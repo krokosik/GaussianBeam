@@ -1,0 +1,13 @@
+This software resuires the following libraries:
+
+	- Qt >= 4.3
+
+To compile this software, type:
+
+	qmake
+	make
+
+To install this software, type:
+
+	make install
+

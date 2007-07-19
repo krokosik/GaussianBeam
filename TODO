@@ -1,0 +1,23 @@
+WISHLIST:
+	Artwork
+	Translations
+	Relative waist position
+	Lens selection
+	Sensitivity graph
+	Lens movement magnification
+	Lens lock (abs & relative & telescope)
+	Print
+	Better Wavelength to RGB function
+	Forbidden area
+	Diaphragme
+	Ruller
+	Relative distances on graph
+	Better hyperbola interpolation
+	General ABCD tranform
+	Enable increase & decrease of fit table
+	Not found display in waist fit
+	Window title and command line argument
+	Customize status bar display & add Gouy phase & q
+
+BUGS :
+	Magic waist removes interfaces

@@ -1,0 +1,82 @@
+/* This file is part of the Gaussian Beam project
+   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License version 2 as published by the Free Software Foundation.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+
+   You should have received a copy of the GNU Library General Public License
+   along with this library; see the file COPYING.LIB.  If not, write to
+   the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.
+*/
+
+#ifndef GAUSSIANBEAMWIDGET_H
+#define GAUSSIANBEAMWIDGET_H
+
+#include "ui_GaussianBeamForm.h"
+#include "GaussianBeamModel.h"
+#include "GaussianBeamDelegate.h"
+#include "GaussianBeam.h"
+
+#include <QWidget>
+
+class QStandardItemModel;
+class QDomElement;
+class QAction;
+
+class OpticsView;
+class GaussianBeamPlot;
+
+class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
+{
+	Q_OBJECT
+
+public:
+	GaussianBeamWidget(QWidget* parent = 0);
+
+protected slots:
+	void on_pushButton_Add_clicked();
+	void on_pushButton_Remove_clicked();
+	void on_pushButton_MagicWaist_clicked();
+	void on_pushButton_Save_clicked();
+	void on_pushButton_SaveAs_clicked();
+	void on_pushButton_Open_clicked();
+	void on_pushButton_Fit_clicked();
+	void on_pushButton_SetInputBeam_clicked();
+	void on_pushButton_SetTargetBeam_clicked();
+	void on_doubleSpinBox_Wavelength_valueChanged(double value);
+	void on_doubleSpinBox_HRange_valueChanged(double value);
+	void on_doubleSpinBox_VRange_valueChanged(double value);
+	void on_doubleSpinBox_HOffset_valueChanged(double value);
+	void on_action_AddLens_triggered();
+	void on_action_AddFlatInterface_triggered();
+	void on_action_AddCurvedInterface_triggered();
+
+private:
+	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+	void openFile(const QString& path = QString());
+	void saveFile(const QString& path = QString());
+	void parseXml(const QDomElement& element);
+	void parseXmlOptics(const QDomElement& element);
+	void setCurrentFile(const QString& path);
+
+private:
+	GaussianBeamModel* model;
+	GaussianBeamDelegate delegate;
+	QItemSelectionModel* selectionModel;
+	OpticsView* opticsView;
+	GaussianBeamPlot* plot;
+	QStandardItemModel* fitModel;
+
+	Beam m_fitBeam;
+	QString m_currentFile;
+	int m_lastLensName, m_lastFlatInterfaceName, m_lastCurvedInterfaceName;
+};
+
+#endif
