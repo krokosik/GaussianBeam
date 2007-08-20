@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -20,8 +20,6 @@
 #define GAUSSIANBEAMWIDGET_H
 
 #include "ui_GaussianBeamForm.h"
-#include "GaussianBeamModel.h"
-#include "GaussianBeamDelegate.h"
 #include "GaussianBeam.h"
 
 #include <QWidget>
@@ -32,6 +30,8 @@ class QAction;
 
 class OpticsView;
 class GaussianBeamPlot;
+class GaussianBeamDelegate;
+class GaussianBeamModel;
 
 class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
 {
@@ -65,10 +65,11 @@ private:
 	void parseXml(const QDomElement& element);
 	void parseXmlOptics(const QDomElement& element);
 	void setCurrentFile(const QString& path);
+	void updateUnits();
 
 private:
 	GaussianBeamModel* model;
-	GaussianBeamDelegate delegate;
+	GaussianBeamDelegate* delegate;
 	QItemSelectionModel* selectionModel;
 	OpticsView* opticsView;
 	GaussianBeamPlot* plot;

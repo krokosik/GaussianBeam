@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,13 +16,15 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include <QtGui>
-
 #include "GaussianBeamDelegate.h"
 #include "GaussianBeamModel.h"
+#include "Unit.h"
 
-GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent)
+#include <QtGui>
+
+GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model)
 	: QItemDelegate(parent)
+	, m_model(model)
 {
 }
 
@@ -44,13 +46,36 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		return editor;
 	}
 	case COL_POSITION:
-	case COL_FOCAL:
 	case COL_WAIST_POSITION:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
 		editor->setMinimum(-infinity);
 		editor->setMaximum(infinity);
+		return editor;
+	}
+	case COL_PROPERTIES:
+	{
+		const Optics* optics = m_model->optics(index);
+		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
+		editor->setAccelerated(true);
+		editor->setMinimum(-infinity);
+		editor->setMaximum(infinity);
+		if (optics->type() == LensType)
+		{
+			editor->setPrefix("f = ");
+			editor->setSuffix(Units::getUnit(UnitFocal).string("m"));
+		}
+		else if (optics->type() == FlatInterfaceType)
+		{
+			editor->setMinimum(0.);
+			editor->setPrefix("n2/n1 = ");
+		}
+		else if (optics->type() == CurvedInterfaceType) /// @todo enable to change the index ratio
+		{
+			editor->setPrefix("R = ");
+			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
+		}
 		return editor;
 	}
 	case COL_NAME:
@@ -82,13 +107,26 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	switch (index.column())
 	{
 	case COL_POSITION:
-	case COL_FOCAL:
 	case COL_WAIST:
 	case COL_WAIST_POSITION:
 	case COL_RAYLEIGH:
 	case COL_DIVERGENCE:
 	{
 		double value = index.model()->data(index, Qt::DisplayRole).toDouble();
+		QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
+		spinBox->setValue(value);
+		break;
+	}
+	case COL_PROPERTIES:
+	{
+		const Optics* optics = m_model->optics(index);
+		double value = 0.;
+		if (optics->type() == LensType)
+			value = dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider();
+		else if (optics->type() == FlatInterfaceType)
+			value = dynamic_cast<const FlatInterface*>(optics)->indexRatio();
+		else if (optics->type() == CurvedInterfaceType)
+			value = dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()*Units::getUnit(UnitCurvature).divider();
 		QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;

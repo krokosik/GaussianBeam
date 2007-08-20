@@ -3,15 +3,19 @@
 ######################################################################
 
 TEMPLATE = app
-TARGET = 
+TARGET =
 DEPENDPATH += .
 INCLUDEPATH += .
 QT += xml
 #LIBS += -lqwt-qt4
 
+CODECFORTR     = UTF-8
+CODECFORSRC    = UTF-8
+
 # Input
-HEADERS += GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
-           GaussianBeam.h GaussianBeamModel.h #GaussianBeamPlot.h
-FORMS   += GaussianBeamForm.ui
-SOURCES += GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
-           GaussianBeam.cpp GaussianBeamModel.cpp #GaussianBeamPlot.cpp
+HEADERS = GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
+           GaussianBeam.h GaussianBeamModel.h Unit.h
+SOURCES = GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
+           GaussianBeam.cpp GaussianBeamModel.cpp Unit.cpp
+FORMS   = GaussianBeamForm.ui
+TRANSLATIONS = GaussianBeam_fr.ts

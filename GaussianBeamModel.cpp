@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,19 +16,20 @@
    Boston, MA 02110-1301, USA.
 */
 
+#include "GaussianBeamModel.h"
+#include "Unit.h"
+
 #include <QtGui>
 #include <QDebug>
-
-#include "GaussianBeamModel.h"
 
 GaussianBeamModel::GaussianBeamModel(QObject* parent)
 	: QAbstractTableModel(parent)
 {
 	m_optics.clear();
-	
+
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), rowCount());
 	m_optics[0]->setLocked(true);
-	for (int i = 1; i < 3; i++) 
+	for (int i = 1; i < 3; i++)
 	{
 		QString name = "L" + QString::number(i);
 		addOptics(new Lens(0.02*i + 0.001, 0.1*i + 0.02, name.toUtf8().data()), rowCount());
@@ -62,19 +63,35 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 	if (index.column() == COL_OPTICS)
 		return opticsName(m_optics[index.row()]->type());
 	else if (index.column() == COL_POSITION)
-		return m_optics[index.row()]->position()/UNIT_POSITION;
+		return m_optics[index.row()]->position()*Units::getUnit(UnitPosition).divider();
 	else if ((index.column() == COL_RELATIVE_POSITION) && (index.row() > 0))
-		return (m_optics[index.row()]->position() - m_optics[index.row()-1]->position())/UNIT_POSITION;
-	else if ((index.column() == COL_FOCAL) && (m_optics[index.row()]->type() == LensType))
-		return dynamic_cast<Lens*>(m_optics[index.row()])->focal()/UNIT_FOCAL;
+		return (m_optics[index.row()]->position() - m_optics[index.row()-1]->position())*Units::getUnit(UnitPosition).divider();
+	else if (index.column() == COL_PROPERTIES)
+	{
+		if (m_optics[index.row()]->type() == LensType)
+		{
+			return QString("f = ") + QString::number(dynamic_cast<Lens*>(m_optics[index.row()])->focal()*Units::getUnit(UnitFocal).divider())
+			                       + Units::getUnit(UnitFocal).string("m");
+		}
+		else if (m_optics[index.row()]->type() == FlatInterfaceType)
+		{
+			return QString("n2/n1 = ") + QString::number(dynamic_cast<FlatInterface*>(m_optics[index.row()])->indexRatio());
+		}
+		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
+		{
+			return QString("n2/n1 = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->indexRatio()) +
+			       QString("\n R = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
+			                       + Units::getUnit(UnitCurvature).string("m");
+		}
+	}
 	else if (index.column() == COL_WAIST)
-		return m_beams[index.row()].waist()/UNIT_WAIST;
+		return m_beams[index.row()].waist()*Units::getUnit(UnitWaist).divider();
 	else if (index.column() == COL_WAIST_POSITION)
-		return m_beams[index.row()].waistPosition()/UNIT_WAIST_POSITION;
+		return m_beams[index.row()].waistPosition()*Units::getUnit(UnitPosition).divider();
 	else if (index.column() == COL_RAYLEIGH)
-		return m_beams[index.row()].rayleigh()/UNIT_RAYLEIGH;
+		return m_beams[index.row()].rayleigh()*Units::getUnit(UnitRayleigh).divider();
 	else if (index.column() == COL_DIVERGENCE)
-		return m_beams[index.row()].divergence()/UNIT_DIVERGENCE;
+		return m_beams[index.row()].divergence()*Units::getUnit(UnitDivergence).divider();
 	else if (index.column() == COL_NAME)
 		return QString::fromUtf8(m_optics[index.row()]->name().c_str());
 	else if (index.column() == COL_LOCK)
@@ -93,19 +110,19 @@ QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation,
 				case COL_OPTICS:
 					return tr("Optics");
 				case COL_POSITION:
-					return tr("Position\n(mm)");
+					return tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)";
 				case COL_RELATIVE_POSITION:
 					return tr("Relative\nposition");
-				case COL_FOCAL:
-					return tr("Focal (mm)");
+				case COL_PROPERTIES:
+					return tr("Properties");
 				case COL_WAIST:
-					return tr("Waist (µm)");
+					return tr("Waist") + " (" + Units::getUnit(UnitWaist).prefix() + "m)";
 				case COL_WAIST_POSITION:
-					return tr("Waist\nPosition (mm)");
+					return tr("Waist\nPosition") + " (" + Units::getUnit(UnitPosition).prefix() + "m)";
 				case COL_RAYLEIGH:
-					return tr("Rayleigh\nlength (µm)");
+					return tr("Rayleigh\nlength") + " (" + Units::getUnit(UnitRayleigh).prefix() + "m)";
 				case COL_DIVERGENCE:
-					return tr("Divergence\n(mrad)");
+					return tr("Divergence") + "\n(" + Units::getUnit(UnitDivergence).prefix() + "rad)";
 				case COL_NAME:
 					return tr("Name");
 				case COL_LOCK:
@@ -128,27 +145,34 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	bool backward = false;
 
 	if (index.column() == COL_POSITION)
-		m_optics[index.row()]->setPosition(value.toDouble()*UNIT_POSITION);
-	else if (index.column() == COL_FOCAL)
-		dynamic_cast<Lens*>(m_optics[index.row()])->setFocal(value.toDouble()*UNIT_FOCAL);
+		m_optics[index.row()]->setPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
+	else if (index.column() == COL_PROPERTIES)
+	{
+		if (m_optics[index.row()]->type() == LensType)
+			dynamic_cast<Lens*>(m_optics[index.row()])->setFocal(value.toDouble()*Units::getUnit(UnitFocal).multiplier());
+		else if (m_optics[index.row()]->type() == FlatInterfaceType)
+			dynamic_cast<FlatInterface*>(m_optics[index.row()])->setIndexRatio(value.toDouble());
+		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
+			dynamic_cast<CurvedInterface*>(m_optics[index.row()])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
+	}
 	else if (index.column() == COL_WAIST)
 	{
-		m_beams[index.row()].setWaist(value.toDouble()*UNIT_WAIST);
+		m_beams[index.row()].setWaist(value.toDouble()*Units::getUnit(UnitWaist).multiplier());
 		backward = true;
 	}
 	else if (index.column() == COL_WAIST_POSITION)
 	{
-		m_beams[index.row()].setWaistPosition(value.toDouble()*UNIT_WAIST_POSITION);
+		m_beams[index.row()].setWaistPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
 		backward = true;
 	}
 	else if (index.column() == COL_RAYLEIGH)
 	{
-		m_beams[index.row()].setRayleigh(value.toDouble()*UNIT_RAYLEIGH);
+		m_beams[index.row()].setRayleigh(value.toDouble()*Units::getUnit(UnitRayleigh).multiplier());
 		backward = true;
 	}
 	else if (index.column() == COL_DIVERGENCE)
 	{
-		m_beams[index.row()].setDivergence(value.toDouble()*UNIT_DIVERGENCE);
+		m_beams[index.row()].setDivergence(value.toDouble()*Units::getUnit(UnitDivergence).multiplier());
 		backward = true;
 	}
 	else if (index.column() == COL_NAME)
@@ -172,7 +196,7 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		(index.column() == COL_WAIST_POSITION) ||
 		(index.column() == COL_RAYLEIGH) ||
 		(index.column() == COL_DIVERGENCE) ||
-		(m_optics[index.row()]->type() == LensType) && (index.column() == COL_FOCAL))
+		(index.column() == COL_PROPERTIES))
 		flags |= Qt::ItemIsEditable;
 
 	return flags;

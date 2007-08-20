@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,10 +16,12 @@
    Boston, MA 02110-1301, USA.
 */
 
+#include "GaussianBeamModel.h"
 #include "GaussianBeamWidget.h"
 #include "GaussianBeamDelegate.h"
 #include "OpticsView.h"
-#include "GaussianBeamPlot.h"
+//#include "GaussianBeamPlot.h"
+#include "Unit.h"
 
 
 #include <QApplication>
@@ -65,19 +67,20 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	selectionModel = new QItemSelectionModel(model);
 	table->setSelectionModel(selectionModel);
 	opticsView->setSelectionModel(selectionModel);
-	table->setItemDelegate(&delegate);
 	table->resizeColumnsToContents();
 	opticsView->setStatusLabel(label_Status);
+	delegate = new GaussianBeamDelegate(this, model);
+	table->setItemDelegate(delegate);
 
 	// Waist fit
 	fitModel = new QStandardItemModel(5, 2, this);
-	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position\n(mm)"));
-	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value\n(µm)"));
+	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)");
+	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).prefix() + "m)");
 	fitTable->setModel(fitModel);
 	fitTable->setColumnWidth(0, 82);
 	fitTable->setColumnWidth(1, 82);
-	comboBox_FitData->insertItem(0, "Radius @ 1/e²");
-	comboBox_FitData->insertItem(1, "Diameter @ 1/e²");
+	comboBox_FitData->insertItem(0, tr("Radius @ 1/eÂ²"));
+	comboBox_FitData->insertItem(1, tr("Diameter @ 1/eÂ²"));
 	comboBox_FitData->setCurrentIndex(1);
 	opticsView->setFitModel(fitModel);
 	opticsView->setMeasureCombo(comboBox_FitData);
@@ -91,12 +94,24 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	m_lastLensName = 2;
 	m_lastFlatInterfaceName = 0;
 	m_lastCurvedInterfaceName = 0;
+	updateUnits();
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
-	opticsView->setWavelength(value*UNIT_WAVELENGTH);
-	model->setWavelength(value*UNIT_WAVELENGTH);
+	opticsView->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
+	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
+}
+
+void GaussianBeamWidget::updateUnits()
+{
+	doubleSpinBox_Wavelength->setSuffix(Units::getUnit(UnitWavelength).string("m"));
+	doubleSpinBox_HRange->setSuffix(Units::getUnit(UnitHRange).string("m"));
+	doubleSpinBox_VRange->setSuffix(Units::getUnit(UnitVRange).string("m"));
+	doubleSpinBox_HOffset->setSuffix(Units::getUnit(UnitHRange).string("m"));
+	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string("m"));
+	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string("m"));
+	/// @todo update table headers and status bar
 }
 
 ///////////////////////////////////////////////////////////
@@ -116,6 +131,7 @@ void GaussianBeamWidget::on_action_AddLens_triggered()
 	QString name = "L" + QString::number(++m_lastLensName);
 	double position = model->optics(model->rowCount()-1)->position() + 0.05;
 	model->addOptics(new Lens(0.1, position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
 }
 
 void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
@@ -123,6 +139,7 @@ void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
 	QString name = "I" + QString::number(++m_lastFlatInterfaceName);
 	double position = model->optics(model->rowCount()-1)->position() + 0.05;
 	model->addOptics(new FlatInterface(1.5, position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
 }
 
 void GaussianBeamWidget::on_action_AddCurvedInterface_triggered()
@@ -130,6 +147,8 @@ void GaussianBeamWidget::on_action_AddCurvedInterface_triggered()
 	QString name = "C" + QString::number(++m_lastCurvedInterfaceName);
 	double position = model->optics(model->rowCount()-1)->position() + 0.05;
 	model->addOptics(new CurvedInterface(0.1, 1.5, position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
+	table->resizeRowToContents(model->rowCount()-1);
 }
 
 void GaussianBeamWidget::on_pushButton_Remove_clicked()
@@ -148,8 +167,8 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
 	Beam inputBeam;
 	inputBeam.setWavelength(model->wavelength());
-	Beam targetBeam(doubleSpinBox_TargetWaist->value()*UNIT_WAIST,
-	                doubleSpinBox_TargetPosition->value()*UNIT_POSITION,
+	Beam targetBeam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
+	                doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
 	                inputBeam.wavelength());
 	std::vector<Lens> lenses;
 
@@ -189,8 +208,8 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 		if (factor*fitModel->data(fitModel->index(row, 1)).toDouble() != 0.)
 		{
 			qDebug() << fitModel->data(fitModel->index(row, 0)).toDouble() << fitModel->data(fitModel->index(row, 1)).toDouble();
-			positions.push_back(fitModel->data(fitModel->index(row, 0)).toDouble()*UNIT_WAIST_POSITION);
-			radii.push_back(factor*fitModel->data(fitModel->index(row, 1)).toDouble()*UNIT_WAIST);
+			positions.push_back(fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier());
+			radii.push_back(factor*fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier());
 		}
 
 	if (positions.size() <= 1)
@@ -202,9 +221,9 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 	qDebug() << "Fitting" << positions.size() << "elements";
 
 	m_fitBeam = GaussianBeam::fitBeam(positions, radii, model->wavelength(), &rho2);
-	QString text = tr("Waist") + " = " + QString::number(m_fitBeam.waist()/UNIT_WAIST) + " µm\n" +
-	               tr("Position") + " = " + QString::number(m_fitBeam.waistPosition()/UNIT_POSITION) + " mm\n"
-	               "R² = " + QString::number(rho2);
+	QString text = tr("Waist") + " = " + QString::number(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
+	               tr("Position") + " = " + QString::number(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
+	               tr("RÂ²") + " = " + QString::number(rho2);
 	label_FitResult->setText(text);
 	pushButton_SetInputBeam->setEnabled(true);
 	pushButton_SetTargetBeam->setEnabled(true);
@@ -217,8 +236,8 @@ void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
-	doubleSpinBox_TargetWaist->setValue(m_fitBeam.waist()/UNIT_WAIST);
-	doubleSpinBox_TargetPosition->setValue(m_fitBeam.waistPosition()/UNIT_WAIST_POSITION);
+	doubleSpinBox_TargetWaist->setValue(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_TargetPosition->setValue(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider());
 }
 
 ///////////////////////////////////////////////////////////
@@ -301,15 +320,15 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 	while (!child.isNull())
 	{
 		if (child.tagName() == "wavelength") ////////////////
-			doubleSpinBox_Wavelength->setValue(child.text().toDouble()/UNIT_WAVELENGTH);
+			doubleSpinBox_Wavelength->setValue(child.text().toDouble()*Units::getUnit(UnitWavelength).divider());
 		else if (child.tagName() == "magicWaist") ////////////////
 			parseXml(child);
 		else if (child.tagName() == "targetWaist")
-			doubleSpinBox_TargetWaist->setValue(child.text().toDouble()/UNIT_WAIST);
+			doubleSpinBox_TargetWaist->setValue(child.text().toDouble()*Units::getUnit(UnitWaist).divider());
 		else if (child.tagName() == "waistTolerance")
 			doubleSpinBox_WaistTolerance->setValue(child.text().toDouble()*100.);
 		else if (child.tagName() == "targetPosition")
-			doubleSpinBox_TargetPosition->setValue(child.text().toDouble()/UNIT_WAIST_POSITION);
+			doubleSpinBox_TargetPosition->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "positionTolerance")
 			doubleSpinBox_PositionTolerance->setValue(child.text().toDouble()*100.);
 		else if (child.tagName() == "scramble")
@@ -327,17 +346,17 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 			parseXml(child);
 		}
 		else if (child.tagName() == "dataPosition")
-			fitModel->setData(fitModel->index(fitRow, 0), child.text().toDouble()/UNIT_POSITION);
+			fitModel->setData(fitModel->index(fitRow, 0), child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "dataValue")
-			fitModel->setData(fitModel->index(fitRow, 1), child.text().toDouble()/UNIT_WAIST);
+			fitModel->setData(fitModel->index(fitRow, 1), child.text().toDouble()*Units::getUnit(UnitWaist).divider());
 		else if (child.tagName() == "display") ////////////////
 			parseXml(child);
 		else if (child.tagName() == "HRange")
-			doubleSpinBox_HRange->setValue(child.text().toDouble()/UNIT_POSITION);
+			doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "VRange")
-			doubleSpinBox_VRange->setValue(child.text().toDouble()/UNIT_WAIST_POSITION);
+			doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "HOffset")
-			doubleSpinBox_HOffset->setValue(child.text().toDouble()/UNIT_POSITION);
+			doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if ((child.tagName() == "inputBeam") ||
 		         (child.tagName() == "lens") ||
 		         (child.tagName() == "flatInterface") ||
@@ -419,9 +438,9 @@ void GaussianBeamWidget::saveFile(const QString &path)
 	xmlWriter.writeAttribute("version", "1.0");
 	xmlWriter.writeTextElement("wavelength", QString::number(model->wavelength()));
 	xmlWriter.writeStartElement("magicWaist");
-		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*UNIT_WAIST));
+		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier()));
 		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
-		xmlWriter.writeTextElement("targetPosition", QString::number(doubleSpinBox_TargetPosition->value()*UNIT_WAIST_POSITION));
+		xmlWriter.writeTextElement("targetPosition", QString::number(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier()));
 		xmlWriter.writeTextElement("positionTolerance", QString::number(doubleSpinBox_PositionTolerance->value()/100.));
 		xmlWriter.writeTextElement("scramble", QString::number(checkBox_Scramble->checkState()));
 	xmlWriter.writeEndElement();
@@ -430,15 +449,15 @@ void GaussianBeamWidget::saveFile(const QString &path)
 		for (int row = 0; row < fitModel->rowCount(); row++)
 		{
 			xmlWriter.writeStartElement("fitData");
-				xmlWriter.writeTextElement("dataPosition", QString::number(fitModel->data(fitModel->index(row, 0)).toDouble()*UNIT_WAIST_POSITION));
-				xmlWriter.writeTextElement("dataValue",  QString::number(fitModel->data(fitModel->index(row, 1)).toDouble()*UNIT_WAIST));
+				xmlWriter.writeTextElement("dataPosition", QString::number(fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier()));
+				xmlWriter.writeTextElement("dataValue",  QString::number(fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier()));
 			xmlWriter.writeEndElement();
 		}
 	xmlWriter.writeEndElement();
 	xmlWriter.writeStartElement("display");
-		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*UNIT_POSITION));
-		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*UNIT_WAIST_POSITION));
-		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*UNIT_POSITION));
+		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
+		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
+		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
 	xmlWriter.writeEndElement();
 	for (int row = 0; row < model->rowCount(); row++)
 	{
@@ -479,17 +498,17 @@ void GaussianBeamWidget::saveFile(const QString &path)
 
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
-	opticsView->setHRange(value*UNIT_HRANGE);
+	opticsView->setHRange(value*Units::getUnit(UnitHRange).multiplier());
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
 {
-	opticsView->setVRange(value*UNIT_VRANGE);
+	opticsView->setVRange(value*Units::getUnit(UnitVRange).multiplier());
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
 {
-	opticsView->setHOffset(value*UNIT_HRANGE);
+	opticsView->setHOffset(value*Units::getUnit(UnitHRange).multiplier());
 }
 
 ///////////////////////////////////////////////////////////

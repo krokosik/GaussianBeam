@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -21,26 +21,25 @@
 
 #include <QItemDelegate>
 #include <QModelIndex>
-#include <QObject>
-#include <QSize>
-#include <QSpinBox>
+
+class GaussianBeamModel;
 
 class GaussianBeamDelegate : public QItemDelegate
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    GaussianBeamDelegate(QObject *parent = 0);
+	GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model);
 
-    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option,
-                          const QModelIndex &index) const;
+public:
+	QWidget *createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-    void setEditorData(QWidget *editor, const QModelIndex &index) const;
-    void setModelData(QWidget *editor, QAbstractItemModel *model,
-                      const QModelIndex &index) const;
+	void setEditorData(QWidget* editor, const QModelIndex& index) const;
+	void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const;
+	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
-    void updateEditorGeometry(QWidget *editor,
-        const QStyleOptionViewItem &option, const QModelIndex &index) const;
+private:
+	GaussianBeamModel* m_model;
 };
 
 #endif

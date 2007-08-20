@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -22,24 +22,13 @@
 #define COL_OPTICS 0
 #define COL_POSITION 1
 #define COL_RELATIVE_POSITION 2
-#define COL_FOCAL 3
+#define COL_PROPERTIES 3
 #define COL_WAIST 4
 #define COL_WAIST_POSITION 5
 #define COL_RAYLEIGH 6
 #define COL_DIVERGENCE 7
 #define COL_NAME 8
 #define COL_LOCK 9
-
-#define UNIT_POSITION 1e-3
-#define UNIT_FOCAL 1e-3
-#define UNIT_WAIST 1e-6
-#define UNIT_WAIST_POSITION 1e-3
-#define UNIT_RAYLEIGH 1e-6
-#define UNIT_WAVELENGTH 1e-9
-#define UNIT_DIVERGENCE 1e-3
-#define UNIT_CURVATURE 1e-3
-#define UNIT_HRANGE 1e-3
-#define UNIT_VRANGE 1e-6
 
 #include "GaussianBeam.h"
 
@@ -66,6 +55,7 @@ public:
 
 public:
 	const Optics* optics(int row) const { return m_optics[row]; }
+	const Optics* optics(const QModelIndex& index) const { return optics(index.row()); }
 	const QList<Optics*>& opticsList() const { return m_optics; }
 	const Beam& beam(int row) const { return m_beams[row]; }
 	const QList<Beam>& beamList() const { return m_beams; }

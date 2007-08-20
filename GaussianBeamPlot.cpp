@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -54,16 +54,16 @@ GaussianBeamPlot::GaussianBeamPlot(QWidget* parent)
 	setAxisTitle(xBottom, "x");
 	setAxisTitle(yLeft, "y");
 	setCanvasBackground(Qt::yellow);
-	
+
 	// Insert new curves
 	QwtPlotCurve* curve = new QwtPlotCurve();
 	curve->setRenderHint(QwtPlotItem::RenderAntialiased);
 	curve->setPen(QPen(Qt::red));
 	curve->attach(this);
-	
+
 	// Create sin and cos data
 	curve->setData(GaussianBeamPlotData());
-	
+
 	// Insert markers
 /*
 	//  ...a horizontal line at y = 0...
@@ -73,7 +73,7 @@ GaussianBeamPlot::GaussianBeamPlot(QWidget* parent)
 	mY->setLineStyle(QwtPlotMarker::HLine);
 	mY->setYValue(0.0);
 	mY->attach(this);
-	
+
 	//  ...a vertical line at x = 2 * pi
 	QwtPlotMarker *mX = new QwtPlotMarker();
 	mX->setLabel(QString::fromLatin1("x = 2 pi"));

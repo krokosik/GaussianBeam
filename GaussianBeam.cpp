@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -53,7 +53,7 @@ double Beam::divergence() const
 
 void Beam::setDivergence(double divergence)
 {
-	if (divergence > 0.)
+	if ((divergence > 0.) && (divergence < M_PI/2.))
 		m_waist = m_wavelength/(M_PI*tan(divergence));
 }
 
@@ -179,13 +179,6 @@ Lens::Lens(double focal, double position, string name)
 
 Beam Lens::image(const Beam& inputBeam) const
 {
-/*	old method
-	double s        = m_position - inputBeam.waistPosition();
-	double prev_z0  = inputBeam.rayleigh();
-	double mag      = 1./sqrt(sqr(1. - s/m_focal) + sqr(prev_z0/m_focal));
-	return Beam(mag*inputBeam.waist(), 1./(1./m_focal - 1./(s + sqr(prev_z0)/(s-m_focal))) + m_position, inputBeam.wavelength());
-*/
-
 	const complex<double> qIn = inputBeam.q(m_position);
 	const complex<double> qOut = 1./(1./qIn - 1./focal());
 	return Beam(qOut, m_position, inputBeam.wavelength());

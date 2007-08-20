@@ -16,29 +16,35 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef GAUSSIANBEAMPLOT_H
-#define GAUSSIANBEAMPLOT_H
+#ifndef UNIT_H
+#define UNIT_H
 
-#include <qwt-qt4/qwt_plot.h>
-#include <qwt-qt4/qwt_plot_curve.h>
-#include <qwt-qt4/qwt_data.h>
+#include <QString>
 
-class GaussianBeamPlotData : public QwtData
+class Unit
 {
 public:
-	GaussianBeamPlotData();
+	Unit(int power);
 
 public:
-	virtual QwtData *copy() const;
-	virtual size_t size() const;
-	virtual double x(size_t i) const;
-	virtual double y(size_t i) const;
+	QChar prefix() const;
+	QString string(QString unitString) const;
+	double multiplier() const;
+	double divider() const;
+
+private:
+	int m_power;
 };
 
-class GaussianBeamPlot : public QwtPlot
+enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength, UnitDivergence, UnitCurvature, UnitHRange, UnitVRange};
+
+class Units
 {
 public:
-	GaussianBeamPlot(QWidget* parent);
+	Units();
+
+public:
+	static const Unit getUnit(UnitType unit);
 };
 
 #endif

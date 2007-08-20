@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,10 +19,18 @@
 #include "GaussianBeamWidget.h"
 
 #include <QApplication>
+#include <QTextCodec>
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
+
+	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
+	QTranslator translator;
+	QString locale = QLocale::system().name();
+	translator.load(QString("GaussianBeam_") + locale);
+	app.installTranslator(&translator);
 
 	GaussianBeamWidget widget;
 

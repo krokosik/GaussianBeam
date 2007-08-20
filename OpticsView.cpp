@@ -1,5 +1,5 @@
 /* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007 JÃ©rÃ´me Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,6 +19,7 @@
 #include "OpticsView.h"
 #include "GaussianBeamModel.h"
 #include "GaussianBeam.h"
+#include "Unit.h"
 
 #include <QtGui>
 #include <QtDebug>
@@ -93,6 +94,16 @@ void OpticsView::computePaths()
 	m_flatInterfacePath.lineTo(lens.center().x(), lens.top());
 	m_flatInterfacePath.lineTo(lens.center().x(), lens.bottom());
 	m_flatInterfacePath.lineTo(lens.right(), lens.bottom());
+
+	/// @todo chech the correct relation between the radius of curvature and the concavity
+
+	m_convexInterfacePath = QPainterPath();
+	m_convexInterfacePath.moveTo(0., lens.top());
+	m_convexInterfacePath.arcTo(lens, 90., 180.);
+//
+	m_concaveInterfacePath = QPainterPath();
+	m_concaveInterfacePath.moveTo(0., lens.bottom());
+	m_concaveInterfacePath.arcTo(lens, 270., 180.);
 }
 
 void OpticsView::computeTranformMatrix()
@@ -259,9 +270,9 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 				(currentOptics->type() == CreateBeamType))
 			{
 				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beamList()[row];
-				QString text = tr("Position: ") + QString::number(abs_position/UNIT_POSITION, 'f', 2) + "mm    " +
-				               tr("Beam radius: ") + QString::number(beam.radius(abs_position)/UNIT_WAIST) + "µm    " +
-				               tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)/UNIT_CURVATURE) + "mm    ";
+				QString text = tr("Position: ") + QString::number(abs_position*Units::getUnit(UnitPosition).divider(), 'f', 2) + tr("mm") + "    " +
+				               tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider()) + tr("Âµm") + "    " +
+				               tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider()) + tr("mm") + "    ";
 				m_statusLabel->setText(text);
 				break;
 			}
@@ -331,8 +342,8 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			factor = 0.5;
 		for (int row = 0; row < m_fitModel->rowCount(); row++)
 		{
-			double position = m_fitModel->data(m_fitModel->index(row, 0)).toDouble()*UNIT_WAIST_POSITION;
-			double radius = factor*m_fitModel->data(m_fitModel->index(row, 1)).toDouble()*UNIT_WAIST;
+			double position = m_fitModel->data(m_fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
+			double radius = factor*m_fitModel->data(m_fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
 			if ((position != 0.) && (radius > 0.))
 			{
 				QPointF point = QPointF(position, radius)*m_abs2view;
@@ -386,6 +397,14 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			else if (currentOptics->type() == FlatInterfaceType)
 			{
 				painter.drawPath(m_flatInterfacePath*objectCenterMatrix);
+			}
+			else if (currentOptics->type() == CurvedInterfaceType)
+			{
+				const CurvedInterface* interface = dynamic_cast<const CurvedInterface*>(currentOptics);
+				if (interface->surfaceRadius() < 0.)
+					painter.drawPath(m_concaveInterfacePath*objectCenterMatrix);
+				else
+					painter.drawPath(m_convexInterfacePath*objectCenterMatrix);
 			}
 
 			if (currentOptics->type() != CreateBeamType)
@@ -471,7 +490,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			painter.setPen(textPen);
 			QPointF view_waistTop(view_waistPos.x(), view_waistPos.y() - currentBeam->waist()*vScale());
 			painter.drawLine(view_waistPos, view_waistTop);
-			QString text; text.setNum(int(currentBeam->waist()/UNIT_WAIST));
+			QString text; text.setNum(int(currentBeam->waist()*Units::getUnit(UnitWaist).divider()));
 			QRectF view_textRect(0., 0., 100., 15.);
 			view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
 			painter.drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
