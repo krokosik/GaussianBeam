@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>242</width>
-          <height>343</height>
+          <width>201</width>
+          <height>288</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -256,7 +256,7 @@
           <x>0</x>
           <y>0</y>
           <width>696</width>
-          <height>426</height>
+          <height>447</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -357,6 +357,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_MagicWaistResult" >
+           <property name="text" >
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer>
            <property name="orientation" >
             <enum>Qt::Vertical</enum>
@@ -416,8 +423,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>150</width>
-          <height>283</height>
+          <width>118</width>
+          <height>219</height>
          </rect>
         </property>
         <attribute name="label" >

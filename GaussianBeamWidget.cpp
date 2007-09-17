@@ -165,6 +165,8 @@ void GaussianBeamWidget::on_pushButton_Remove_clicked()
 
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
+	label_MagicWaistResult->setText("");
+
 	Beam inputBeam;
 	inputBeam.setWavelength(model->wavelength());
 	Beam targetBeam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
@@ -184,7 +186,10 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 	              doubleSpinBox_PositionTolerance->value()*0.01,
 	              checkBox_Scramble->checkState() == Qt::Checked);
 	if (!result)
+	{
+		label_MagicWaistResult->setText(tr("Desired waist could not be found !"));
 		return;
+	}
 
 	model->removeRows(1, model->rowCount()-1);
 
