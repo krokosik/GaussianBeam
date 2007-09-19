@@ -23,22 +23,33 @@
 #include <qwt-qt4/qwt_plot_curve.h>
 #include <qwt-qt4/qwt_data.h>
 
+enum YPlotType {YPlotWaist, YPlotDivergence, YPlotRayleigh, YPlotRadius, YPlotCurvature, YPlotGouy};
+
+class GaussianBeamModel;
+
 class GaussianBeamPlotData : public QwtData
 {
 public:
-	GaussianBeamPlotData();
+	GaussianBeamPlotData(GaussianBeamModel* model, YPlotType YData);
 
 public:
 	virtual QwtData *copy() const;
 	virtual size_t size() const;
 	virtual double x(size_t i) const;
 	virtual double y(size_t i) const;
+
+private:
+	GaussianBeamModel* m_model;
+	YPlotType m_YData;
 };
 
 class GaussianBeamPlot : public QwtPlot
 {
 public:
-	GaussianBeamPlot(QWidget* parent);
+	GaussianBeamPlot(QWidget* parent, GaussianBeamModel* model);
+
+private:
+	GaussianBeamModel* m_model;
 };
 
 #endif

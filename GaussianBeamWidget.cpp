@@ -20,7 +20,9 @@
 #include "GaussianBeamWidget.h"
 #include "GaussianBeamDelegate.h"
 #include "OpticsView.h"
-//#include "GaussianBeamPlot.h"
+#ifdef GBPLOT
+	#include "GaussianBeamPlot.h"
+#endif
 #include "Unit.h"
 
 
@@ -47,19 +49,26 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	//toolBox->setSizeHint(100);
 	toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));
 
+	// Pointer creation
+	model = new GaussianBeamModel(this);
+
 	// Extra widgets, not included in designer
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
-//	plot = new GaussianBeamPlot(this);
 	opticsView = new OpticsView(this);
-//	splitter->addWidget(plot);
+#ifdef GBPLOT
+	plot = new GaussianBeamPlot(this, model);
+	splitter->addWidget(plot);
+	checkBox_ShowGraph->setEnabled(true);
+	//checkBox_ShowGraph->setChecked(true);
+	plot->setVisible(checkBox_ShowGraph->isChecked());
+#endif
 	splitter->addWidget(opticsView);
 	layout->addWidget(splitter);
 	layout->setMargin(0);
 	widget->setLayout(layout);
 
 	// Create model & views
-	model = new GaussianBeamModel(this);
 	table->setModel(model);
 	opticsView->setModel(model);
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -101,6 +110,14 @@ void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
 	opticsView->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
+}
+
+void GaussianBeamWidget::on_checkBox_ShowGraph_clicked(bool checked)
+{
+	qDebug() << "Show graph";
+#ifdef GBPLOT
+	plot->setVisible(checked);
+#endif
 }
 
 void GaussianBeamWidget::updateUnits()

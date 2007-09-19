@@ -50,6 +50,7 @@ protected slots:
 	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
 	void on_pushButton_SetTargetBeam_clicked();
+	void on_checkBox_ShowGraph_clicked(bool checked);
 	void on_doubleSpinBox_Wavelength_valueChanged(double value);
 	void on_doubleSpinBox_HRange_valueChanged(double value);
 	void on_doubleSpinBox_VRange_valueChanged(double value);

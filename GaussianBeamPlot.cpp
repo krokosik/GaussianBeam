@@ -17,17 +17,21 @@
 */
 
 #include "GaussianBeamPlot.h"
+#include "GaussianBeamModel.h"
+#include "GaussianBeam.h"
 
 /////////////////////////////////////////////////
 // GaussianBeamPlotData
 
-GaussianBeamPlotData::GaussianBeamPlotData()
+GaussianBeamPlotData::GaussianBeamPlotData(GaussianBeamModel* model, YPlotType YData)
 	: QwtData()
+	, m_model(model)
+	, m_YData(YData)
 {}
 
 QwtData* GaussianBeamPlotData::copy() const
 {
-	return new GaussianBeamPlotData();
+	return new GaussianBeamPlotData(m_model, m_YData);
 }
 
 size_t GaussianBeamPlotData::size() const
@@ -37,19 +41,37 @@ size_t GaussianBeamPlotData::size() const
 
 double GaussianBeamPlotData::x(size_t i) const
 {
-	return double(i)/100.;
+	return double(i)/200.;
 }
 
 double GaussianBeamPlotData::y(size_t i) const
 {
-	return double(i)/200.;
+	const Beam& beam = m_model->beam(1);
+	double z = x(i);
+
+
+	if (m_YData == YPlotRadius)
+		return beam.radius(z);
+	else if (m_YData == YPlotCurvature)
+		return beam.curvature(z);
+	else if (m_YData == YPlotGouy)
+		return beam.gouyPhase(z);
+	else if (m_YData == YPlotWaist)
+		return beam.waist();
+	else if (m_YData == YPlotDivergence)
+		return beam.divergence();
+	else if (m_YData == YPlotRayleigh)
+		return beam.rayleigh();
+
+	return 0.;
 }
 
 /////////////////////////////////////////////////
 // GaussianBeamPlot
 
-GaussianBeamPlot::GaussianBeamPlot(QWidget* parent)
+GaussianBeamPlot::GaussianBeamPlot(QWidget* parent, GaussianBeamModel* model)
 	: QwtPlot(parent)
+	, m_model(model)
 {
 	setAxisTitle(xBottom, "x");
 	setAxisTitle(yLeft, "y");
@@ -62,7 +84,7 @@ GaussianBeamPlot::GaussianBeamPlot(QWidget* parent)
 	curve->attach(this);
 
 	// Create sin and cos data
-	curve->setData(GaussianBeamPlotData());
+	curve->setData(GaussianBeamPlotData(m_model, YPlotRadius));
 
 	// Insert markers
 /*
