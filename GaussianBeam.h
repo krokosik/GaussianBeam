@@ -96,12 +96,12 @@ private:
 	double m_wavelength;
 };
 
-enum OpticsType {CreateBeamType, LensType, FlatInterfaceType, CurvedInterfaceType};
+enum OpticsType {CreateBeamType, LensType, FlatMirrorType, CurvedMirrorType, FlatInterfaceType, CurvedInterfaceType};
 
 class Optics
 {
 public:
-	Optics(OpticsType type, double position, std::string name);
+	Optics(OpticsType type, bool ABCD, double position, std::string name);
 	virtual ~Optics() {}
 
 public:
@@ -116,9 +116,11 @@ public:
 	void setLocked(bool locked) { m_locked = locked; }
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
+	bool isABCD() { return m_ABCD; }
 
-protected:
+private:
 	OpticsType m_type;
+	bool m_ABCD;
 	double m_position;
 	std::string m_name;
 	bool m_locked;
@@ -137,32 +139,74 @@ public:
 	double waist() const { return m_waist; }
 	void setWaist(double waist) { m_waist = waist; }
 
-protected:
+private:
 	double m_waist;
 };
 
-class Lens : public Optics
+class ABCD : public Optics
 {
 public:
-	Lens(double focal, double position, std::string name = "");
-	virtual ~Lens() {}
+	ABCD(OpticsType type, double position, std::string name = "");
 
 public:
 	virtual Beam image(const Beam& inputBeam) const;
 	virtual Beam antecedent(const Beam& outputBeam) const;
 
 public:
+	virtual double A() const { return 1.; }
+	virtual double B() const { return 0.; }
+	virtual double C() const { return 0.; }
+	virtual double D() const { return 1.; }
+};
+
+class Lens : public ABCD
+{
+public:
+	Lens(double focal, double position, std::string name = "")
+		: ABCD(LensType, position, name) , m_focal(focal) {}
+	virtual ~Lens() {}
+
+public:
+	virtual double C() const { return -1./focal(); }
+
+public:
 	double focal() const { return m_focal; }
 	void setFocal(double focal) { m_focal = focal; }
 
-protected:
+private:
 	double m_focal;
+};
+
+class FlatMirror : public ABCD
+{
+public:
+	FlatMirror(double position, std::string name = "")
+		: ABCD(FlatMirrorType, position, name) {}
+	virtual ~FlatMirror() {}
+};
+
+class CurvedMirror : public ABCD
+{
+public:
+	CurvedMirror(double curvatureRadius, double position, std::string name = "")
+		: ABCD(CurvedMirrorType, position, name), m_curvatureRadius(curvatureRadius) {}
+	virtual ~CurvedMirror() {}
+
+public:
+ 	virtual double C() const { return -2./curvatureRadius(); }
+
+public:
+	double curvatureRadius() const { return m_curvatureRadius; }
+	void setCurvatureRadius(double curvatureRadius) { m_curvatureRadius = curvatureRadius; }
+
+protected:
+	double m_curvatureRadius;
 };
 
 /**
 * Virtual class
 */
-class Interface : public Optics
+class Interface : public ABCD
 {
 public:
 	/**
@@ -171,8 +215,12 @@ public:
 	* @param position position of the interface
 	* @param name user name for the optics
 	*/
-	Interface(OpticsType type, double indexRatio, double position, std::string name = "");
+	Interface(OpticsType type, double indexRatio, double position, std::string name = "")
+		: ABCD(type, position, name), m_indexRatio(indexRatio) {}
 	virtual ~Interface() {}
+
+public:
+	virtual double D() const { return 1./indexRatio(); }
 
 public:
 	double indexRatio() const { return m_indexRatio; }
@@ -191,13 +239,9 @@ public:
 	* @param position position of the interface
 	* @param name user name for the optics
 	*/
-	FlatInterface(double indexRatio, double position, std::string name = "");
+	FlatInterface(double indexRatio, double position, std::string name = "")
+		: Interface(FlatInterfaceType, indexRatio, position, name) {}
 	virtual ~FlatInterface() {}
-
-public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
-
 };
 
 class CurvedInterface : public Interface
@@ -210,12 +254,12 @@ public:
 	* @param position position of the interface
 	* @param name user name for the optics
 	*/
-	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "");
+	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "")
+		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) {}
 	virtual ~CurvedInterface() {}
 
 public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual double C() const { return (1./indexRatio()-1.)/surfaceRadius(); }
 
 public:
 	double surfaceRadius() const { return m_surfaceRadius; }
@@ -224,7 +268,21 @@ public:
 protected:
 	double m_surfaceRadius;
 };
+/*
+class GenericABCD : public Optics
+{
 
+
+public:
+	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam) const;
+
+public:
+
+protected:
+	double m_A, m_B, m_C, m_D;
+};
+*/
 namespace GaussianBeam
 {
 	/**

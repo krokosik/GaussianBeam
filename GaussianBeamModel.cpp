@@ -73,6 +73,11 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			return QString("f = ") + QString::number(dynamic_cast<Lens*>(m_optics[index.row()])->focal()*Units::getUnit(UnitFocal).divider())
 			                       + Units::getUnit(UnitFocal).string("m");
 		}
+		else if (m_optics[index.row()]->type() == CurvedMirrorType)
+		{
+			return QString("R = ") + QString::number(dynamic_cast<CurvedMirror*>(m_optics[index.row()])->curvatureRadius()*Units::getUnit(UnitCurvature).divider())
+			                       + Units::getUnit(UnitCurvature).string("m");
+		}
 		else if (m_optics[index.row()]->type() == FlatInterfaceType)
 		{
 			return QString("n2/n1 = ") + QString::number(dynamic_cast<FlatInterface*>(m_optics[index.row()])->indexRatio());
@@ -150,6 +155,8 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	{
 		if (m_optics[index.row()]->type() == LensType)
 			dynamic_cast<Lens*>(m_optics[index.row()])->setFocal(value.toDouble()*Units::getUnit(UnitFocal).multiplier());
+		else if (m_optics[index.row()]->type() == CurvedMirrorType)
+			dynamic_cast<CurvedMirror*>(m_optics[index.row()])->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (m_optics[index.row()]->type() == FlatInterfaceType)
 			dynamic_cast<FlatInterface*>(m_optics[index.row()])->setIndexRatio(value.toDouble());
 		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
@@ -196,7 +203,7 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		(index.column() == COL_WAIST_POSITION) ||
 		(index.column() == COL_RAYLEIGH) ||
 		(index.column() == COL_DIVERGENCE) ||
-		(index.column() == COL_PROPERTIES))
+		(index.column() == COL_PROPERTIES) && (m_optics[index.row()]->type() != FlatMirrorType))
 		flags |= Qt::ItemIsEditable;
 
 	return flags;
@@ -263,6 +270,10 @@ QString GaussianBeamModel::opticsName(OpticsType opticsType) const
 		return tr("Input beam");
 	else if (opticsType == LensType)
 		return tr("Lens");
+	else if (opticsType == FlatMirrorType)
+		return tr("Flat Mirror");
+	else if (opticsType == CurvedMirrorType)
+		return tr("Curved Mirror");
 	else if (opticsType == FlatInterfaceType)
 		return tr("Flat interface");
 	else if (opticsType == CurvedInterfaceType)

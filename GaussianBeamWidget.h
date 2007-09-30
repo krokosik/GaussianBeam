@@ -56,6 +56,8 @@ protected slots:
 	void on_doubleSpinBox_VRange_valueChanged(double value);
 	void on_doubleSpinBox_HOffset_valueChanged(double value);
 	void on_action_AddLens_triggered();
+	void on_action_AddFlatMirror_triggered();
+	void on_action_AddCurvedMirror_triggered();
 	void on_action_AddFlatInterface_triggered();
 	void on_action_AddCurvedInterface_triggered();
 
@@ -78,7 +80,8 @@ private:
 
 	Beam m_fitBeam;
 	QString m_currentFile;
-	int m_lastLensName, m_lastFlatInterfaceName, m_lastCurvedInterfaceName;
+	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName,
+	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName;
 };
 
 #endif

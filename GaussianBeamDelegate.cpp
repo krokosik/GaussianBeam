@@ -66,6 +66,11 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 			editor->setPrefix("f = ");
 			editor->setSuffix(Units::getUnit(UnitFocal).string("m"));
 		}
+		else if (optics->type() == CurvedMirrorType)
+		{
+			editor->setPrefix("R = ");
+			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
+		}
 		else if (optics->type() == FlatInterfaceType)
 		{
 			editor->setMinimum(0.);
@@ -123,6 +128,8 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		double value = 0.;
 		if (optics->type() == LensType)
 			value = dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider();
+		else if (optics->type() == CurvedMirrorType)
+			value = dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius();
 		else if (optics->type() == FlatInterfaceType)
 			value = dynamic_cast<const FlatInterface*>(optics)->indexRatio();
 		else if (optics->type() == CurvedInterfaceType)

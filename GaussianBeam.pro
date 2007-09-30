@@ -24,9 +24,9 @@ CODECFORTR     = UTF-8
 CODECFORSRC    = UTF-8
 
 # Input
-HEADERS += GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
-           GaussianBeam.h GaussianBeamModel.h Unit.h
-SOURCES += GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
-           GaussianBeam.cpp GaussianBeamModel.cpp Unit.cpp
+HEADERS += GaussianBeam.h GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
+           GaussianBeamModel.h Unit.h
+SOURCES += GaussianBeam.cpp GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
+           GaussianBeamModel.cpp Unit.cpp
 FORMS   = GaussianBeamForm.ui
 TRANSLATIONS = GaussianBeam_fr.ts

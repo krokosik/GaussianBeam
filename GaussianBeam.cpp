@@ -144,8 +144,9 @@ double Beam::approxNextPosition(double currentPosition, Approximation& approxima
 /////////////////////////////////////////////////
 // Optics class
 
-Optics::Optics(OpticsType type, double position, string name)
+Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	: m_type(type)
+	, m_ABCD(ABCD)
 	, m_position(position)
 	, m_name(name)
 	, m_locked(false)
@@ -155,91 +156,39 @@ Optics::Optics(OpticsType type, double position, string name)
 // CreateBeam class
 
 CreateBeam::CreateBeam(double waist, double waistPosition, string name)
-	: Optics(CreateBeamType, waistPosition, name)
+	: Optics(CreateBeamType, false/*Not ABCD*/, waistPosition, name)
 	, m_waist(waist)
 {}
 
 Beam CreateBeam::image(const Beam& inputBeam) const
 {
-	return Beam(m_waist, m_position, inputBeam.wavelength());
+	return Beam(m_waist, position(), inputBeam.wavelength());
 }
 
 Beam CreateBeam::antecedent(const Beam& outputBeam) const
 {
-	return Beam(m_waist, m_position, outputBeam.wavelength());
+	return Beam(m_waist, position(), outputBeam.wavelength());
 }
 
 /////////////////////////////////////////////////
-// Lens class
+// ABCD class
 
-Lens::Lens(double focal, double position, string name)
-	: Optics(LensType, position, name)
-	, m_focal(focal)
+ABCD::ABCD(OpticsType type, double position, std::string name)
+	: Optics(type, true/*Is ABCD*/, position, name)
 {}
 
-Beam Lens::image(const Beam& inputBeam) const
+Beam ABCD::image(const Beam& inputBeam) const
 {
-	const complex<double> qIn = inputBeam.q(m_position);
-	const complex<double> qOut = 1./(1./qIn - 1./focal());
-	return Beam(qOut, m_position, inputBeam.wavelength());
+	const complex<double> qIn = inputBeam.q(position());
+	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
+	return Beam(qOut, position(), inputBeam.wavelength());
 }
 
-Beam Lens::antecedent(const Beam& outputBeam) const
+Beam ABCD::antecedent(const Beam& outputBeam) const
 {
-	const complex<double> qOut = outputBeam.q(m_position);
-	const complex<double> qIn = 1./(1./qOut + 1./focal());
-	return Beam(qIn, m_position, outputBeam.wavelength());
-}
-
-/////////////////////////////////////////////////
-// Interface class
-
-Interface::Interface(OpticsType type, double indexRatio, double position, string name)
-	: Optics(type, position, name)
-	, m_indexRatio(indexRatio)
-{}
-
-/////////////////////////////////////////////////
-// FlatInterface class
-
-FlatInterface::FlatInterface(double indexRatio, double position, string name)
-	: Interface(FlatInterfaceType, indexRatio, position, name)
-{}
-
-Beam FlatInterface::image(const Beam& inputBeam) const
-{
-	const complex<double> qIn = inputBeam.q(m_position);
-	const complex<double> qOut = qIn/indexRatio();
-	return Beam(qOut, m_position, inputBeam.wavelength());
-}
-
-Beam FlatInterface::antecedent(const Beam& outputBeam) const
-{
-	const complex<double> qOut = outputBeam.q(m_position);
-	const complex<double> qIn = qOut*indexRatio();
-	return Beam(qIn, m_position, outputBeam.wavelength());
-}
-
-/////////////////////////////////////////////////
-// CurvedInterface class
-
-CurvedInterface::CurvedInterface(double surfaceRadius, double indexRatio, double position, string name)
-	: Interface(CurvedInterfaceType, indexRatio, position, name)
-	, m_surfaceRadius(surfaceRadius)
-{}
-
-Beam CurvedInterface::image(const Beam& inputBeam) const
-{
-	const complex<double> qIn = inputBeam.q(m_position);
-	const complex<double> qOut = indexRatio()/((1. - indexRatio())/surfaceRadius()  + 1./qIn);
-	return Beam(qOut, m_position, inputBeam.wavelength());
-}
-
-Beam CurvedInterface::antecedent(const Beam& outputBeam) const
-{
-	const complex<double> qOut = outputBeam.q(m_position);
-	const complex<double> qIn = 1./((1. - indexRatio())/surfaceRadius()  - indexRatio()/qOut);
-	return Beam(qIn, m_position, outputBeam.wavelength());
+	const complex<double> qOut = outputBeam.q(position());
+	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
+	return Beam(qIn, position(), outputBeam.wavelength());
 }
 
 /////////////////////////////////////////////////

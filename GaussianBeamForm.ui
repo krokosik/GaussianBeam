@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>980</width>
+    <width>625</width>
     <height>610</height>
    </rect>
   </property>
@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>696</width>
-          <height>446</height>
+          <width>341</width>
+          <height>422</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -262,8 +262,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>117</width>
-          <height>309</height>
+          <width>144</width>
+          <height>367</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -430,8 +430,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>120</width>
-          <height>221</height>
+          <width>150</width>
+          <height>283</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -556,7 +556,19 @@
     <string>&amp;Cuved Interface</string>
    </property>
   </action>
+  <action name="action_AddFlatMirror" >
+   <property name="text" >
+    <string>Flat &amp;Mirror</string>
+   </property>
+  </action>
+  <action name="action_AddCurvedMirror" >
+   <property name="text" >
+    <string>Cu&amp;rved Mirror</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="GaussianBeam.qrc" />
+ </resources>
  <connections/>
 </ui>

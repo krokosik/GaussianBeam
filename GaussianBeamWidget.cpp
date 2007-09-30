@@ -42,7 +42,6 @@
 GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	: QWidget(parent)
 {
-	m_lastLensName = 0;
 	m_currentFile = QString();
 
 	setupUi(this);
@@ -101,6 +100,8 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	m_lastLensName = 2;
+	m_lastFlatMirrorName = 0;
+	m_lastCurvedMirrorName = 0;
 	m_lastFlatInterfaceName = 0;
 	m_lastCurvedInterfaceName = 0;
 	updateUnits();
@@ -138,6 +139,8 @@ void GaussianBeamWidget::on_pushButton_Add_clicked()
 {
 	QMenu menu(this);
 	menu.addAction(action_AddLens);
+	menu.addAction(action_AddFlatMirror);
+	menu.addAction(action_AddCurvedMirror);
 	menu.addAction(action_AddFlatInterface);
 	menu.addAction(action_AddCurvedInterface);
 	menu.exec(pushButton_Add->mapToGlobal(QPoint(0, pushButton_Add->height())));
@@ -148,6 +151,22 @@ void GaussianBeamWidget::on_action_AddLens_triggered()
 	QString name = "L" + QString::number(++m_lastLensName);
 	double position = model->optics(model->rowCount()-1)->position() + 0.05;
 	model->addOptics(new Lens(0.1, position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
+}
+
+void GaussianBeamWidget::on_action_AddFlatMirror_triggered()
+{
+	QString name = "M" + QString::number(++m_lastFlatMirrorName);
+	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	model->addOptics(new FlatMirror(position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
+}
+
+void GaussianBeamWidget::on_action_AddCurvedMirror_triggered()
+ {
+	QString name = "R" + QString::number(++m_lastCurvedMirrorName);
+	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	model->addOptics(new CurvedMirror(0.05, position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 }
 

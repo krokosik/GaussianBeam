@@ -451,7 +451,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 				QPolygonF beamPolygonUp, beamPolygonDown;
 				for (double z = approximation.minZ; z <= approximation.maxZ; z = currentBeam->approxNextPosition(z, approximation))
 				{
-					qDebug() << z;
+					//qDebug() << z;
 					beamPolygonUp.append(QPointF(z, currentBeam->radius(z)));
 					beamPolygonDown.prepend(QPointF(z, -currentBeam->radius(z)));
 					if (z == approximation.maxZ)
@@ -490,16 +490,39 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			painter.setPen(textPen);
 			QPointF view_waistTop(view_waistPos.x(), view_waistPos.y() - currentBeam->waist()*vScale());
 			painter.drawLine(view_waistPos, view_waistTop);
-			QString text; text.setNum(int(currentBeam->waist()*Units::getUnit(UnitWaist).divider()));
+			QString text; text.setNum(round(currentBeam->waist()*Units::getUnit(UnitWaist).divider()));
 			QRectF view_textRect(0., 0., 100., 15.);
 			view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
 			painter.drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
 		}
 
-
+		// Relative position
+/*		if (row != 0)
+		{
+			double view_lastObjCenterX, abs_lastObjCenterX;
+			if (row == model()->rowCount()-1)
+			{
+				view_lastObjCenterX = view_waistPos.x();
+				abs_lastObjCenterX = currentBeam->waistPosition();
+			}
+			else
+			{
+				view_lastObjCenterX = view_lastObjCenter.x();
+				abs_lastObjCenterX = abs_lastObjCenter.x();
+			}
+			qDebug() << "FootNote !!!";
+			painter.setPen(textPen);
+			QRectF view_textRect(0., 0., 3.*view_ObjRect.width(), view_ObjRect.width());
+			view_textRect.moveCenter(QPointF((view_lastObjCenterX + view_ObjCenter.x())/2., view_ObjCenter.y() + view_ObjRect.height()*0.8));
+			painter.drawText(view_textRect, Qt::AlignCenter, QString::number(round((abs_lastObjCenterX - abs_ObjCenter.x())*Units::getUnit(UnitPosition).divider())));
+			painter.setPen(rullerPen);
+			painter.drawLine(int(view_ObjCenter.x()), view_ObjCenter.y() + view_ObjRect.height()*0.7,
+			                 int(view_ObjCenter.x()), view_ObjCenter.y() + view_ObjRect.height()*0.9);
+		}
+*/
 		abs_lastObjCenter = abs_ObjCenter;
 		view_lastObjCenter = view_ObjCenter;
-	}
+	} // End optics for loop
 
 /*	for (int i = 0; i < 550; i++)
 	{
