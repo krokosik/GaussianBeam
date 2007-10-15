@@ -54,11 +54,9 @@ public:
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 
 public:
-	const Optics* optics(int row) const { return m_optics[row]; }
-	const Optics* optics(const QModelIndex& index) const { return optics(index.row()); }
-	const QList<Optics*>& opticsList() const { return m_optics; }
+	const Optics& optics(int row) const { return *(m_optics[row]); }
+	const Optics& optics(const QModelIndex& index) const { return optics(index.row()); }
 	const Beam& beam(int row) const { return m_beams[row]; }
-	const QList<Beam>& beamList() const { return m_beams; }
 	double wavelength() { return m_wavelength; }
 	void setWavelength(double wavelength);
 	/**
@@ -70,6 +68,11 @@ public:
 	void setOpticsPosition(int row, double position);
 	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
 
+/// Cavity stuff
+public:
+	bool isCavityStable() const;
+	const Beam cavityEigenBeam(int row) const;
+
 private:
 	QString opticsName(OpticsType opticsType) const;
 	void computeBeams(int changedRow = 0, bool backward = false);
@@ -80,6 +83,11 @@ private:
 	QList<Beam> m_beams;
 
 	double m_wavelength;
+
+	GenericABCD m_cavity;
+	int m_first_cavity_row;
+	int m_last_cavity_row;
+	bool m_ring_cavity;
 };
 
 #endif

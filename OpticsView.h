@@ -27,6 +27,8 @@ class QLabel;
 class QAbstractItemModel;
 class QComboBox;
 
+class Beam;
+
 class OpticsView : public QAbstractItemView
 {
 	Q_OBJECT
@@ -41,7 +43,6 @@ public:
 	void setHRange(double hRange);
 	void setVRange(double vRange);
 	void setHOffset(double hOffset);
-	void setWavelength(double wavelength) { m_wavelength = wavelength; }
 	void setStatusLabel(QLabel* statusLabel) { m_statusLabel = statusLabel; }
 	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
 	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
@@ -75,6 +76,8 @@ private:
 
 	QRectF objectRect() const;
 
+	void drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs_beamRange, bool drawText = false);
+
 private:
 	QLabel* m_statusLabel;
 	QAbstractItemModel* m_fitModel;
@@ -86,7 +89,6 @@ private:
 	QPainterPath m_convexInterfacePath;
 	QPainterPath m_concaveInterfacePath;
 
-	double m_wavelength;
 	double m_hRange;
 	double m_vRange;
 	double m_hOffset;

@@ -78,6 +78,7 @@ public:
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength) { m_wavelength = wavelength; }
 
+	bool isValid() const { return m_valid; }
 	double radius(double z) const;
 	double radiusDerivative(double z) const;
 	double radiusSecondDerivative(double z) const;
@@ -94,9 +95,12 @@ private:
 	double m_waist;
 	double m_waistPosition;
 	double m_wavelength;
+	bool m_valid;
 };
 
-enum OpticsType {CreateBeamType, LensType, FlatMirrorType, CurvedMirrorType, FlatInterfaceType, CurvedInterfaceType};
+enum OpticsType {CreateBeamType, FreeSpaceType,
+                 LensType, FlatMirrorType, CurvedMirrorType,
+                 FlatInterfaceType, CurvedInterfaceType, GenericABCDType};
 
 class Optics
 {
@@ -112,16 +116,23 @@ public:
 	OpticsType type() const { return m_type; }
 	double position() const { return m_position; }
 	void setPosition(double position) { m_position = position; }
+	double endPosition() const { return position() + width(); }
+	double width() const { return m_width; }
+	void setWidth(double width) { m_width = width; }
 	bool locked() const { return m_locked; }
 	void setLocked(bool locked) { m_locked = locked; }
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
-	bool isABCD() { return m_ABCD; }
+	bool isABCD() const { return m_ABCD; }
+
+protected:
+	void setType(OpticsType type) { m_type = type; }
 
 private:
 	OpticsType m_type;
 	bool m_ABCD;
 	double m_position;
+	double m_width;
 	std::string m_name;
 	bool m_locked;
 };
@@ -157,6 +168,23 @@ public:
 	virtual double B() const { return 0.; }
 	virtual double C() const { return 0.; }
 	virtual double D() const { return 1.; }
+
+/// Cavity functions
+public:
+	bool stabilityCriterion1() const;
+	bool stabilityCriterion2() const;
+	Beam eigenMode(double wavelength) const;
+};
+
+class FreeSpace : public ABCD
+{
+public:
+	FreeSpace(double width, double position, std::string name = "")
+		: ABCD(FreeSpaceType, position, name) { setWidth(width); }
+	virtual ~FreeSpace() {}
+
+public:
+	virtual double B() const { return width(); }
 };
 
 class Lens : public ABCD
@@ -268,21 +296,37 @@ public:
 protected:
 	double m_surfaceRadius;
 };
-/*
-class GenericABCD : public Optics
+
+class GenericABCD : public ABCD
 {
-
+public:
+	GenericABCD(const ABCD& abcd)
+		: ABCD(abcd)
+		, m_A(abcd.A()), m_B(abcd.B()), m_C(abcd.C()), m_D(abcd.D())
+		{ setType(GenericABCDType); }
+	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "")
+		: ABCD(GenericABCDType, position, name)
+		, m_A(A), m_B(B), m_C(C), m_D(D) { setWidth(width); }
 
 public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual double A() const { return m_A; }
+	virtual double B() const { return m_B; }
+	virtual double C() const { return m_C; }
+	virtual double D() const { return m_D; }
 
 public:
+	void setA(double A) { m_A = A; }
+	void setB(double B) { m_B = B; }
+	void setC(double C) { m_C = C; }
+	void setD(double D) { m_D = D; }
 
 protected:
 	double m_A, m_B, m_C, m_D;
 };
-*/
+
+GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2);
+GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2);
+
 namespace GaussianBeam
 {
 	/**

@@ -56,27 +56,27 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case COL_PROPERTIES:
 	{
-		const Optics* optics = m_model->optics(index);
+		const Optics& optics = m_model->optics(index);
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
 		editor->setMinimum(-infinity);
 		editor->setMaximum(infinity);
-		if (optics->type() == LensType)
+		if (optics.type() == LensType)
 		{
 			editor->setPrefix("f = ");
 			editor->setSuffix(Units::getUnit(UnitFocal).string("m"));
 		}
-		else if (optics->type() == CurvedMirrorType)
+		else if (optics.type() == CurvedMirrorType)
 		{
 			editor->setPrefix("R = ");
 			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
 		}
-		else if (optics->type() == FlatInterfaceType)
+		else if (optics.type() == FlatInterfaceType)
 		{
 			editor->setMinimum(0.);
 			editor->setPrefix("n2/n1 = ");
 		}
-		else if (optics->type() == CurvedInterfaceType) /// @todo enable to change the index ratio
+		else if (optics.type() == CurvedInterfaceType) /// @todo enable to change the index ratio
 		{
 			editor->setPrefix("R = ");
 			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
@@ -124,16 +124,16 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	}
 	case COL_PROPERTIES:
 	{
-		const Optics* optics = m_model->optics(index);
+		const Optics& optics = m_model->optics(index);
 		double value = 0.;
-		if (optics->type() == LensType)
-			value = dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider();
-		else if (optics->type() == CurvedMirrorType)
-			value = dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius();
-		else if (optics->type() == FlatInterfaceType)
-			value = dynamic_cast<const FlatInterface*>(optics)->indexRatio();
-		else if (optics->type() == CurvedInterfaceType)
-			value = dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()*Units::getUnit(UnitCurvature).divider();
+		if (optics.type() == LensType)
+			value = dynamic_cast<const Lens&>(optics).focal()*Units::getUnit(UnitFocal).divider();
+		else if (optics.type() == CurvedMirrorType)
+			value = dynamic_cast<const CurvedMirror&>(optics).curvatureRadius()*Units::getUnit(UnitCurvature).divider();
+		else if (optics.type() == FlatInterfaceType)
+			value = dynamic_cast<const FlatInterface&>(optics).indexRatio();
+		else if (optics.type() == CurvedInterfaceType)
+			value = dynamic_cast<const CurvedInterface&>(optics).surfaceRadius()*Units::getUnit(UnitCurvature).divider();
 		QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;

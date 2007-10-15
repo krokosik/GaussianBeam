@@ -183,11 +183,20 @@ QModelIndex OpticsView::indexAt(const QPoint& point) const
 {
 	for (int row = 0; row < model()->rowCount(); ++row)
 	{
-		const Optics* currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
+		const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
 
-		QPointF abs_objCenter = QPointF(currentOptics->position(), 0.);
+		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
+		QPointF abs_ObjectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
+		QPointF view_ObjectRight = abs_ObjectRight*m_abs2view;
+		QPointF view_ObjectCenter = (view_ObjectLeft + view_ObjectRight)/2.;
+
+		QRectF view_ObjectRect = objectRect();
+		if (
+
+		QPointF abs_objCenter = QPointF(currentOptics.position(), 0.);
 		QPointF distFromObjCenter = QPointF(point) - abs_objCenter*m_abs2view;
-		if ((currentOptics->type() != CreateBeamType) &&
+		if ((currentOptics.type() != CreateBeamType) &&
 		    objectRect().contains(distFromObjCenter))
 			return model()->index(row, 0);
 	}
@@ -262,14 +271,14 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 	else if (m_statusLabel)
 		for (int row = model()->rowCount() - 1; row >= 0; row--)
 		{
-			const Optics* currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
+			const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
 
-			QPointF abs_objCenter = QPointF(currentOptics->position(), 0.);
+			QPointF abs_objCenter = QPointF(currentOptics.position(), 0.);
 			double abs_position = (QPointF(event->pos())*m_view2abs).x();
-			if ((currentOptics->type() != CreateBeamType) && (abs_objCenter.x() < abs_position) ||
-				(currentOptics->type() == CreateBeamType))
+			if ((currentOptics.type() != CreateBeamType) && (abs_objCenter.x() < abs_position) ||
+				(currentOptics.type() == CreateBeamType))
 			{
-				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beamList()[row];
+				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beam(row);
 				QString text = tr("Position: ") + QString::number(abs_position*Units::getUnit(UnitPosition).divider(), 'f', 2) + tr("mm") + "    " +
 				               tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider()) + tr("µm") + "    " +
 				               tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider()) + tr("mm") + "    ";
@@ -287,9 +296,98 @@ void OpticsView::mouseReleaseEvent(QMouseEvent* event)
 	m_active_object = -1;
 }
 
+void OpticsView::drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs_beamRange, bool drawText)
+{
+	QColor beamColor = wavelengthColor(beam.wavelength());
+	QPen beamPen = painter.pen();
+	beamColor.setAlpha(beamPen.color().alpha());
+	beamPen.setColor(beamColor);
+	painter.setPen(beamPen);
+	QBrush beamBrush = painter.brush();
+	beamColor.setAlpha(beamBrush.color().alpha());
+	beamBrush.setColor(beamColor);
+	painter.setBrush(beamBrush);
+	QPen textPen(Qt::black, 1);
+
+	QRectF view_beamRange = m_abs2view.mapRect(abs_beamRange).normalized();
+	QPointF abs_waistPos = QPointF(beam.waistPosition(), 0.);
+	QPointF view_waistPos = abs_waistPos*m_abs2view;
+
+	QPointF abs_left(m_hOffset, 0.);
+	QPointF view_left = abs_left*m_abs2view;
+
+//	double max_ray = 4.;
+//	double max_w0  = sqrt(1. + sqr(max_ray));
+
+	//QRectF abs_waistRect(0., 0., 2.*beam.rayleigh()*max_ray, 2.*beam.waist()*max_w0);
+	//abs_waistRect.moveCenter(abs_waistPos);
+	/// @todo check if the beam intersects the view. If not, quit.
+
+	if (beam.waist()*vScale() > 1.)
+	{
+		Approximation approximation;
+		approximation.minZ = abs_beamRange.left();
+		approximation.maxZ = abs_beamRange.right();
+		approximation.resolution = 1./vScale();
+
+		if (approximation.minZ < approximation.maxZ)
+		{
+			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
+			QPolygonF beamPolygonUp, beamPolygonDown;
+			for (double z = approximation.minZ; z <= approximation.maxZ; z = beam.approxNextPosition(z, approximation))
+			{
+				//qDebug() << z;
+				beamPolygonUp.append(QPointF(z, beam.radius(z)));
+				beamPolygonDown.prepend(QPointF(z, -beam.radius(z)));
+				if (z == approximation.maxZ)
+					break;
+			}
+			beamPolygonUp.append(QPointF(approximation.maxZ, beam.radius(approximation.maxZ)));
+			beamPolygonDown.prepend(QPointF(approximation.maxZ, -beam.radius(approximation.maxZ)));
+			QPainterPath path;
+			path.moveTo(beamPolygonUp[0]);
+			path.addPolygon(beamPolygonUp);
+			path.lineTo(beamPolygonDown[0]);
+			path.addPolygon(beamPolygonDown);
+			path.lineTo(beamPolygonUp[0]);
+
+			path = path*m_abs2view;
+			painter.drawPath(path);
+		}
+	}
+	else
+	{
+		double sgn = sign((abs_beamRange.right() - abs_waistPos.x())*(abs_beamRange.left() - abs_waistPos.x()));
+		double view_rightRadius = beam.radius(abs_beamRange.right())*vScale();
+		double view_leftRadius = beam.radius(abs_beamRange.left())*vScale();
+
+		QPolygonF ray;
+		ray << QPointF(view_beamRange.left(), view_left.y() + view_leftRadius)
+			<< QPointF(view_beamRange.right(), view_left.y() + sgn*view_rightRadius)
+			<< QPointF(view_beamRange.right(), view_left.y() - sgn*view_rightRadius)
+			<< QPointF(view_beamRange.left(), view_left.y() - view_leftRadius);
+		painter.drawConvexPolygon(ray);
+	}
+
+	// Waist
+	if (drawText)
+	{
+		painter.setPen(textPen);
+		QPointF view_waistTop(view_waistPos.x(), view_waistPos.y() - beam.waist()*vScale());
+		painter.drawLine(view_waistPos, view_waistTop);
+		QString text; text.setNum(round(beam.waist()*Units::getUnit(UnitWaist).divider()));
+		QRectF view_textRect(0., 0., 100., 15.);
+		view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
+		painter.drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
+	}
+}
+
+
 void OpticsView::paintEvent(QPaintEvent* event)
 {
-	qDebug() << "Repaint" << property("Wavelength").toDouble();
+	//qDebug() << "Repaint" << property("Wavelength").toDouble();
+
+	GaussianBeamModel* GBModel = dynamic_cast<GaussianBeamModel*>(model());
 
 	// View properties
 	QItemSelectionModel* selections = selectionModel();
@@ -307,10 +405,14 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	QPen lensPen(Qt::black, 1);
 	QPen textPen(Qt::black, 1);
 	QPen dataPen(Qt::black, 4, Qt::SolidLine, Qt::RoundCap);
-	QColor beamColor = wavelengthColor(m_wavelength);
+	QColor beamColor = Qt::black;
 	beamColor.setAlpha(200);
-	QPen beamPen(beamColor, 0);
+	QPen beamPen(QColor(0,0,0,0), 0);
 	QBrush beamBrush(beamColor);
+	QPen cavityBeamPen(beamColor, 2);
+	cavityBeamPen.setStyle(Qt::DashLine);
+	QBrush cavityBeamBrush;
+	QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
 
 	// Painter
 	QPainter painter(viewport());
@@ -357,28 +459,27 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	// Rullers
 
 
-	QPointF view_lastObjCenter = view_right;
-	QPointF abs_lastObjCenter = abs_right;
-
-	const QList<Optics*>& optics = dynamic_cast<GaussianBeamModel*>(model())->opticsList();
-	const QList<Beam>& beams = dynamic_cast<GaussianBeamModel*>(model())->beamList();
+	QPointF view_lastObjectLeft = view_right;
+	QPointF abs_lastObjectLeft = abs_right;
 
 	for (int row = model()->rowCount()-1; row >= 0; row--)
 	{
-		const Optics* currentOptics = optics[row];
-		const Beam* currentBeam = &(beams[row]);
+		const Optics& currentOptics = GBModel->optics(row);
 
-		qDebug() << "Drawing element" << row << selections->isRowSelected(row, rootIndex());
+		//qDebug() << "Drawing element" << row << selections->isRowSelected(row, rootIndex());
 
-		QPointF abs_ObjCenter = QPointF(currentOptics->position(), 0.);
-		QPointF view_ObjCenter = abs_ObjCenter*m_abs2view;
+		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
+		QPointF abs_ObjectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
+		QPointF view_ObjectRight = abs_ObjectRight*m_abs2view;
+		QPointF view_ObjectCenter = (view_ObjectLeft + view_ObjectRight)/2.;
 
-		QMatrix objectCenterMatrix(1., 0., 0., 1., view_ObjCenter.x(), view_ObjCenter.y());
+		QMatrix objectCenterMatrix(1., 0., 0., 1., view_ObjectCenter.x(), view_ObjectCenter.y());
+
+		double view_defaultObjectHeight = objectRect().height();
 
 		// Optics
-		QRectF view_ObjRect = objectRect();
-		view_ObjRect.moveCenter(view_ObjCenter);
-		if (view_ObjRect.intersects(view_paintArea))
+//		if (view_ObjRect.intersects(view_paintArea))
 		{
 			if (selections->isRowSelected(row, rootIndex()))
 				painter.setBrush(selectedLensBrush);
@@ -386,115 +487,71 @@ void OpticsView::paintEvent(QPaintEvent* event)
 				painter.setBrush(lensBrush);
 			painter.setPen(lensPen);
 
-			if (currentOptics->type() == LensType)
+			if (currentOptics.type() == LensType)
 			{
-				const Lens* lens = dynamic_cast<const Lens*>(currentOptics);
-				if (lens->focal() < 0.)
+				const Lens& lens = dynamic_cast<const Lens&>(currentOptics);
+				if (lens.focal() < 0.)
 					painter.drawPath(m_concaveLensPath*objectCenterMatrix);
 				else
 					painter.drawPath(m_convexLensPath*objectCenterMatrix);
 			}
-			else if (currentOptics->type() == FlatInterfaceType)
+			else if (currentOptics.type() == FlatInterfaceType)
 			{
 				painter.drawPath(m_flatInterfacePath*objectCenterMatrix);
 			}
-			else if (currentOptics->type() == CurvedInterfaceType)
+			else if (currentOptics.type() == CurvedInterfaceType)
 			{
-				const CurvedInterface* interface = dynamic_cast<const CurvedInterface*>(currentOptics);
-				if (interface->surfaceRadius() < 0.)
+				const CurvedInterface& interface = dynamic_cast<const CurvedInterface&>(currentOptics);
+				if (interface.surfaceRadius() < 0.)
 					painter.drawPath(m_concaveInterfacePath*objectCenterMatrix);
 				else
 					painter.drawPath(m_convexInterfacePath*objectCenterMatrix);
 			}
+			else if (currentOptics.type() == GenericABCDType)
+			{
+				QRectF view_ObjectRect = objectRect();
+				view_ObjectRect.moveCenter(view_ObjectCenter);
+				view_ObjectRect.setLeft(view_ObjectLeft.x());
+				view_ObjectRect.setRight(view_ObjectRight.x());
+				painter.setBrush(ABCDBrush);
+				painter.drawRect(view_ObjectRect);
+			}
 
-			if (currentOptics->type() != CreateBeamType)
+			if (currentOptics.type() != CreateBeamType)
 			{
 				painter.setPen(textPen);
-				QRectF view_textRect(0., 0., 3.*view_ObjRect.width(), view_ObjRect.width());
-				view_textRect.moveCenter(view_ObjCenter - QPointF(0., view_ObjRect.height()*0.7));
-				painter.drawText(view_textRect, Qt::AlignCenter, QString::fromUtf8(currentOptics->name().c_str()));
+				QString text = QString::fromUtf8(currentOptics.name().c_str());
+				QRectF view_textRect(0., 0., 0., 0.);
+				view_textRect.moveCenter(view_ObjectCenter - QPointF(0., view_defaultObjectHeight*0.7));
+				view_textRect = painter.boundingRect(view_textRect, Qt::AlignCenter, text);
+				painter.drawText(view_textRect, Qt::AlignCenter, text);
 			}
 		}
 
 		// Input beam
-		if (currentOptics->type() == CreateBeamType)
+		if (currentOptics.type() == CreateBeamType)
 		{
-			view_ObjCenter = view_left;
-			abs_ObjCenter = abs_left;
+			view_ObjectRight = view_left;
+			abs_ObjectRight = abs_left;
 		}
 
 		// Beam
-		QPointF abs_waistPos = QPointF(currentBeam->waistPosition(), 0.);
-		QPointF view_waistPos = abs_waistPos*m_abs2view;
-		double max_ray = 4.;
-		double max_w0  = sqrt(1. + sqr(max_ray));
-
+		QRectF abs_beamRange = abs_paintArea;
+		abs_beamRange.setLeft(abs_ObjectRight.x());
+		abs_beamRange.setRight(abs_lastObjectLeft.x());
+		abs_beamRange = abs_beamRange.normalized();
 		painter.setPen(beamPen);
 		painter.setBrush(beamBrush);
-		QRectF abs_objInterRect = abs_paintArea;
-		abs_objInterRect.setLeft(abs_ObjCenter.x());
-		abs_objInterRect.setRight(abs_lastObjCenter.x());
-		QRectF view_objInterRect = m_abs2view.mapRect(abs_objInterRect);
-		QRectF abs_waistRect(0., 0., 2.*currentBeam->rayleigh()*max_ray, 2.*currentBeam->waist()*max_w0);
-		abs_waistRect.moveCenter(abs_waistPos);
-		if ((currentBeam->waist()*vScale() > 1.) &&
-		    abs_objInterRect.intersects(abs_waistRect))
+		drawBeam(painter, GBModel->beam(row), abs_beamRange, row == model()->rowCount()-1);
+
+		Beam cavityBeam = GBModel->cavityEigenBeam(row);
+		if (GBModel->isCavityStable() && cavityBeam.isValid())
 		{
-			Approximation approximation;
-			approximation.minZ = min(abs_ObjCenter.x(), abs_lastObjCenter.x());
-			approximation.maxZ = max(abs_ObjCenter.x(), abs_lastObjCenter.x());
-			approximation.resolution = 1./vScale();
-
-			if (approximation.minZ < approximation.maxZ)
-			{
-				qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
-				QPolygonF beamPolygonUp, beamPolygonDown;
-				for (double z = approximation.minZ; z <= approximation.maxZ; z = currentBeam->approxNextPosition(z, approximation))
-				{
-					//qDebug() << z;
-					beamPolygonUp.append(QPointF(z, currentBeam->radius(z)));
-					beamPolygonDown.prepend(QPointF(z, -currentBeam->radius(z)));
-					if (z == approximation.maxZ)
-						break;
-				}
-				beamPolygonUp.append(QPointF(approximation.maxZ, currentBeam->radius(approximation.maxZ)));
-				beamPolygonDown.prepend(QPointF(approximation.maxZ, -currentBeam->radius(approximation.maxZ)));
-				QPainterPath path;
-				path.moveTo(beamPolygonUp[0]);
-				path.addPolygon(beamPolygonUp);
-				path.lineTo(beamPolygonDown[0]);
-				path.addPolygon(beamPolygonDown);
-				path.lineTo(beamPolygonUp[0]);
-
-				path = path*m_abs2view;
-				painter.drawPath(path);
-			}
-		}
-		else
-		{
-			double sgn = sign((abs_lastObjCenter.x() - abs_waistPos.x())*(abs_ObjCenter.x() - abs_waistPos.x()));
-			double view_rightRadius = currentBeam->radius(abs_lastObjCenter.x())*vScale();
-			double view_leftRadius = currentBeam->radius(abs_ObjCenter.x())*vScale();
-
-			QPolygonF ray;
-			ray << QPointF(view_ObjCenter.x(), view_left.y() + view_leftRadius)
-				<< QPointF(view_lastObjCenter.x(), view_left.y() + sgn*view_rightRadius)
-				<< QPointF(view_lastObjCenter.x(), view_left.y() - sgn*view_rightRadius)
-				<< QPointF(view_ObjCenter.x(), view_left.y() - view_leftRadius);
-			painter.drawConvexPolygon(ray);
+			painter.setPen(cavityBeamPen);
+			painter.setBrush(cavityBeamBrush);
+			drawBeam(painter, cavityBeam, abs_beamRange);
 		}
 
-		// Waist
-		if (row == model()->rowCount()-1)
-		{
-			painter.setPen(textPen);
-			QPointF view_waistTop(view_waistPos.x(), view_waistPos.y() - currentBeam->waist()*vScale());
-			painter.drawLine(view_waistPos, view_waistTop);
-			QString text; text.setNum(round(currentBeam->waist()*Units::getUnit(UnitWaist).divider()));
-			QRectF view_textRect(0., 0., 100., 15.);
-			view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
-			painter.drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
-		}
 
 		// Relative position
 /*		if (row != 0)
@@ -520,8 +577,8 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			                 int(view_ObjCenter.x()), view_ObjCenter.y() + view_ObjRect.height()*0.9);
 		}
 */
-		abs_lastObjCenter = abs_ObjCenter;
-		view_lastObjCenter = view_ObjCenter;
+		abs_lastObjectLeft = abs_ObjectLeft;
+		view_lastObjectLeft = view_ObjectLeft;
 	} // End optics for loop
 
 /*	for (int i = 0; i < 550; i++)

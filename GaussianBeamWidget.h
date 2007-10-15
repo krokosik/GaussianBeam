@@ -60,6 +60,7 @@ protected slots:
 	void on_action_AddCurvedMirror_triggered();
 	void on_action_AddFlatInterface_triggered();
 	void on_action_AddCurvedInterface_triggered();
+	void on_action_AddGenericABCD_triggered();
 
 private:
 	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
@@ -81,7 +82,7 @@ private:
 	Beam m_fitBeam;
 	QString m_currentFile;
 	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName,
-	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName;
+	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName;
 };
 
 #endif

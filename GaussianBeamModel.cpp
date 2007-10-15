@@ -24,19 +24,20 @@
 
 GaussianBeamModel::GaussianBeamModel(QObject* parent)
 	: QAbstractTableModel(parent)
+	, m_cavity(1., 0., 1., 0., 0., 0.)
 {
+	m_first_cavity_row = 0;
+	m_last_cavity_row = 0;
+	m_ring_cavity = true;
 	m_optics.clear();
 
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), rowCount());
 	m_optics[0]->setLocked(true);
-	for (int i = 1; i < 3; i++)
-	{
-		QString name = "L" + QString::number(i);
-		addOptics(new Lens(0.02*i + 0.001, 0.1*i + 0.02, name.toUtf8().data()), rowCount());
-	}
-//	addOptics(new FlatInterface(1.3, 0.50, "I0"), rowCount());
 
-	computeBeams();
+	/// @todo remove this later
+	m_first_cavity_row = 1;
+	m_last_cavity_row = 2;
+
 }
 
 GaussianBeamModel::~GaussianBeamModel()
@@ -85,8 +86,17 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
 		{
 			return QString("n2/n1 = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->indexRatio()) +
-			       QString("\n R = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
+			       QString("\nR = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
 			                       + Units::getUnit(UnitCurvature).string("m");
+		}
+		else if (m_optics[index.row()]->type() == GenericABCDType)
+		{
+			return QString("A = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->A()) +
+			       QString("\nB = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->B()) +
+			       QString("\nC = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->C()) +
+			       QString("\nD = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->D()) +
+			       QString("\nwidth = ") + QString::number(m_optics[index.row()]->width()*Units::getUnit(UnitPosition).divider())
+			                       + Units::getUnit(UnitPosition).string("m");
 		}
 	}
 	else if (index.column() == COL_WAIST)
@@ -235,6 +245,42 @@ bool GaussianBeamModel::removeRows(int row, int count, const QModelIndex& parent
 }
 
 //////////////////////////////////////////
+// Cavity stuff
+bool GaussianBeamModel::isCavityStable() const
+{
+	if (m_first_cavity_row == 0)
+		return false;
+
+	if (m_cavity.stabilityCriterion1())
+	{
+		if (m_cavity.stabilityCriterion2())
+			return true;
+		else
+			qDebug() << "Cavity stable for 1 and not 2 !!!!";
+	}
+	else if (m_cavity.stabilityCriterion2())
+		qDebug() << "Cavity stable for 2 and not 1 !!!!";
+
+	return false;
+}
+
+const Beam GaussianBeamModel::cavityEigenBeam(int row) const
+{
+	if (!isCavityStable() ||
+	   (row < m_first_cavity_row) ||
+	   (m_ring_cavity && (row >= m_last_cavity_row)) ||
+	   (!m_ring_cavity && (row > m_last_cavity_row)))
+		return Beam();
+
+	Beam beam = m_cavity.eigenMode(m_wavelength);
+
+	for (int i = m_first_cavity_row; i <= row; i++)
+		beam = optics(i).image(beam);
+
+	return beam;
+}
+
+//////////////////////////////////////////
 
 void GaussianBeamModel::setWavelength(double wavelength)
 {
@@ -278,6 +324,8 @@ QString GaussianBeamModel::opticsName(OpticsType opticsType) const
 		return tr("Flat interface");
 	else if (opticsType == CurvedInterfaceType)
 		return tr("Curved interface");
+	else if (opticsType == GenericABCDType)
+		return tr("Generic ABCD");
 
 	return QString();
 }
@@ -310,4 +358,41 @@ void GaussianBeamModel::computeBeams(int changedRow, bool backward)
 			m_beams[row] = beam = m_optics[row]->image(beam);
 		emit dataChanged(index(changedRow, 0), index(rowCount()-1, columnCount()-1));
 	}
+/*
+	// Compute the cavity
+	if (m_first_cavity_row > 0)
+	{
+		const Optics& first_cavity_optics = optics(m_first_cavity_row);
+		const Optics& last_cavity_optics  = optics(m_last_cavity_row);
+
+		// Test coherence
+		if (!first_cavity_optics.isABCD() || ! last_cavity_optics.isABCD())
+			qDebug() << "Warning : cavity boundaries are not of ABCD type";
+		if (!(m_last_cavity_row > 0) || !(m_last_cavity_row >= m_first_cavity_row))
+			qDebug() << "Warning m_last_cavity_row seems to be wrong !";
+
+		// Compute cavity
+		m_cavity = dynamic_cast<const ABCD&>(first_cavity_optics);
+		for (int i = m_first_cavity_row + 1; i < m_last_cavity_row; i++)
+		{
+			if (optics(i).isABCD())
+				m_cavity *= dynamic_cast<const ABCD&>(optics(i));
+			FreeSpace freeSpace(optics(i+1).position() - optics(i).endPosition(), optics(i).endPosition());
+			m_cavity*= freeSpace;
+		}
+		if (m_ring_cavity)
+			for (int i = m_last_cavity_row; i > m_first_cavity_row; i--)
+			{
+				if (optics(i).isABCD())
+					m_cavity *= dynamic_cast<const ABCD&>(optics(i));
+				FreeSpace freeSpace(optics(i).endPosition() - optics(i-1).endPosition(), optics(i-1).endPosition());
+				m_cavity*= freeSpace;
+			}
+		else
+		{
+			m_cavity *= dynamic_cast<const ABCD&>(last_cavity_optics);
+			/// @todo add a user defined free space between the last and the first optics for linear cavities.
+		}
+
+	}*/
 }

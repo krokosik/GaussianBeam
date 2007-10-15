@@ -27,13 +27,17 @@ using namespace std;
 /// Beam class
 
 Beam::Beam()
-{}
+{
+	m_valid = false;
+}
 
 Beam::Beam(double waist, double waistPosition, double wavelength)
 	: m_waist(waist)
 	, m_waistPosition(waistPosition)
 	, m_wavelength(wavelength)
-{}
+{
+	m_valid = true;
+}
 
 Beam::Beam(const complex<double>& q, double z, double wavelength)
 	: m_wavelength(wavelength)
@@ -41,6 +45,7 @@ Beam::Beam(const complex<double>& q, double z, double wavelength)
 	const double z0 = q.imag();
 	m_waist = sqrt(z0*wavelength/M_PI);
 	m_waistPosition = z - q.real();
+	m_valid = true;
 }
 
 double Beam::divergence() const
@@ -148,6 +153,7 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	: m_type(type)
 	, m_ABCD(ABCD)
 	, m_position(position)
+	, m_width(0.)
 	, m_name(name)
 	, m_locked(false)
 {}
@@ -181,14 +187,45 @@ Beam ABCD::image(const Beam& inputBeam) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-	return Beam(qOut, position(), inputBeam.wavelength());
+	return Beam(qOut, position() + width(), inputBeam.wavelength());
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam) const
 {
-	const complex<double> qOut = outputBeam.q(position());
+	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
 	return Beam(qIn, position(), outputBeam.wavelength());
+}
+
+bool ABCD::stabilityCriterion1() const
+{
+	return fabs((A()+B())/2.) < 1.;
+}
+
+bool ABCD::stabilityCriterion2() const
+{
+	return sqr(D() - A()) + 4.*C()*B() < 0.;
+}
+
+Beam ABCD::eigenMode(double wavelength) const
+{
+	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength);
+}
+
+GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
+{
+	double A = abcd1.A()*abcd2.A() + abcd1.B()*abcd2.C();
+	double B = abcd1.A()*abcd2.B() + abcd1.B()*abcd2.D();
+	double C = abcd1.C()*abcd2.A() + abcd1.D()*abcd2.C();
+	double D = abcd1.C()*abcd2.B() + abcd1.D()*abcd2.D();
+
+	/// @todo check if the two abjects are adjacent ?
+	return GenericABCD(A, B, C, D, abcd1.width() + abcd2.width(), abcd1.position());
+}
+
+GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2)
+{
+	return abcd1*abcd2;
 }
 
 /////////////////////////////////////////////////

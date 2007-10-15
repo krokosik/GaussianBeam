@@ -25,17 +25,12 @@
 #endif
 #include "Unit.h"
 
-
 #include <QApplication>
 #include <QPushButton>
 #include <QStandardItemModel>
 #include <QDebug>
-#include <QFile>
-#include <QFileDialog>
 #include <QMessageBox>
 #include <QMenu>
-#include <QtXml/QDomDocument>
-#include <QtXml/QXmlStreamWriter>
 
 #include <cmath>
 
@@ -43,6 +38,12 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	: QWidget(parent)
 {
 	m_currentFile = QString();
+	m_lastLensName = 0;
+	m_lastFlatMirrorName = 0;
+	m_lastCurvedMirrorName = 0;
+	m_lastFlatInterfaceName = 0;
+	m_lastCurvedInterfaceName = 0;
+	m_lastGenericABCDName = 0;
 
 	setupUi(this);
 	//toolBox->setSizeHint(100);
@@ -58,9 +59,13 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 #ifdef GBPLOT
 	plot = new GaussianBeamPlot(this, model);
 	splitter->addWidget(plot);
+	checkBox_ShowGraph->setVisible(true);
 	checkBox_ShowGraph->setEnabled(true);
 	//checkBox_ShowGraph->setChecked(true);
 	plot->setVisible(checkBox_ShowGraph->isChecked());
+#else
+	checkBox_ShowGraph->setVisible(false);
+	checkBox_ShowGraph->setEnabled(false);
 #endif
 	splitter->addWidget(opticsView);
 	layout->addWidget(splitter);
@@ -79,6 +84,13 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	opticsView->setStatusLabel(label_Status);
 	delegate = new GaussianBeamDelegate(this, model);
 	table->setItemDelegate(delegate);
+	for (int i = 1; i < 3; i++)
+	{
+		m_lastLensName++;
+		QString name = "L" + QString::number(i);
+		model->addOptics(new Lens(0.02*i + 0.001, 0.1*i + 0.02, name.toUtf8().data()), model->rowCount());
+	}
+
 
 	// Waist fit
 	fitModel = new QStandardItemModel(5, 2, this);
@@ -99,17 +111,11 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
-	m_lastLensName = 2;
-	m_lastFlatMirrorName = 0;
-	m_lastCurvedMirrorName = 0;
-	m_lastFlatInterfaceName = 0;
-	m_lastCurvedInterfaceName = 0;
 	updateUnits();
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
-	opticsView->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 }
 
@@ -143,13 +149,14 @@ void GaussianBeamWidget::on_pushButton_Add_clicked()
 	menu.addAction(action_AddCurvedMirror);
 	menu.addAction(action_AddFlatInterface);
 	menu.addAction(action_AddCurvedInterface);
+	menu.addAction(action_AddGenericABCD);
 	menu.exec(pushButton_Add->mapToGlobal(QPoint(0, pushButton_Add->height())));
 }
 
 void GaussianBeamWidget::on_action_AddLens_triggered()
 {
 	QString name = "L" + QString::number(++m_lastLensName);
-	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
 	model->addOptics(new Lens(0.1, position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 }
@@ -157,7 +164,7 @@ void GaussianBeamWidget::on_action_AddLens_triggered()
 void GaussianBeamWidget::on_action_AddFlatMirror_triggered()
 {
 	QString name = "M" + QString::number(++m_lastFlatMirrorName);
-	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
 	model->addOptics(new FlatMirror(position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 }
@@ -165,7 +172,7 @@ void GaussianBeamWidget::on_action_AddFlatMirror_triggered()
 void GaussianBeamWidget::on_action_AddCurvedMirror_triggered()
  {
 	QString name = "R" + QString::number(++m_lastCurvedMirrorName);
-	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
 	model->addOptics(new CurvedMirror(0.05, position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 }
@@ -173,7 +180,7 @@ void GaussianBeamWidget::on_action_AddCurvedMirror_triggered()
 void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
 {
 	QString name = "I" + QString::number(++m_lastFlatInterfaceName);
-	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
 	model->addOptics(new FlatInterface(1.5, position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 }
@@ -181,8 +188,17 @@ void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
 void GaussianBeamWidget::on_action_AddCurvedInterface_triggered()
 {
 	QString name = "C" + QString::number(++m_lastCurvedInterfaceName);
-	double position = model->optics(model->rowCount()-1)->position() + 0.05;
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
 	model->addOptics(new CurvedInterface(0.1, 1.5, position, name.toUtf8().data()), model->rowCount());
+	table->resizeColumnsToContents();
+	table->resizeRowToContents(model->rowCount()-1);
+}
+
+void GaussianBeamWidget::on_action_AddGenericABCD_triggered()
+{
+	QString name = "G" + QString::number(++m_lastGenericABCDName);
+	double position = model->optics(model->rowCount()-1).position() + 0.05;
+	model->addOptics(new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, position, name.toUtf8().data()), model->rowCount());
 	table->resizeColumnsToContents();
 	table->resizeRowToContents(model->rowCount()-1);
 }
@@ -191,7 +207,7 @@ void GaussianBeamWidget::on_pushButton_Remove_clicked()
 {
 	/// @todo transfer some logic to GaussianBeamModel
 	for (int row = model->rowCount() - 1; row >= 0; row--)
-		if ((model->optics(row)->type() != CreateBeamType) &&
+		if ((model->optics(row).type() != CreateBeamType) &&
 		    selectionModel->isRowSelected(row, QModelIndex()))
 			model->removeRow(row);
 }
@@ -212,10 +228,10 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 	/// @todo some cleaning is needed !
 	for (int row = 0; row < model->rowCount(); ++row)
-		if (model->optics(row)->type() == CreateBeamType)
-			inputBeam = model->optics(row)->image(inputBeam);
-		else if (model->optics(row)->type() == LensType)
-			lenses.push_back(*dynamic_cast<const Lens*>(model->optics(row)));
+		if (model->optics(row).type() == CreateBeamType)
+			inputBeam = model->optics(row).image(inputBeam);
+		else if (model->optics(row).type() == LensType)
+			lenses.push_back(dynamic_cast<const Lens&>(model->optics(row)));
 
 	bool result = GaussianBeam::magicWaist(inputBeam, targetBeam, lenses,
 	              doubleSpinBox_WaistTolerance->value()*0.01,
@@ -302,239 +318,6 @@ void GaussianBeamWidget::on_pushButton_Save_clicked()
 void GaussianBeamWidget::on_pushButton_SaveAs_clicked()
 {
 	saveFile();
-}
-
-void GaussianBeamWidget::openFile(const QString &path)
-{
-	QString fileName = path;
-
-	if (fileName.isNull())
-		fileName = QFileDialog::getOpenFileName(this, tr("Choose a data file"), "", "*.xml");
-	if (fileName.isEmpty())
-		return;
-
-	QFile file(fileName);
-	if (!(file.open(QFile::ReadOnly | QFile::Text)))
-	{
-		QMessageBox::warning(this, tr("Opening file"), tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()));
-		return;
-	}
-
-	// Parsing XML file
-	QString errorStr;
-	int errorLine;
-	int errorColumn;
-	QDomDocument domDocument;
-
-	if (!domDocument.setContent(&file, true, &errorStr, &errorLine, &errorColumn))
-	{
-		QMessageBox::information(window(), tr("XML error"), tr("Parse error at line %1, column %2:\n%3").arg(errorLine).arg(errorColumn).arg(errorStr));
-		return;
-	}
-
-	// XML version
-	QDomElement root = domDocument.documentElement();
-	if (root.tagName() != "gaussianBeam")
-	{
-		QMessageBox::information(window(), tr("XML error"), tr("The file is not an Gaussian Beam file."));
-		return;
-	}
-	if (root.hasAttribute("version") && root.attribute("version").toDouble() > 1.)
-	{
-		QMessageBox::information(window(), tr("XML error"), tr("Your version of Gaussian Beam is too old."));
-		return;
-	}
-
-	// Parse elements
-	model->removeRows(0, model->rowCount());
-	parseXml(root);
-	file.close();
-
-	setCurrentFile(fileName);
-}
-
-void GaussianBeamWidget::parseXml(const QDomElement& element)
-{
-	QDomElement child = element.firstChildElement();
-	int fitRow = fitModel->rowCount() - 1;
-
-	while (!child.isNull())
-	{
-		if (child.tagName() == "wavelength") ////////////////
-			doubleSpinBox_Wavelength->setValue(child.text().toDouble()*Units::getUnit(UnitWavelength).divider());
-		else if (child.tagName() == "magicWaist") ////////////////
-			parseXml(child);
-		else if (child.tagName() == "targetWaist")
-			doubleSpinBox_TargetWaist->setValue(child.text().toDouble()*Units::getUnit(UnitWaist).divider());
-		else if (child.tagName() == "waistTolerance")
-			doubleSpinBox_WaistTolerance->setValue(child.text().toDouble()*100.);
-		else if (child.tagName() == "targetPosition")
-			doubleSpinBox_TargetPosition->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "positionTolerance")
-			doubleSpinBox_PositionTolerance->setValue(child.text().toDouble()*100.);
-		else if (child.tagName() == "scramble")
-			 checkBox_Scramble->setCheckState(Qt::CheckState(child.text().toInt()));
-		else if (child.tagName() == "waistFit") ////////////////
-		{
-			fitModel->removeRows(0, fitModel->rowCount());
-			parseXml(child);
-		}
-		else if (child.tagName() == "fitDataType")
-			comboBox_FitData->setCurrentIndex(child.text().toInt());
-		else if (child.tagName() == "fitData")
-		{
-			fitModel->insertRow(++fitRow);
-			parseXml(child);
-		}
-		else if (child.tagName() == "dataPosition")
-			fitModel->setData(fitModel->index(fitRow, 0), child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "dataValue")
-			fitModel->setData(fitModel->index(fitRow, 1), child.text().toDouble()*Units::getUnit(UnitWaist).divider());
-		else if (child.tagName() == "display") ////////////////
-			parseXml(child);
-		else if (child.tagName() == "HRange")
-			doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "VRange")
-			doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "HOffset")
-			doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if ((child.tagName() == "inputBeam") ||
-		         (child.tagName() == "lens") ||
-		         (child.tagName() == "flatInterface") ||
-		         (child.tagName() == "curvedInterface"))
-			parseXmlOptics(child);
-		else
-			qDebug() << " -> Unknown tag: " << child.tagName();
-
-		child = child.nextSiblingElement();
-	}
-}
-
-void GaussianBeamWidget::parseXmlOptics(const QDomElement& element)
-{
-	Optics* optics;
-
-	if (element.tagName() == "inputBeam")
-		optics = new CreateBeam(1., 1., "");
-	else if (element.tagName() == "lens")
-		optics = new Lens(1., 1., "");
-	else if (element.tagName() == "flatInterface")
-		optics = new FlatInterface(1., 1., "");
-	else if (element.tagName() == "curvedInterface")
-		optics = new CurvedInterface(1., 1., 1., "");
-	else
-		qDebug() << " -> Unknown tag: " << element.tagName();
-
-	QDomElement child = element.firstChildElement();
-
-	while (!child.isNull())
-	{
-		if (child.tagName() == "position")
-			optics->setPosition(child.text().toDouble());
-		else if (child.tagName() == "name")
-			optics->setName(child.text().toUtf8().data());
-		else if (child.tagName() == "focal")
-			dynamic_cast<Lens*>(optics)->setFocal(child.text().toDouble());
-		else if (child.tagName() == "waist")
-			dynamic_cast<CreateBeam*>(optics)->setWaist(child.text().toDouble());
-		else if (child.tagName() == "waistPosition") // For compatibility
-			dynamic_cast<CreateBeam*>(optics)->setPosition(child.text().toDouble());
-		else if (child.tagName() == "indexRatio")
-			dynamic_cast<Interface*>(optics)->setIndexRatio(child.text().toDouble());
-		else if (child.tagName() == "surfaceRadius")
-			dynamic_cast<CurvedInterface*>(optics)->setSurfaceRadius(child.text().toDouble());
-		else
-			qDebug() << " -> Unknown tag: " << child.tagName();
-
-		child = child.nextSiblingElement();
-	}
-
-	model->addOptics(optics, model->rowCount());
-}
-
-void GaussianBeamWidget::saveFile(const QString &path)
-{
-	QString fileName = path;
-
-	if (fileName.isNull())
-		fileName = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::currentPath(), "*.xml");
-	if (fileName.isEmpty())
-		return;
-	if (!fileName.endsWith(".xml"))
-		fileName += ".xml";
-
-
-	QFile file(fileName);
-	if (!file.open(QFile::WriteOnly | QFile::Text))
-	{
-		QMessageBox::warning(this, tr("Saving file"), tr("Cannot write file %1:\n%2.").arg(fileName).arg(file.errorString()));
-		return;
-	}
-
-	QXmlStreamWriter xmlWriter(&file);
-	xmlWriter.setAutoFormatting(true);
-	xmlWriter.writeStartDocument("1.0");
-	xmlWriter.writeDTD("<!DOCTYPE gaussianBeam>");
-	xmlWriter.writeStartElement("gaussianBeam");
-	xmlWriter.writeAttribute("version", "1.0");
-	xmlWriter.writeTextElement("wavelength", QString::number(model->wavelength()));
-	xmlWriter.writeStartElement("magicWaist");
-		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier()));
-		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
-		xmlWriter.writeTextElement("targetPosition", QString::number(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("positionTolerance", QString::number(doubleSpinBox_PositionTolerance->value()/100.));
-		xmlWriter.writeTextElement("scramble", QString::number(checkBox_Scramble->checkState()));
-	xmlWriter.writeEndElement();
-	xmlWriter.writeStartElement("waistFit");
-		xmlWriter.writeTextElement("fitDataType", QString::number(comboBox_FitData->currentIndex()));
-		for (int row = 0; row < fitModel->rowCount(); row++)
-		{
-			xmlWriter.writeStartElement("fitData");
-				xmlWriter.writeTextElement("dataPosition", QString::number(fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier()));
-				xmlWriter.writeTextElement("dataValue",  QString::number(fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier()));
-			xmlWriter.writeEndElement();
-		}
-	xmlWriter.writeEndElement();
-	xmlWriter.writeStartElement("display");
-		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
-	xmlWriter.writeEndElement();
-	for (int row = 0; row < model->rowCount(); row++)
-	{
-		const Optics* optics = model->optics(row);
-
-		if (model->optics(row)->type() == CreateBeamType)
-		{
-			xmlWriter.writeStartElement("inputBeam");
-			xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam*>(optics)->waist()));
-		}
-		else if (model->optics(row)->type() == LensType)
-		{
-			xmlWriter.writeStartElement("lens");
-			xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens*>(optics)->focal()));
-		}
-		else if (model->optics(row)->type() == FlatInterfaceType)
-		{
-			xmlWriter.writeStartElement("flatInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const FlatInterface*>(optics)->indexRatio()));
-		}
-		else if (model->optics(row)->type() == CurvedInterfaceType)
-		{
-			xmlWriter.writeStartElement("curvedInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface*>(optics)->indexRatio()));
-			xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()));
-		}
-
-		xmlWriter.writeTextElement("position", QString::number(optics->position()));
-		xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
-		xmlWriter.writeEndElement();
-	}
-	xmlWriter.writeEndElement();
-	xmlWriter.writeEndDocument();
-	file.close();
-
-	setCurrentFile(fileName);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)

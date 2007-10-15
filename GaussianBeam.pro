@@ -3,7 +3,7 @@
 ######################################################################
 
 # Comment or uncomment this line depending on whether or not you want plot support
-CONFIG += plot
+#CONFIG += plot
 
 
 TEMPLATE = app
@@ -27,6 +27,6 @@ CODECFORSRC    = UTF-8
 HEADERS += GaussianBeam.h GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
            GaussianBeamModel.h Unit.h
 SOURCES += GaussianBeam.cpp GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
-           GaussianBeamModel.cpp Unit.cpp
+           GaussianBeamModel.cpp Unit.cpp GaussianBeamWidgetSave.cpp
 FORMS   = GaussianBeamForm.ui
 TRANSLATIONS = GaussianBeam_fr.ts

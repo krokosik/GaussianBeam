@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>625</width>
-    <height>610</height>
+    <width>891</width>
+    <height>606</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>341</width>
-          <height>422</height>
+          <width>591</width>
+          <height>403</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -262,8 +262,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>144</width>
-          <height>367</height>
+          <width>147</width>
+          <height>389</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -430,8 +430,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>150</width>
-          <height>283</height>
+          <width>153</width>
+          <height>291</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -507,6 +507,19 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_Cavity" >
+        <property name="geometry" >
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>607</width>
+          <height>375</height>
+         </rect>
+        </property>
+        <attribute name="label" >
+         <string>Cavity</string>
+        </attribute>
+       </widget>
       </widget>
      </item>
     </layout>
@@ -564,6 +577,11 @@
   <action name="action_AddCurvedMirror" >
    <property name="text" >
     <string>Cu&amp;rved Mirror</string>
+   </property>
+  </action>
+  <action name="action_AddGenericABCD" >
+   <property name="text" >
+    <string>Generic &amp;ABCD</string>
    </property>
   </action>
  </widget>
