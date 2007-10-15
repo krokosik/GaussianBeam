@@ -192,12 +192,17 @@ QModelIndex OpticsView::indexAt(const QPoint& point) const
 		QPointF view_ObjectCenter = (view_ObjectLeft + view_ObjectRight)/2.;
 
 		QRectF view_ObjectRect = objectRect();
-		if (
+		view_ObjectRect.moveCenter(view_ObjectCenter);
+		if (view_ObjectRight.x() - view_ObjectLeft.x() > view_ObjectRect.width())
+		{
+			view_ObjectRect.setLeft(view_ObjectLeft.x());
+			view_ObjectRect.setRight(view_ObjectRight.x());
+		}
 
 		QPointF abs_objCenter = QPointF(currentOptics.position(), 0.);
 		QPointF distFromObjCenter = QPointF(point) - abs_objCenter*m_abs2view;
 		if ((currentOptics.type() != CreateBeamType) &&
-		    objectRect().contains(distFromObjCenter))
+		    view_ObjectRect.contains(QPointF(point)))
 			return model()->index(row, 0);
 	}
 
