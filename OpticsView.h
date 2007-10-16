@@ -96,6 +96,7 @@ private:
 	QMatrix m_view2abs;
 
 	int m_active_object;
+	double m_active_object_offset;
 };
 
 #endif

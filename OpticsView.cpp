@@ -66,6 +66,7 @@ OpticsView::OpticsView(QWidget *parent)
 	computePaths();
 
 	m_active_object = -1;
+	m_active_object_offset = 0.;
 	m_statusLabel = 0;
 
 	setMouseTracking(true);
@@ -263,7 +264,14 @@ void OpticsView::mousePressEvent(QMouseEvent* event)
 
 	QModelIndex index = indexAt(event->pos());
 	if (index.isValid())
+	{
+		const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(index.row());
+		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
+		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
+
+		m_active_object_offset = double(event->pos().x()) - view_ObjectLeft.x();
 		m_active_object = index.row();
+	}
 
 	if (m_active_object != -1)
 		mouseMoveEvent(event);
@@ -272,7 +280,10 @@ void OpticsView::mousePressEvent(QMouseEvent* event)
 void OpticsView::mouseMoveEvent(QMouseEvent* event)
 {
 	if (m_active_object >= 0)
-		dynamic_cast<GaussianBeamModel*>(model())->setOpticsPosition(m_active_object, (QPointF(event->pos())*m_view2abs).x());
+	{
+		QPointF pos = QPointF(event->pos()) - QPointF(m_active_object_offset, 0.);
+		dynamic_cast<GaussianBeamModel*>(model())->setOpticsPosition(m_active_object, (pos*m_view2abs).x());
+	}
 	else if (m_statusLabel)
 		for (int row = model()->rowCount() - 1; row >= 0; row--)
 		{
@@ -503,6 +514,20 @@ void OpticsView::paintEvent(QPaintEvent* event)
 			else if (currentOptics.type() == FlatInterfaceType)
 			{
 				painter.drawPath(m_flatInterfacePath*objectCenterMatrix);
+			}
+			else if (currentOptics.type() == FlatMirrorType)
+			{
+				QRectF view_ObjectRect = objectRect();
+				view_ObjectRect.moveCenter(view_ObjectCenter);
+				painter.setBrush(ABCDBrush);
+				painter.drawRect(view_ObjectRect);
+			}
+			else if (currentOptics.type() == CurvedMirrorType)
+			{
+				QRectF view_ObjectRect = objectRect();
+				view_ObjectRect.moveCenter(view_ObjectCenter);
+				painter.setBrush(ABCDBrush);
+				painter.drawRect(view_ObjectRect);
 			}
 			else if (currentOptics.type() == CurvedInterfaceType)
 			{
