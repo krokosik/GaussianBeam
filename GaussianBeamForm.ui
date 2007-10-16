@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>591</width>
-          <height>403</height>
+          <width>607</width>
+          <height>442</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -262,8 +262,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>147</width>
-          <height>389</height>
+          <width>117</width>
+          <height>309</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -430,8 +430,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>153</width>
-          <height>291</height>
+          <width>120</width>
+          <height>221</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -506,19 +506,6 @@
           </spacer>
          </item>
         </layout>
-       </widget>
-       <widget class="QWidget" name="page_Cavity" >
-        <property name="geometry" >
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>607</width>
-          <height>375</height>
-         </rect>
-        </property>
-        <attribute name="label" >
-         <string>Cavity</string>
-        </attribute>
        </widget>
       </widget>
      </item>
