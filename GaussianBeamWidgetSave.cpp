@@ -156,7 +156,10 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element)
 	else if (element.tagName() == "genericABCD")
 		optics = new GenericABCD(1., 1., 1., 1., 1., 1., "");
 	else
+	{
 		qDebug() << " -> Unknown tag: " << element.tagName();
+		return;
+	}
 
 	QDomElement child = element.firstChildElement();
 

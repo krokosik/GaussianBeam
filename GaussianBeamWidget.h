@@ -38,7 +38,7 @@ class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
 	Q_OBJECT
 
 public:
-	GaussianBeamWidget(QWidget* parent = 0);
+	GaussianBeamWidget(QString file = QString(), QWidget* parent = 0);
 
 protected slots:
 	void on_pushButton_Add_clicked();
@@ -70,6 +70,7 @@ private:
 	void parseXmlOptics(const QDomElement& element);
 	void setCurrentFile(const QString& path);
 	void updateUnits();
+	void insertOptics(Optics* optics, bool resizeRow = false);
 
 private:
 	GaussianBeamModel* model;

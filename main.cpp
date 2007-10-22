@@ -32,7 +32,12 @@ int main(int argc, char *argv[])
 	translator.load(QString("GaussianBeam_") + locale);
 	app.installTranslator(&translator);
 
-	GaussianBeamWidget widget;
+	///@todo parse other arguments ?
+	QString file;
+	if (argc > 1)
+		file = argv[1];
+
+	GaussianBeamWidget widget(file);
 
 	widget.show();
 	return app.exec();

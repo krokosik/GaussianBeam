@@ -31,10 +31,11 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QMenu>
+#include <QFileInfo>
 
 #include <cmath>
 
-GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
+GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	: QWidget(parent)
 {
 	m_currentFile = QString();
@@ -112,6 +113,9 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	updateUnits();
+
+	if (!file.isEmpty())
+		openFile(file);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
@@ -153,54 +157,55 @@ void GaussianBeamWidget::on_pushButton_Add_clicked()
 	menu.exec(pushButton_Add->mapToGlobal(QPoint(0, pushButton_Add->height())));
 }
 
+void GaussianBeamWidget::insertOptics(Optics* optics, bool resizeRow)
+{
+	QModelIndex index = table->selectionModel()->currentIndex();
+	int row = model->rowCount();
+	if (index.isValid())
+		row = index.row() + 1;
+
+	optics->setPosition(model->optics(row-1).position() + 0.05);
+	model->addOptics(optics, row);
+
+	table->resizeColumnsToContents();
+	if (resizeRow)
+		table->resizeRowToContents(row);
+}
+
 void GaussianBeamWidget::on_action_AddLens_triggered()
 {
 	QString name = "L" + QString::number(++m_lastLensName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new Lens(0.1, position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
+	insertOptics(new Lens(0.1, 0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_action_AddFlatMirror_triggered()
 {
 	QString name = "M" + QString::number(++m_lastFlatMirrorName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new FlatMirror(position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
+	insertOptics(new FlatMirror(0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_action_AddCurvedMirror_triggered()
  {
 	QString name = "R" + QString::number(++m_lastCurvedMirrorName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new CurvedMirror(0.05, position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
+	insertOptics(new CurvedMirror(0.05, 0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
 {
 	QString name = "I" + QString::number(++m_lastFlatInterfaceName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new FlatInterface(1.5, position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
+	insertOptics(new FlatInterface(1.5, 0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_action_AddCurvedInterface_triggered()
 {
 	QString name = "C" + QString::number(++m_lastCurvedInterfaceName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new CurvedInterface(0.1, 1.5, position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
-	table->resizeRowToContents(model->rowCount()-1);
+	insertOptics(new CurvedInterface(0.1, 1.5, 0.0, name.toUtf8().data()), true);
 }
 
 void GaussianBeamWidget::on_action_AddGenericABCD_triggered()
 {
 	QString name = "G" + QString::number(++m_lastGenericABCDName);
-	double position = model->optics(model->rowCount()-1).position() + 0.05;
-	model->addOptics(new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, position, name.toUtf8().data()), model->rowCount());
-	table->resizeColumnsToContents();
-	table->resizeRowToContents(model->rowCount()-1);
+	insertOptics(new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, 0.0, name.toUtf8().data()), true);
 }
 
 void GaussianBeamWidget::on_pushButton_Remove_clicked()
@@ -303,6 +308,10 @@ void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 void GaussianBeamWidget::setCurrentFile(const QString& path)
 {
 	m_currentFile = path;
+	if (!m_currentFile.isEmpty())
+		setWindowTitle(QFileInfo(m_currentFile).fileName() + " - GaussianBeam");
+	else
+		setWindowTitle("GaussianBeam");
 }
 
 void GaussianBeamWidget::on_pushButton_Open_clicked()
