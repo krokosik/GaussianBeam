@@ -123,11 +123,13 @@ void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 }
 
-void GaussianBeamWidget::on_checkBox_ShowGraph_clicked(bool checked)
+void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
 {
 	qDebug() << "Show graph";
 #ifdef GBPLOT
 	plot->setVisible(checked);
+#else
+	Q_UNUSED(checked);
 #endif
 }
 
@@ -220,15 +222,37 @@ void GaussianBeamWidget::on_pushButton_Remove_clicked()
 ///////////////////////////////////////////////////////////
 // MAGIC WAIST PAGE
 
+Beam GaussianBeamWidget::targetWaist()
+{
+	return Beam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
+	            doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
+	            model->wavelength());
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
+{
+	Q_UNUSED(value);
+	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
+{
+	Q_UNUSED(value);
+	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+}
+
+void GaussianBeamWidget::on_checkBox_ShowTargetWaist_toggled(bool checked)
+{
+	opticsView->setTargetWaist(targetWaist(), checked);
+}
+
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
 	label_MagicWaistResult->setText("");
 
 	Beam inputBeam;
 	inputBeam.setWavelength(model->wavelength());
-	Beam targetBeam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
-	                doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
-	                inputBeam.wavelength());
+	Beam targetBeam = targetWaist();
 	std::vector<Lens> lenses;
 
 	/// @todo some cleaning is needed !
@@ -257,6 +281,8 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 ///////////////////////////////////////////////////////////
 // FIT PAGE
+
+///@bug fill optics views as fit points are entered
 
 void GaussianBeamWidget::on_pushButton_Fit_clicked()
 {

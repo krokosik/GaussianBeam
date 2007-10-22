@@ -50,11 +50,14 @@ protected slots:
 	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
 	void on_pushButton_SetTargetBeam_clicked();
-	void on_checkBox_ShowGraph_clicked(bool checked);
+	void on_checkBox_ShowGraph_toggled(bool checked);
+	void on_checkBox_ShowTargetWaist_toggled(bool checked);
 	void on_doubleSpinBox_Wavelength_valueChanged(double value);
 	void on_doubleSpinBox_HRange_valueChanged(double value);
 	void on_doubleSpinBox_VRange_valueChanged(double value);
 	void on_doubleSpinBox_HOffset_valueChanged(double value);
+	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
+	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
 	void on_action_AddLens_triggered();
 	void on_action_AddFlatMirror_triggered();
 	void on_action_AddCurvedMirror_triggered();
@@ -71,6 +74,7 @@ private:
 	void setCurrentFile(const QString& path);
 	void updateUnits();
 	void insertOptics(Optics* optics, bool resizeRow = false);
+	Beam targetWaist();
 
 private:
 	GaussianBeamModel* model;

@@ -78,7 +78,7 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_IO" >
         <property name="geometry" >
@@ -86,7 +86,7 @@
           <x>0</x>
           <y>0</y>
           <width>607</width>
-          <height>442</height>
+          <height>418</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -262,8 +262,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>117</width>
-          <height>309</height>
+          <width>607</width>
+          <height>418</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -359,7 +359,14 @@
          <item>
           <widget class="QCheckBox" name="checkBox_Scramble" >
            <property name="text" >
-            <string>Scramble lenses</string>
+            <string>Scramble optics</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkBox_ShowTargetWaist" >
+           <property name="text" >
+            <string>Show target waist</string>
            </property>
           </widget>
          </item>
@@ -430,8 +437,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>120</width>
-          <height>221</height>
+          <width>150</width>
+          <height>283</height>
          </rect>
         </property>
         <attribute name="label" >

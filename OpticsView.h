@@ -19,6 +19,8 @@
 #ifndef OPTICSVIEW_H
 #define OPTICSVIEW_H
 
+#include "GaussianBeam.h"
+
 #include <QAbstractItemView>
 #include <QPoint>
 #include <QPainterPath>
@@ -26,8 +28,6 @@
 class QLabel;
 class QAbstractItemModel;
 class QComboBox;
-
-class Beam;
 
 class OpticsView : public QAbstractItemView
 {
@@ -46,6 +46,7 @@ public:
 	void setStatusLabel(QLabel* statusLabel) { m_statusLabel = statusLabel; }
 	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
 	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
+	void setTargetWaist(const Beam& targetBeam, bool showTargetWaist);
 	void updateViewport() { viewport()->update(); }
 
 protected slots:
@@ -89,6 +90,8 @@ private:
 	QPainterPath m_convexInterfacePath;
 	QPainterPath m_concaveInterfacePath;
 
+	bool m_showTargetWaist;
+	Beam m_targetBeam;
 	double m_hRange;
 	double m_vRange;
 	double m_hOffset;
