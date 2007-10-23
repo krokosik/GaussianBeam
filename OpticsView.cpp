@@ -294,24 +294,36 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 		dynamic_cast<GaussianBeamModel*>(model())->setOpticsPosition(m_active_object, (pos*m_view2abs).x());
 	}
 	else if (m_statusLabel)
+	{
+		double abs_position = (QPointF(event->pos())*m_view2abs).x();
+		QString text = tr("Position: ") + QString::number(abs_position*Units::getUnit(UnitPosition).divider(), 'f', 2) + " " + tr("mm") + "    ";
+
 		for (int row = model()->rowCount() - 1; row >= 0; row--)
 		{
 			const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
 
-			QPointF abs_objCenter = QPointF(currentOptics.position(), 0.);
-			double abs_position = (QPointF(event->pos())*m_view2abs).x();
-			if ((currentOptics.type() != CreateBeamType) && (abs_objCenter.x() < abs_position) ||
+			QPointF abs_objectLeft = QPointF(currentOptics.position(), 0.);
+			QPointF abs_objectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+			// Check if we are inside the optics
+			if ((currentOptics.width() > 0.) && (abs_objectLeft.x() < abs_position) && (abs_objectRight.x() > abs_position))
+				break;
+			// Check if we are lookgin at the mode created by this optics
+			if ((currentOptics.type() != CreateBeamType) && (abs_objectRight.x() < abs_position) ||
 				(currentOptics.type() == CreateBeamType))
 			{
 				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beam(row);
-				QString text = tr("Position: ") + QString::number(abs_position*Units::getUnit(UnitPosition).divider(), 'f', 2) + tr("mm") + "    " +
-				               tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider()) + tr("µm") + "    " +
-				               tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider()) + tr("mm") + "    ";
-				m_statusLabel->setText(text);
+				text += tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
+				        tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
+				if (m_showTargetWaist)
+				{
+					double coupling = GaussianBeam::coupling(beam, m_targetBeam, abs_position);
+					text += tr("Target overlap: ") + QString::number(coupling*100., 'f', 2) + " " + tr("%") + "    ";
+				}
 				break;
 			}
 		}
-
+		m_statusLabel->setText(text);
+	}
 	QAbstractItemView::mouseMoveEvent(event);
 }
 

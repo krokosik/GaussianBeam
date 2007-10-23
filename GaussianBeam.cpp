@@ -314,7 +314,7 @@ double GaussianBeam::coupling(const Beam& beam1, const Beam& beam2, double z)
 	//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
 	double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
 
-	cerr << "Coupling = " << eta << endl;
+	cerr << "Coupling = " << eta << " // " << zred1 << " " << zred2 << " " << rho << endl;
 
 	return eta;
 }
