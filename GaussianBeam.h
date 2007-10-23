@@ -85,11 +85,9 @@ public:
 	double curvature(double z) const;
 	double gouyPhase(double z) const;
 	std::complex<double> q(double z) const;
+	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }
 
 	double approxNextPosition(double currentPosition, Approximation& approximation) const;
-
-private:
-	inline double alpha(double z) const { return (z - waistPosition())/rayleigh(); }
 
 private:
 	double m_waist;
@@ -351,6 +349,11 @@ namespace GaussianBeam
 	* @p rho2 a pointer to a double set to the squared correlation coefficient
 	*/
 	Beam fitBeam(std::vector<double> positions, std::vector<double> radii, double wavelength, double* rho2 = 0);
+
+	/**
+	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
+	*/
+	double coupling(const Beam& beam1, const Beam& beam2, double z);
 }
 
 #endif

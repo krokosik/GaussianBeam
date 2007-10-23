@@ -116,6 +116,10 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 
 	if (!file.isEmpty())
 		openFile(file);
+
+	Beam beam1(100e-6, 0.1, 461e-9);
+	Beam beam2(300e-6, 0.8, 200e-9);
+	GaussianBeam::coupling(beam1, beam2, -0.3);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)

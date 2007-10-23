@@ -78,27 +78,27 @@ void Beam::setRayleigh(double rayleigh)
 
 double Beam::radius(double z) const
 {
-	return waist()*sqrt(1. + sqr(alpha(z)));
+	return waist()*sqrt(1. + sqr(zred(z)));
 }
 
 double Beam::radiusDerivative(double z) const
 {
-	return waist()/rayleigh()/sqrt(1. + 1./sqr(alpha(z)));
+	return waist()/rayleigh()/sqrt(1. + 1./sqr(zred(z)));
 }
 
 double Beam::radiusSecondDerivative(double z) const
 {
-	return waist()/sqr(rayleigh())/pow(1. + sqr(alpha(z)), 1.5);
+	return waist()/sqr(rayleigh())/pow(1. + sqr(zred(z)), 1.5);
 }
 
 double Beam::curvature(double z) const
 {
-	return (z - waistPosition())*(1. + 1./sqr(alpha(z)));
+	return (z - waistPosition())*(1. + 1./sqr(zred(z)));
 }
 
 double Beam::gouyPhase(double z) const
 {
-	return atan(alpha(z));
+	return atan(zred(z));
 }
 
 complex<double> Beam::q(double z) const
@@ -294,4 +294,27 @@ Beam GaussianBeam::fitBeam(vector<double> positions, vector<double> radii, doubl
 		*rho2 = stats.rho2;
 
 	return beam;
+}
+
+double GaussianBeam::coupling(const Beam& beam1, const Beam& beam2, double z)
+{
+//	double w1 = beam1.radius(z);
+//	double w2 = beam2.radius(z);
+//	double w12 = sqr(beam1.radius(z));
+//	double w22 = sqr(beam2.radius(z));
+//	double k1 = 2.*M_PI/beam1.wavelength();
+//	double k2 = 2.*M_PI/beam2.wavelength();
+//	double R1 = beam1.curvature(z);
+//	double R2 = beam2.curvature(z);
+	double zred1 = beam1.zred(z);
+	double zred2 = beam2.zred(z);
+	double rho = sqr(beam1.radius(z)/beam2.radius(z));
+
+	//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
+	//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
+	double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
+
+	cerr << "Coupling = " << eta << endl;
+
+	return eta;
 }
