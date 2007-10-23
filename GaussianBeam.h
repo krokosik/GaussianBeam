@@ -355,7 +355,7 @@ namespace GaussianBeam
 	* This overlap does not depend on @p z if both beams have the same wavelength,
 	* hence the default value for z
 	*/
-	double coupling(const Beam& beam1, const Beam& beam2, double z = 0.);
+	double overlap(const Beam& beam1, const Beam& beam2, double z = 0.);
 }
 
 #endif

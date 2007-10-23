@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>607</width>
-          <height>418</height>
+          <width>207</width>
+          <height>321</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -263,7 +263,7 @@
           <x>0</x>
           <y>0</y>
           <width>607</width>
-          <height>418</height>
+          <height>442</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -288,9 +288,50 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_6" >
+          <widget class="QLabel" name="label_2" >
            <property name="text" >
-            <string>Tolerance</string>
+            <string>Target position</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_TargetPosition" >
+           <property name="minimum" >
+            <double>-100000.000000000000000</double>
+           </property>
+           <property name="maximum" >
+            <double>100000.000000000000000</double>
+           </property>
+           <property name="value" >
+            <double>550.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" >
+           <item>
+            <widget class="QRadioButton" name="radioButton_Tolerance" >
+             <property name="text" >
+              <string>Tolerance</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radioButton_Overlap" >
+             <property name="text" >
+              <string>Overlap</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_WaistTolerance" >
+           <property name="text" >
+            <string>Tolerance on waist</string>
            </property>
           </widget>
          </item>
@@ -314,36 +355,16 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_2" >
+          <widget class="QLabel" name="label_PositionTolerance" >
            <property name="text" >
-            <string>Target position</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_TargetPosition" >
-           <property name="minimum" >
-            <double>-100000.000000000000000</double>
-           </property>
-           <property name="maximum" >
-            <double>100000.000000000000000</double>
-           </property>
-           <property name="value" >
-            <double>550.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_7" >
-           <property name="text" >
-            <string>Tolerance</string>
+            <string>Tolerance on position</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QDoubleSpinBox" name="doubleSpinBox_PositionTolerance" >
            <property name="suffix" >
-            <string> % z0</string>
+            <string> % Rayleigh</string>
            </property>
            <property name="decimals" >
             <number>1</number>
@@ -353,6 +374,26 @@
            </property>
            <property name="value" >
             <double>5.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_MinOverlap" >
+           <property name="text" >
+            <string>Overlap</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_MinOverlap" >
+           <property name="suffix" >
+            <string> %</string>
+           </property>
+           <property name="maximum" >
+            <double>100.000000000000000</double>
+           </property>
+           <property name="value" >
+            <double>98.000000000000000</double>
            </property>
           </widget>
          </item>
@@ -367,6 +408,13 @@
           <widget class="QCheckBox" name="checkBox_ShowTargetWaist" >
            <property name="text" >
             <string>Show target waist</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_OverlapResult" >
+           <property name="text" >
+            <string/>
            </property>
           </widget>
          </item>
@@ -437,8 +485,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>150</width>
-          <height>283</height>
+          <width>120</width>
+          <height>221</height>
          </rect>
         </property>
         <attribute name="label" >

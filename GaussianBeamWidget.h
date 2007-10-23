@@ -58,6 +58,7 @@ protected slots:
 	void on_doubleSpinBox_HOffset_valueChanged(double value);
 	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
+	void on_radioButton_Tolerance_toggled(bool checked);
 	void on_action_AddLens_triggered();
 	void on_action_AddFlatMirror_triggered();
 	void on_action_AddCurvedMirror_triggered();
@@ -75,6 +76,7 @@ private:
 	void updateUnits();
 	void insertOptics(Optics* optics, bool resizeRow = false);
 	Beam targetWaist();
+	void displayOverlap();
 
 private:
 	GaussianBeamModel* model;

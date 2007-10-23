@@ -107,37 +107,22 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	opticsView->setMeasureCombo(comboBox_FitData);
 
 	// Connect slots
+	/// @bug this does not react ?
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(updateView(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
+	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	updateUnits();
 
 	if (!file.isEmpty())
 		openFile(file);
-
-	Beam beam1(100e-6, 0.1, 461e-9);
-	Beam beam2(300e-6, 0.8, 461e-9);
-	GaussianBeam::coupling(beam1, beam2, -0.3);
-	GaussianBeam::coupling(beam1, beam2, -0.1);
-	GaussianBeam::coupling(beam1, beam2, 0.3);
-	GaussianBeam::coupling(beam1, beam2, 1.0);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
 	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
-}
-
-void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
-{
-	qDebug() << "Show graph";
-#ifdef GBPLOT
-	plot->setVisible(checked);
-#else
-	Q_UNUSED(checked);
-#endif
 }
 
 void GaussianBeamWidget::updateUnits()
@@ -236,21 +221,51 @@ Beam GaussianBeamWidget::targetWaist()
 	            model->wavelength());
 }
 
+void GaussianBeamWidget::displayOverlap()
+{
+	double overlap = GaussianBeam::overlap(model->beam(model->rowCount()-1), targetWaist());
+	label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
+}
+
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
 {
 	Q_UNUSED(value);
 	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+	displayOverlap();
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
 {
 	Q_UNUSED(value);
 	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+	displayOverlap();
 }
 
 void GaussianBeamWidget::on_checkBox_ShowTargetWaist_toggled(bool checked)
 {
 	opticsView->setTargetWaist(targetWaist(), checked);
+}
+
+void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)
+{
+	if (checked)
+	{
+		label_MinOverlap->setVisible(false);
+		doubleSpinBox_MinOverlap->setVisible(false);
+		label_WaistTolerance->setVisible(true);
+		doubleSpinBox_WaistTolerance->setVisible(true);
+		label_PositionTolerance->setVisible(true);
+		doubleSpinBox_PositionTolerance->setVisible(true);
+	}
+	else
+	{
+		label_WaistTolerance->setVisible(false);
+		doubleSpinBox_WaistTolerance->setVisible(false);
+		label_PositionTolerance->setVisible(false);
+		doubleSpinBox_PositionTolerance->setVisible(false);
+		label_MinOverlap->setVisible(true);
+		doubleSpinBox_MinOverlap->setVisible(true);
+	}
 }
 
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
@@ -284,6 +299,7 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 	for (unsigned int l = 0; l < lenses.size(); l++)
 		model->addOptics(new Lens(lenses[l]), model->rowCount());
 
+	displayOverlap();
 }
 
 ///////////////////////////////////////////////////////////
@@ -377,8 +393,22 @@ void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
 	opticsView->setHOffset(value*Units::getUnit(UnitHRange).multiplier());
 }
 
+void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
+{
+	qDebug() << "Show graph";
+#ifdef GBPLOT
+	plot->setVisible(checked);
+#else
+	Q_UNUSED(checked);
+#endif
+}
+
 ///////////////////////////////////////////////////////////
 // General functions
+
+void GaussianBeamWidget::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
+{
+}
 
 void GaussianBeamWidget::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {

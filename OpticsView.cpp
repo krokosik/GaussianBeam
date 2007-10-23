@@ -314,11 +314,6 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beam(row);
 				text += tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
 				        tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
-				if (m_showTargetWaist)
-				{
-					double coupling = GaussianBeam::coupling(beam, m_targetBeam, abs_position);
-					text += tr("Target overlap: ") + QString::number(coupling*100., 'f', 2) + " " + tr("%") + "    ";
-				}
 				break;
 			}
 		}
