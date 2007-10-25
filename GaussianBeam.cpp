@@ -231,37 +231,41 @@ GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2)
 /////////////////////////////////////////////////
 // GaussianBeam namespace
 
-bool GaussianBeam::magicWaist(const Beam& inputBeam, const Beam& targetBeam, vector<Lens>& optics,
-                              double waistTolerance, double positionTolerance, bool scramble)
+bool GaussianBeam::magicWaist(const Beam& inputBeam, vector<Optics*>& optics, const MagicWaistTarget& target)
 {
 	const int nTry = 1000000;
-
+//	int i = 0;
 	for (int i = 0; i < nTry; i++)
 	{
 		// Scramble lenses
-		if (scramble)
+		if (target.scramble)
 			for (unsigned int j = 0; j < 3*optics.size(); j++)
-				::swap(optics[rand()%optics.size()], optics[rand()%optics.size()]);
+				::swap(optics[rand() % (optics.size()-1) + 1], optics[rand() % (optics.size()-1) + 1]);
 		// Place lenses
 		Beam beam = inputBeam;
-		double previousPos = inputBeam.waistPosition();
+		double previousPos = 1000.;//inputBeam.waistPosition();
+		cerr << endl;
 		for (unsigned int l = 0; l < optics.size(); l++)
 		{
-			if (!optics[l].locked())
+			if (!optics[l]->locked())
 			{
+				//cerr << "moving ";
 				/// @todo better range determination
-				double position = double(rand())/double(RAND_MAX)*(targetBeam.waistPosition() - previousPos) + previousPos;
-				optics[l].setPosition(position);
+				double position = double(rand())/double(RAND_MAX)*(target.beam.waistPosition() - previousPos) + previousPos;
+				optics[l]->setPosition(position);
 			}
-			beam = optics[l].image(beam);
-			previousPos = optics[l].position();
+			beam = optics[l]->image(beam);
+			previousPos = optics[l]->position();
+			//cerr << previousPos << endl;
 		}
 		// Check waist
-		if ((fabs(beam.waist() - targetBeam.waist()) < waistTolerance*targetBeam.waist()) &&
-		    (fabs(beam.waistPosition() - targetBeam.waistPosition()) < positionTolerance*targetBeam.rayleigh()))
+		if (target.overlap &&
+			(overlap(beam, target.beam) > target.minOverlap) ||
+			(!target.overlap) &&
+			(fabs(beam.waist() - target.beam.waist()) < target.waistTolerance*target.beam.waist()) &&
+		    (fabs(beam.waistPosition() - target.beam.waistPosition()) < target.positionTolerance*target.beam.rayleigh()))
 		{
 			cerr << "found waist : " << beam.waist() << " @ " << beam.waistPosition() << " // try = " << i << endl;
-			cerr << targetBeam.rayleigh() << endl;
 			return true;
 		}
 	}

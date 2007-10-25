@@ -110,6 +110,8 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	/// @bug this does not react ?
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(updateView(const QModelIndex&, const QModelIndex&)));
+	connect(model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
+	        this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
@@ -274,38 +276,42 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 	Beam inputBeam;
 	inputBeam.setWavelength(model->wavelength());
-	Beam targetBeam = targetWaist();
-	std::vector<Lens> lenses;
+
+	GaussianBeam::MagicWaistTarget target;
+	target.beam = targetWaist();
+	target.overlap = radioButton_Overlap->isChecked();
+	target.minOverlap = doubleSpinBox_MinOverlap->value()*0.01;
+	target.waistTolerance = doubleSpinBox_WaistTolerance->value()*0.01;
+	target.positionTolerance = doubleSpinBox_PositionTolerance->value()*0.01;
+	target.scramble = checkBox_Scramble->isChecked();
+
+	std::vector<Optics*> optics;
 
 	/// @todo some cleaning is needed !
-	for (int row = 0; row < model->rowCount(); ++row)
+	for (int row = 0; row < model->rowCount(); row++)
+	{
 		if (model->optics(row).type() == CreateBeamType)
 			inputBeam = model->optics(row).image(inputBeam);
-		else if (model->optics(row).type() == LensType)
-			lenses.push_back(dynamic_cast<const Lens&>(model->optics(row)));
+		//if (model->optics(row).type() == LensType)
+		optics.push_back(model->optics(row).clone());
+	}
 
-	bool result = GaussianBeam::magicWaist(inputBeam, targetBeam, lenses,
-	              doubleSpinBox_WaistTolerance->value()*0.01,
-	              doubleSpinBox_PositionTolerance->value()*0.01,
-	              checkBox_Scramble->checkState() == Qt::Checked);
-	if (!result)
+	if (!GaussianBeam::magicWaist(inputBeam, optics, target))
 	{
 		label_MagicWaistResult->setText(tr("Desired waist could not be found !"));
 		return;
 	}
 
-	model->removeRows(1, model->rowCount()-1);
+	model->removeRows(0, model->rowCount());
 
-	for (unsigned int l = 0; l < lenses.size(); l++)
-		model->addOptics(new Lens(lenses[l]), model->rowCount());
+	for (unsigned int l = 0; l < optics.size(); l++)
+		model->addOptics(optics[l], model->rowCount());
 
 	displayOverlap();
 }
 
 ///////////////////////////////////////////////////////////
 // FIT PAGE
-
-///@bug fill optics views as fit points are entered
 
 void GaussianBeamWidget::on_pushButton_Fit_clicked()
 {
@@ -408,6 +414,8 @@ void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
 
 void GaussianBeamWidget::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
+	qDebug() << "UpdateWidget";
+	displayOverlap();
 }
 
 void GaussianBeamWidget::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)

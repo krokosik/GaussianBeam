@@ -66,8 +66,11 @@ protected slots:
 	void on_action_AddCurvedInterface_triggered();
 	void on_action_AddGenericABCD_triggered();
 
-private:
+protected slots:
+	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+
+private:
 	void openFile(const QString& path = QString());
 	void saveFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
