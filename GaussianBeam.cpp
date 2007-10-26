@@ -231,10 +231,10 @@ GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2)
 /////////////////////////////////////////////////
 // GaussianBeam namespace
 
-bool GaussianBeam::magicWaist(const Beam& inputBeam, vector<Optics*>& optics, const MagicWaistTarget& target)
+bool GaussianBeam::magicWaist(vector<Optics*>& optics, const MagicWaistTarget& target)
 {
 	const int nTry = 1000000;
-//	int i = 0;
+
 	for (int i = 0; i < nTry; i++)
 	{
 		// Scramble lenses
@@ -242,21 +242,22 @@ bool GaussianBeam::magicWaist(const Beam& inputBeam, vector<Optics*>& optics, co
 			for (unsigned int j = 0; j < 3*optics.size(); j++)
 				::swap(optics[rand() % (optics.size()-1) + 1], optics[rand() % (optics.size()-1) + 1]);
 		// Place lenses
-		Beam beam = inputBeam;
-		double previousPos = 1000.;//inputBeam.waistPosition();
-		cerr << endl;
+		Beam beam;
+		beam.setWavelength(target.beam.wavelength());
+		double previousPos = 0.;
 		for (unsigned int l = 0; l < optics.size(); l++)
 		{
 			if (!optics[l]->locked())
 			{
-				//cerr << "moving ";
 				/// @todo better range determination
 				double position = double(rand())/double(RAND_MAX)*(target.beam.waistPosition() - previousPos) + previousPos;
 				optics[l]->setPosition(position);
 			}
 			beam = optics[l]->image(beam);
 			previousPos = optics[l]->position();
-			//cerr << previousPos << endl;
+			/// @bug this is a hack !
+			if ((optics[l]->type() == CreateBeamType) && (previousPos > 0.))
+				previousPos = 0.;
 		}
 		// Check waist
 		if (target.overlap &&

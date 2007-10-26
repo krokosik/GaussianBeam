@@ -98,6 +98,10 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)");
 	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).prefix() + "m)");
 	fitTable->setModel(fitModel);
+	fitTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+	fitTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	fitSelectionModel = new QItemSelectionModel(fitModel);
+	fitTable->setSelectionModel(fitSelectionModel);
 	fitTable->setColumnWidth(0, 82);
 	fitTable->setColumnWidth(1, 82);
 	comboBox_FitData->insertItem(0, tr("Radius @ 1/e²"));
@@ -225,8 +229,15 @@ Beam GaussianBeamWidget::targetWaist()
 
 void GaussianBeamWidget::displayOverlap()
 {
-	double overlap = GaussianBeam::overlap(model->beam(model->rowCount()-1), targetWaist());
-	label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
+	qDebug() << "Display Overlap";
+	if (model->rowCount()-1 > 0)
+	{
+		double overlap = GaussianBeam::overlap(model->beam(model->rowCount()-1), targetWaist());
+		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
+	}
+	else
+		label_OverlapResult->setText("");
+	qDebug() << "end";
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
@@ -274,9 +285,6 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
 	label_MagicWaistResult->setText("");
 
-	Beam inputBeam;
-	inputBeam.setWavelength(model->wavelength());
-
 	GaussianBeam::MagicWaistTarget target;
 	target.beam = targetWaist();
 	target.overlap = radioButton_Overlap->isChecked();
@@ -287,25 +295,19 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 	std::vector<Optics*> optics;
 
-	/// @todo some cleaning is needed !
 	for (int row = 0; row < model->rowCount(); row++)
-	{
-		if (model->optics(row).type() == CreateBeamType)
-			inputBeam = model->optics(row).image(inputBeam);
-		//if (model->optics(row).type() == LensType)
 		optics.push_back(model->optics(row).clone());
-	}
 
-	if (!GaussianBeam::magicWaist(inputBeam, optics, target))
+	if (!GaussianBeam::magicWaist(optics, target))
 	{
 		label_MagicWaistResult->setText(tr("Desired waist could not be found !"));
 		return;
 	}
 
-	model->removeRows(0, model->rowCount());
-
 	for (unsigned int l = 0; l < optics.size(); l++)
-		model->addOptics(optics[l], model->rowCount());
+		model->addOptics(optics[l], l);
+
+	model->removeRows(optics.size(), model->rowCount() - optics.size());
 
 	displayOverlap();
 }
@@ -355,6 +357,23 @@ void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
 	doubleSpinBox_TargetWaist->setValue(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider());
 	doubleSpinBox_TargetPosition->setValue(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider());
+}
+
+void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
+{
+	qDebug() << "AddRow";
+	QModelIndex index = fitTable->selectionModel()->currentIndex();
+	int row = fitModel->rowCount();
+	if (index.isValid())
+		row = index.row() + 1;
+	fitModel->insertRow(row);
+}
+
+void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
+{
+	for (int row = fitModel->rowCount() - 1; row >= 0; row--)
+		if (fitSelectionModel->isRowSelected(row, QModelIndex()))
+			fitModel->removeRow(row);
 }
 
 ///////////////////////////////////////////////////////////

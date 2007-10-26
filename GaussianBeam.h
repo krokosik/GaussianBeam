@@ -342,18 +342,14 @@ namespace GaussianBeam
 		bool scramble;
 	};
 
-
 	/**
 	* Find a lens arrangement to produce @p targetBeam from @p inputBeam
-	* @p inputBeam input waist
-	* @p targetBeam target waist
 	* @p optics vector of optics to use
-	* @p waistTolerance relative tolerance on the waist
-	* @p positionTolerance tolerance on waist position in Rayleigh ranges
-	* @p scramble change lens ordering
+	* @p target data structure gathering target properties
 	* @return true for success
 	*/
-	bool magicWaist(const Beam& inputBeam, std::vector<Optics*>& optics, const MagicWaistTarget& target);
+	bool magicWaist(std::vector<Optics*>& optics, const MagicWaistTarget& target);
+
 	/**
 	* Find the waist radius and position for a given set of radii measurement of a Gaussian beam
 	* It fits the given data with a linear fit, and finds the only hyperbola

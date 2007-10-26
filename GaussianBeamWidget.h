@@ -50,6 +50,8 @@ protected slots:
 	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
 	void on_pushButton_SetTargetBeam_clicked();
+	void on_pushButton_FitAddRow_clicked();
+	void on_pushButton_FitRemoveRow_clicked();
 	void on_checkBox_ShowGraph_toggled(bool checked);
 	void on_checkBox_ShowTargetWaist_toggled(bool checked);
 	void on_doubleSpinBox_Wavelength_valueChanged(double value);
@@ -85,6 +87,7 @@ private:
 	GaussianBeamModel* model;
 	GaussianBeamDelegate* delegate;
 	QItemSelectionModel* selectionModel;
+	QItemSelectionModel* fitSelectionModel;
 	OpticsView* opticsView;
 	GaussianBeamPlot* plot;
 	QStandardItemModel* fitModel;

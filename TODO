@@ -14,14 +14,14 @@ WISHLIST:
 	Ruller
 	Relative distances on graph
 	Better hyperbola interpolation
-	General ABCD tranform and mirrors
-	Enable increase & decrease of fit table
-	Window title and command line argument
 	Customize status bar display & add Gouy phase & q
 	Export graph to text data
 	Optical cavities, eigen mode and stability.
 	Waist relative to selection
 
 BUGS :
-	Magic waist removes interfaces
 	Multiple properties handling
+	When the status bar text changes, it may resize the main window
+	Check that the save command saves all parameters & optics
+	Proper optics ordering in magic waist
+	Magic waist does not trigger if the input waist is after the first optics
