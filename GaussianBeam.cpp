@@ -24,7 +24,8 @@
 
 using namespace std;
 
-/// Beam class
+/////////////////////////////////////////////////
+// Beam class
 
 Beam::Beam()
 {
@@ -156,7 +157,65 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	, m_width(0.)
 	, m_name(name)
 	, m_absoluteLock(false)
+	, m_relativeLockParent(0)
 {}
+
+void Optics::setAbsoluteLock(bool absoluteLock)
+{
+	if (absoluteLock)
+		relativeUnlock();
+
+	m_absoluteLock = absoluteLock;
+}
+
+bool Optics::relativeLockedTo(const Optics* const optics) const
+{
+	return relativeLockRoot()->isRelativeLockDescendant(optics);
+}
+
+bool Optics::relativeLockTo(Optics* optics)
+{
+	if (relativeLockedTo(optics))
+		return false;
+
+	if (m_relativeLockParent)
+		relativeUnlock();
+
+	m_relativeLockParent = optics;
+	optics->m_relativeLockChildren.push_back(this);
+
+	m_absoluteLock = false;
+	return true;
+}
+
+/**
+* Detach the optics from the relative lock tree.
+* @return true if success, false otherwise
+*/
+bool Optics::relativeUnlock()
+{
+	///@todo
+	return false;
+}
+
+const Optics* Optics::relativeLockRoot() const
+{
+	if (!m_relativeLockParent)
+		return this;
+	else
+		return m_relativeLockParent->relativeLockRoot();
+}
+
+bool Optics::isRelativeLockDescendant(const Optics* const optics) const
+{
+	if (optics == this)
+		return true;
+
+	for (list<Optics*>::const_iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
+		return isRelativeLockDescendant(*it);
+
+	return false;
+}
 
 /////////////////////////////////////////////////
 // CreateBeam class

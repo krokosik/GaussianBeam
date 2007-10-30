@@ -119,14 +119,43 @@ public:
 	double endPosition() const { return position() + width(); }
 	double width() const { return m_width; }
 	void setWidth(double width) { m_width = width; }
-	bool absoluteLock() const { return m_absoluteLock; }
-	void setAbsoluteLock(bool absoluteLock) { m_absoluteLock = absoluteLock; }
-	void addRelativeLock(Optics* optics);
-	void removeRelativeLock(Optics* optics);
-	const std::list<Optics*>& relativeLock() const { return m_relativeLockList; }
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
 	bool isABCD() const { return m_ABCD; }
+	/**
+	* Query absolute lock
+	* @return true if the lock is absolute, false otherwise
+	*/
+	bool absoluteLock() const { return m_absoluteLock; }
+	/**
+	* Set absolute lock state. Setting an absolute lock removes any relative lock
+	* @param absoluteLock if true, remove relative lock and set absolute lock. If false, removes absolute lock if present.
+	*/
+	void setAbsoluteLock(bool absoluteLock);
+	/**
+	* Query relative lock
+	* @return true if the optics is within the locking tree of @p optics
+	*/
+	bool relativeLockedTo(const Optics* const optics) const;
+	/**
+	* @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
+	*/
+	bool relativeLockedToAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
+	/**
+	* Lock the optics to the given optics. Only works if @p optics is not within the locking tree of this optics.
+	* If the locking succeeds, the absolute lock is set to false.
+	* @return true if success, false otherwise
+	*/
+	bool relativeLockTo(Optics* optics);
+	/**
+	* Detach the optics from the relative lock tree.
+	* @return true if success, false otherwise
+	*/
+	bool relativeUnlock();
+
+private:
+	const Optics* relativeLockRoot() const;
+	bool isRelativeLockDescendant(const Optics* const optics) const;
 
 protected:
 	void setType(OpticsType type) { m_type = type; }
@@ -138,7 +167,8 @@ private:
 	double m_width;
 	std::string m_name;
 	bool m_absoluteLock;
-	std::list<Optics*> m_relativeLockList;
+	Optics* m_relativeLockParent;
+	std::list<Optics*> m_relativeLockChildren;
 };
 
 class CreateBeam : public Optics
