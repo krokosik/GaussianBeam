@@ -171,6 +171,8 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element)
 			optics->setPosition(child.text().toDouble());
 		else if (child.tagName() == "name")
 			optics->setName(child.text().toUtf8().data());
+		else if (child.tagName() == "absoluteLock")
+			optics->setAbsoluteLock(child.text().toInt() == 1 ? true : false);
 		else if (child.tagName() == "width")
 			optics->setWidth(child.text().toDouble());
 		else if (child.tagName() == "waist")
@@ -294,9 +296,9 @@ void GaussianBeamWidget::saveFile(const QString &path)
 			xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD&>(optics).C()));
 			xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD&>(optics).D()));
 		}
-
 		xmlWriter.writeTextElement("position", QString::number(optics.position()));
 		xmlWriter.writeTextElement("name", QString(optics.name().c_str()));
+		xmlWriter.writeTextElement("absoluteLock", QString::number(optics.absoluteLock() ? true : false));
 		xmlWriter.writeEndElement();
 	}
 	xmlWriter.writeEndElement();

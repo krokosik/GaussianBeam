@@ -20,6 +20,7 @@
 #define GAUSSIANBEAM_H
 
 #include <vector>
+#include <list>
 #include <string>
 #include <complex>
 
@@ -118,8 +119,11 @@ public:
 	double endPosition() const { return position() + width(); }
 	double width() const { return m_width; }
 	void setWidth(double width) { m_width = width; }
-	bool locked() const { return m_locked; }
-	void setLocked(bool locked) { m_locked = locked; }
+	bool absoluteLock() const { return m_absoluteLock; }
+	void setAbsoluteLock(bool absoluteLock) { m_absoluteLock = absoluteLock; }
+	void addRelativeLock(Optics* optics);
+	void removeRelativeLock(Optics* optics);
+	const std::list<Optics*>& relativeLock() const { return m_relativeLockList; }
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
 	bool isABCD() const { return m_ABCD; }
@@ -133,7 +137,8 @@ private:
 	double m_position;
 	double m_width;
 	std::string m_name;
-	bool m_locked;
+	bool m_absoluteLock;
+	std::list<Optics*> m_relativeLockList;
 };
 
 class CreateBeam : public Optics

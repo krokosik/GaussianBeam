@@ -32,7 +32,7 @@ GaussianBeamModel::GaussianBeamModel(QObject* parent)
 	m_optics.clear();
 
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), rowCount());
-	m_optics[0]->setLocked(true);
+	m_optics[0]->setAbsoluteLock(true);
 
 	/// @todo remove this later
 	m_first_cavity_row = 1;
@@ -110,7 +110,7 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 	else if (index.column() == COL_NAME)
 		return QString::fromUtf8(m_optics[index.row()]->name().c_str());
 	else if (index.column() == COL_LOCK)
-		return m_optics[index.row()]->locked();
+		return m_optics[index.row()]->absoluteLock();
 
 	return QVariant();
 }
@@ -195,7 +195,7 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	else if (index.column() == COL_NAME)
 		m_optics[index.row()]->setName(value.toString().toUtf8().data());
  	else if (index.column() == COL_LOCK)
-		m_optics[index.row()]->setLocked(value.toBool());
+		m_optics[index.row()]->setAbsoluteLock(value.toBool());
 
 	computeBeams(index.row(), backward);
 

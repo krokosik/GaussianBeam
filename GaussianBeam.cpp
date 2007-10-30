@@ -155,7 +155,7 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	, m_position(position)
 	, m_width(0.)
 	, m_name(name)
-	, m_locked(false)
+	, m_absoluteLock(false)
 {}
 
 /////////////////////////////////////////////////
@@ -247,7 +247,7 @@ bool GaussianBeam::magicWaist(vector<Optics*>& optics, const MagicWaistTarget& t
 		double previousPos = 0.;
 		for (unsigned int l = 0; l < optics.size(); l++)
 		{
-			if (!optics[l]->locked())
+			if (!optics[l]->absoluteLock())
 			{
 				/// @todo better range determination
 				double position = double(rand())/double(RAND_MAX)*(target.beam.waistPosition() - previousPos) + previousPos;
