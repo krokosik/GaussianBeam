@@ -110,7 +110,15 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 	else if (index.column() == COL_NAME)
 		return QString::fromUtf8(m_optics[index.row()]->name().c_str());
 	else if (index.column() == COL_LOCK)
-		return m_optics[index.row()]->absoluteLock();
+	{
+		/// @bug what if the parent name changes ?
+		if (m_optics[index.row()]->absoluteLock())
+			return tr("absolute");
+		else if (m_optics[index.row()]->relativeLockParent())
+			return QString::fromUtf8(m_optics[index.row()]->relativeLockParent()->name().c_str());
+		else
+			return tr("none");
+	}
 
 	return QVariant();
 }
@@ -297,7 +305,7 @@ void GaussianBeamModel::addOptics(Optics* optics, int row)
 
 void GaussianBeamModel::setOpticsPosition(int row, double position)
 {
-	m_optics[row]->setPosition(position);
+	m_optics[row]->setPositionCheckLock(position);
 	computeBeams(row);
 }
 

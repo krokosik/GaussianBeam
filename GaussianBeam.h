@@ -133,6 +133,14 @@ public:
 	*/
 	void setAbsoluteLock(bool absoluteLock);
 	/**
+	* @return the relative lock parent. 0 if there is no parent
+	*/
+	const Optics* relativeLockParent() const { return m_relativeLockParent; }
+	/**
+	* @return a list of relative lock children
+	*/
+	const std::list<Optics*>& relativeLockChildren() const { return m_relativeLockChildren; }
+	/**
 	* Query relative lock
 	* @return true if the optics is within the locking tree of @p optics
 	*/
@@ -140,7 +148,7 @@ public:
 	/**
 	* @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
 	*/
-	bool relativeLockedToAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
+	bool relativeLockedTreeAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
 	/**
 	* Lock the optics to the given optics. Only works if @p optics is not within the locking tree of this optics.
 	* If the locking succeeds, the absolute lock is set to false.
@@ -152,6 +160,12 @@ public:
 	* @return true if success, false otherwise
 	*/
 	bool relativeUnlock();
+	/**
+	* Move the optics to @p position while taking care of locks :
+	* - move the whole lock tree
+	* - if the lock tree is abolutly locked, don't do anything
+	*/
+	void setPositionCheckLock(double position);
 
 private:
 	const Optics* relativeLockRoot() const;

@@ -91,8 +91,10 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case COL_LOCK:
 	{
 		QComboBox* editor = new QComboBox(parent);
-		editor->addItem(tr("true"));
-		editor->addItem(tr("false"));
+		editor->addItem(tr("none"));
+		editor->addItem(tr("absolute"));
+		for (int i = 0; i < m_model->rowCount(); i++)
+			editor->addItem(QString::fromUtf8(m_model->optics(i).name().c_str()));
 		return editor;
 	}
 	default:
@@ -104,7 +106,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 
 void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-	qDebug() << "setEditorData" << index.model()->data(index, Qt::DisplayRole);
+	qDebug() << "setEditorData" << m_model->data(index, Qt::DisplayRole);
 
 	if (!index.isValid() || (editor == 0))
 		return;
@@ -117,7 +119,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	case COL_RAYLEIGH:
 	case COL_DIVERGENCE:
 	{
-		double value = index.model()->data(index, Qt::DisplayRole).toDouble();
+		double value = m_model->data(index, Qt::DisplayRole).toDouble();
 		QDoubleSpinBox *spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;
@@ -140,16 +142,17 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	}
 	case COL_NAME:
 	{
-		QString name = index.model()->data(index, Qt::DisplayRole).toString();
+		QString name = m_model->data(index, Qt::DisplayRole).toString();
 		QLineEdit *lineEdit = static_cast<QLineEdit*>(editor);
 		lineEdit->setText(name);
 		break;
 	}
 	case COL_LOCK:
 	{
-		bool value = index.model()->data(index, Qt::DisplayRole).toBool();
+		QString value = m_model->data(index, Qt::DisplayRole).toString();
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
-		comboBox->setCurrentIndex(value ? 0 : 1);
+		/// @bug todo with string
+		//comboBox->setCurrentIndex(value ? 0 : 1);
 		break;
 	}
 	default:

@@ -275,8 +275,6 @@ void OpticsView::mousePressEvent(QMouseEvent* event)
 	if (index.isValid())
 	{
 		const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(index.row());
-		if (currentOptics.relativeLockedToAbsoluteLock())
-			return;
 
 		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
 		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;

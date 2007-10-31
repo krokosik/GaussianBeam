@@ -217,6 +217,15 @@ bool Optics::isRelativeLockDescendant(const Optics* const optics) const
 	return false;
 }
 
+void Optics::setPositionCheckLock(double position)
+{
+	if (relativeLockedTreeAbsoluteLock())
+		return;
+
+	/// @todo move the whole tree
+	setPosition(position);
+}
+
 /////////////////////////////////////////////////
 // CreateBeam class
 
