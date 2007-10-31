@@ -20,6 +20,8 @@
 
 #include <cmath>
 
+const double Unit::infinity = 1000000.;
+
 Unit::Unit(int power)
 {
 	m_power = power;
@@ -57,9 +59,9 @@ QChar Unit::prefix() const
 	return '?';
 }
 
-QString Unit::string(QString unitString) const
+QString Unit::string(QString unitString, bool space) const
 {
-	return QString(" ") + prefix() + unitString;
+	return (space ? QString(" ") : QString("")) + prefix() + unitString;
 }
 
 double Unit::multiplier() const
@@ -95,18 +97,10 @@ const Unit Units::getUnit(UnitType unit)
 		return Unit(-3);
 	else if (unit == UnitVRange)
 		return Unit(-6);
+	else if (unit == UnitABCD)
+		return Unit(-3);
+	else if (unit == UnitWidth)
+		return Unit(-3);
 
 	return Unit(0);
 }
-/*
-#define UNIT_POSITION 1e-3
-#define UNIT_FOCAL 1e-3
-#define UNIT_WAIST 1e-6
-#define UNIT_WAIST_POSITION 1e-3
-#define UNIT_RAYLEIGH 1e-6
-#define UNIT_WAVELENGTH 1e-9
-#define UNIT_DIVERGENCE 1e-3
-#define UNIT_CURVATURE 1e-3
-#define UNIT_HRANGE 1e-3
-#define UNIT_VRANGE 1e-6
-*/

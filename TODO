@@ -19,9 +19,13 @@ WISHLIST:
 	Optical cavities, eigen mode and stability.
 	Waist relative to selection
 
-BUGS :
-	Multiple properties handling
+BUGS:
 	When the status bar text changes, it may resize the main window
-	Check that the save command saves all parameters & optics
 	Proper optics ordering in magic waist
 	Magic waist does not trigger if the input waist is after the first optics
+	0 focal length may crash the program
+	Check direction of the curvature radius on the graph
+
+CONSTANT VIGILENCE:
+	Check that the save command saves all parameters & optics
+	Translations

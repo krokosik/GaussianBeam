@@ -28,15 +28,20 @@ public:
 
 public:
 	QChar prefix() const;
-	QString string(QString unitString) const;
+	QString string(QString unitString, bool space = true) const;
 	double multiplier() const;
 	double divider() const;
+
+public:
+	static const double infinity;
 
 private:
 	int m_power;
 };
 
-enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength, UnitDivergence, UnitCurvature, UnitHRange, UnitVRange};
+enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
+               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
+               UnitWidth};
 
 class Units
 {

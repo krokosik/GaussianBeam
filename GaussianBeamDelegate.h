@@ -33,8 +33,38 @@ class ABCDWidget : public QWidget
 public:
 	ABCDWidget(QWidget* parent = 0);
 
+public:
+	double A() { return m_ADoubleSpinBox.value(); }
+	double B() { return m_BDoubleSpinBox.value(); }
+	double C() { return m_CDoubleSpinBox.value(); }
+	double D() { return m_DDoubleSpinBox.value(); }
+	double width() { return m_widthDoubleSpinBox.value(); }
+	void setA(double A) { m_ADoubleSpinBox.setValue(A); }
+	void setB(double B) { m_BDoubleSpinBox.setValue(B); }
+	void setC(double C) { m_CDoubleSpinBox.setValue(C); }
+	void setD(double D) { m_DDoubleSpinBox.setValue(D); }
+	void setWidth(double width) { m_widthDoubleSpinBox.setValue(width); };
+
 private:
 	QDoubleSpinBox m_ADoubleSpinBox, m_BDoubleSpinBox, m_CDoubleSpinBox, m_DDoubleSpinBox;
+	QDoubleSpinBox m_widthDoubleSpinBox;
+};
+
+class CurvedInterfaceWidget : public QWidget
+{
+	Q_OBJECT
+
+public:
+	CurvedInterfaceWidget(QWidget* parent = 0);
+
+public:
+	double surfaceRadius() { return m_surfaceRadiusDoubleSpinBox.value(); }
+	double indexRatio() { return m_indexRatioDoubleSpinBox.value(); }
+	void setSurfaceRadius(double surfaceRadius) { m_surfaceRadiusDoubleSpinBox.setValue(surfaceRadius); }
+	void setIndexRatio(double indexRatio) { m_indexRatioDoubleSpinBox.setValue(indexRatio); }
+
+private:
+	QDoubleSpinBox m_surfaceRadiusDoubleSpinBox, m_indexRatioDoubleSpinBox;
 };
 
 class GaussianBeamDelegate : public QItemDelegate

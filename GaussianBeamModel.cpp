@@ -92,11 +92,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		else if (m_optics[index.row()]->type() == GenericABCDType)
 		{
 			return QString("A = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->A()) +
-			       QString("\nB = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->B()) +
-			       QString("\nC = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->C()) +
+			       QString("\nB = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->B()*Units::getUnit(UnitABCD).divider())
+			                         + Units::getUnit(UnitABCD).string("m") +
+			       QString("\nC = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->C()/Units::getUnit(UnitABCD).divider())
+			                         + " /" + Units::getUnit(UnitABCD).string("m", false) +
 			       QString("\nD = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->D()) +
-			       QString("\nwidth = ") + QString::number(m_optics[index.row()]->width()*Units::getUnit(UnitPosition).divider())
-			                       + Units::getUnit(UnitPosition).string("m");
+			       QString("\nwidth = ") + QString::number(m_optics[index.row()]->width()*Units::getUnit(UnitWidth).divider())
+			                       + Units::getUnit(UnitWidth).string("m");
 		}
 	}
 	else if (index.column() == COL_WAIST)
@@ -177,8 +179,25 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 			dynamic_cast<CurvedMirror*>(m_optics[index.row()])->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (m_optics[index.row()]->type() == FlatInterfaceType)
 			dynamic_cast<FlatInterface*>(m_optics[index.row()])->setIndexRatio(value.toDouble());
+//		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
+//			dynamic_cast<CurvedInterface*>(m_optics[index.row()])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
-			dynamic_cast<CurvedInterface*>(m_optics[index.row()])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
+		{
+			CurvedInterface* optics = dynamic_cast<CurvedInterface*>(m_optics[index.row()]);
+			optics->setSurfaceRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
+			optics->setIndexRatio(value.toList()[1].toDouble());
+		}
+		else if (m_optics[index.row()]->type() == GenericABCDType)
+		{
+			/// @todo check that the ABCD matrix is valid, e.g. by introducing bool GenericABCD::isValid()
+			GenericABCD* ABCDOptics = dynamic_cast<GenericABCD*>(m_optics[index.row()]);
+			ABCDOptics->setA(value.toList()[0].toDouble());
+			ABCDOptics->setB(value.toList()[1].toDouble()*Units::getUnit(UnitABCD).multiplier());
+			ABCDOptics->setC(value.toList()[2].toDouble()/Units::getUnit(UnitABCD).multiplier());
+			ABCDOptics->setD(value.toList()[3].toDouble());
+			ABCDOptics->setWidth(value.toList()[4].toDouble()*Units::getUnit(UnitWidth).multiplier());
+		}
+
 	}
 	else if (index.column() == COL_WAIST)
 	{
