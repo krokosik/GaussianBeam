@@ -55,6 +55,7 @@ public:
 
 public:
 	const Optics& optics(int row) const { return *(m_optics[row]); }
+	const Optics* opticsPtr(int row) const { return m_optics[row]; }
 	const Optics& optics(const QModelIndex& index) const { return optics(index.row()); }
 	const Beam& beam(int row) const { return m_beams[row]; }
 	double wavelength() { return m_wavelength; }

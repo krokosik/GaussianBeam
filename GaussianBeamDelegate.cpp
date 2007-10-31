@@ -22,6 +22,17 @@
 
 #include <QtGui>
 
+ABCDWidget::ABCDWidget(QWidget* parent)
+	: QWidget(parent)
+{
+	 QVBoxLayout *layout = new QVBoxLayout(this);
+	 layout->addWidget(&m_ADoubleSpinBox);
+	 layout->addWidget(&m_BDoubleSpinBox);
+	 layout->addWidget(&m_CDoubleSpinBox);
+	 layout->addWidget(&m_DDoubleSpinBox);
+	 setLayout(layout);
+}
+
 GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model)
 	: QItemDelegate(parent)
 	, m_model(model)
@@ -57,6 +68,13 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case COL_PROPERTIES:
 	{
 		const Optics& optics = m_model->optics(index);
+
+		if (optics.type() == GenericABCDType)
+		{
+			ABCDWidget* editor = new ABCDWidget(parent);
+			return editor;
+		}
+
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
 		editor->setMinimum(-infinity);
@@ -90,11 +108,13 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case COL_LOCK:
 	{
+		const Optics& optics = m_model->optics(index);
 		QComboBox* editor = new QComboBox(parent);
 		editor->addItem(tr("none"));
 		editor->addItem(tr("absolute"));
 		for (int i = 0; i < m_model->rowCount(); i++)
-			editor->addItem(QString::fromUtf8(m_model->optics(i).name().c_str()));
+			if (!optics.relativeLockedTo(m_model->opticsPtr(i)) || (m_model->opticsPtr(i) == optics.relativeLockParent()))
+				editor->addItem(QString::fromUtf8(m_model->optics(i).name().c_str()));
 		return editor;
 	}
 	default:
@@ -127,6 +147,12 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	case COL_PROPERTIES:
 	{
 		const Optics& optics = m_model->optics(index);
+
+		if (optics.type() == GenericABCDType)
+		{
+			break;
+		}
+
 		double value = 0.;
 		if (optics.type() == LensType)
 			value = dynamic_cast<const Lens&>(optics).focal()*Units::getUnit(UnitFocal).divider();
@@ -151,8 +177,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	{
 		QString value = m_model->data(index, Qt::DisplayRole).toString();
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
-		/// @bug todo with string
-		//comboBox->setCurrentIndex(value ? 0 : 1);
+		comboBox->setCurrentIndex(comboBox->findText(value));
 		break;
 	}
 	default:
@@ -171,7 +196,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	case COL_LOCK:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
-		model->setData(index, comboBox->currentIndex() == 0);
+		model->setData(index, comboBox->itemText(comboBox->currentIndex()));
 	}
 	default:
 		QItemDelegate::setModelData(editor, model, index);

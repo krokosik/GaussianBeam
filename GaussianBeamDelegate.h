@@ -21,8 +21,21 @@
 
 #include <QItemDelegate>
 #include <QModelIndex>
+#include <QWidget>
+#include <QDoubleSpinBox>
 
 class GaussianBeamModel;
+
+class ABCDWidget : public QWidget
+{
+	Q_OBJECT
+
+public:
+	ABCDWidget(QWidget* parent = 0);
+
+private:
+	QDoubleSpinBox m_ADoubleSpinBox, m_BDoubleSpinBox, m_CDoubleSpinBox, m_DDoubleSpinBox;
+};
 
 class GaussianBeamDelegate : public QItemDelegate
 {
