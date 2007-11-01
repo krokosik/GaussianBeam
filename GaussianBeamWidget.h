@@ -76,7 +76,7 @@ private:
 	void openFile(const QString& path = QString());
 	void saveFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
-	void parseXmlOptics(const QDomElement& element);
+	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
 	void setCurrentFile(const QString& path);
 	void updateUnits();
 	void insertOptics(Optics* optics, bool resizeRow = false);

@@ -159,7 +159,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->addItem(tr("none"));
 		editor->addItem(tr("absolute"));
 		for (int i = 0; i < m_model->rowCount(); i++)
-			if (!optics.relativeLockedTo(m_model->opticsPtr(i)) || (m_model->opticsPtr(i) == optics.relativeLockParent()))
+			if (!m_model->optics(i).relativeLockedTo(m_model->opticsPtr(index.row())) || (m_model->opticsPtr(i) == optics.relativeLockParent()))
 				editor->addItem(QString::fromUtf8(m_model->optics(i).name().c_str()));
 		return editor;
 	}

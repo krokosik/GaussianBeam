@@ -6,7 +6,7 @@ WISHLIST:
 	Lens selection
 	Sensitivity graph
 	Lens movement magnification
-	Lens lock (relative & telescope)
+	Telescope lens lock
 	Print
 	Better Wavelength to RGB function
 	Forbidden area
@@ -25,6 +25,7 @@ BUGS:
 	Magic waist does not trigger if the input waist is after the first optics
 	0 focal length may crash the program
 	Check direction of the curvature radius on the graph
+	What happens to tree pointers when cloning the optics ?
 
 CONSTANT VIGILENCE:
 	Check that the save command saves all parameters & optics

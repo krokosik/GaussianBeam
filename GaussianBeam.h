@@ -105,7 +105,7 @@ class Optics
 {
 public:
 	Optics(OpticsType type, bool ABCD, double position, std::string name);
-	virtual ~Optics() {}
+	virtual ~Optics();
 	virtual Optics* clone() const = 0;
 
 public:
@@ -142,15 +142,15 @@ public:
 	const std::list<Optics*>& relativeLockChildren() const { return m_relativeLockChildren; }
 	/**
 	* Query relative lock
-	* @return true if the optics is within the locking tree of @p optics
+	* @return true if @p optics within the locking tree of this optics
 	*/
 	bool relativeLockedTo(const Optics* const optics) const;
 	/**
 	* @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
 	*/
-	bool relativeLockedTreeAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
+	bool relativeLockedTreeAbsoluteLock() const { return relativeLockRootConst()->absoluteLock(); }
 	/**
-	* Lock the optics to the given optics. Only works if @p optics is not within the locking tree of this optics.
+	* Lock the optics to the given @p optics. Only works if @p optics is not within the locking tree of this optics.
 	* If the locking succeeds, the absolute lock is set to false.
 	* @return true if success, false otherwise
 	*/
@@ -168,8 +168,17 @@ public:
 	void setPositionCheckLock(double position);
 
 private:
-	const Optics* relativeLockRoot() const;
+	/// @todo this is not clean. Think...
+	Optics* relativeLockRoot();
+	const Optics* relativeLockRootConst() const;
+	/**
+	* Check if @p optics is this optics or recursively one of this optic's descendants
+	*/
 	bool isRelativeLockDescendant(const Optics* const optics) const;
+	/**
+	* translate this optics and recursvely its descendant by @p distance
+	*/
+	void moveDescendant(double distance);
 
 protected:
 	void setType(OpticsType type) { m_type = type; }

@@ -160,6 +160,15 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	, m_relativeLockParent(0)
 {}
 
+Optics::~Optics()
+{
+	// Detach all children
+	for (list<Optics*>::iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
+		(*it)->m_relativeLockParent = 0;
+
+	relativeUnlock();
+}
+
 void Optics::setAbsoluteLock(bool absoluteLock)
 {
 	if (absoluteLock)
@@ -170,7 +179,7 @@ void Optics::setAbsoluteLock(bool absoluteLock)
 
 bool Optics::relativeLockedTo(const Optics* const optics) const
 {
-	return relativeLockRoot()->isRelativeLockDescendant(optics);
+	return relativeLockRootConst()->isRelativeLockDescendant(optics);
 }
 
 bool Optics::relativeLockTo(Optics* optics)
@@ -188,17 +197,18 @@ bool Optics::relativeLockTo(Optics* optics)
 	return true;
 }
 
-/**
-* Detach the optics from the relative lock tree.
-* @return true if success, false otherwise
-*/
 bool Optics::relativeUnlock()
 {
-	///@todo
-	return false;
+	if (!m_relativeLockParent)
+		return false;
+
+	m_relativeLockParent->m_relativeLockChildren.remove(this);
+	m_relativeLockParent = 0;
+
+	return true;
 }
 
-const Optics* Optics::relativeLockRoot() const
+Optics* Optics::relativeLockRoot()
 {
 	if (!m_relativeLockParent)
 		return this;
@@ -206,24 +216,42 @@ const Optics* Optics::relativeLockRoot() const
 		return m_relativeLockParent->relativeLockRoot();
 }
 
+const Optics* Optics::relativeLockRootConst() const
+{
+	if (!m_relativeLockParent)
+		return this;
+	else
+		return m_relativeLockParent->relativeLockRootConst();
+}
+
 bool Optics::isRelativeLockDescendant(const Optics* const optics) const
 {
 	if (optics == this)
 		return true;
 
+	cerr << "Checking if " << name() << " is connected to " << optics->name() << endl;
+
 	for (list<Optics*>::const_iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
-		return isRelativeLockDescendant(*it);
+		if ((*it)->isRelativeLockDescendant(optics))
+			return true;
 
 	return false;
 }
 
-void Optics::setPositionCheckLock(double position)
+void Optics::moveDescendant(double distance)
+{
+	setPosition(position() + distance);
+
+	for (list<Optics*>::iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
+		(*it)->moveDescendant(distance);
+}
+
+void Optics::setPositionCheckLock(double pos)
 {
 	if (relativeLockedTreeAbsoluteLock())
 		return;
 
-	/// @todo move the whole tree
-	setPosition(position);
+	relativeLockRoot()->moveDescendant(pos - position());
 }
 
 /////////////////////////////////////////////////

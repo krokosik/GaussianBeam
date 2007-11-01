@@ -113,7 +113,6 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		return QString::fromUtf8(m_optics[index.row()]->name().c_str());
 	else if (index.column() == COL_LOCK)
 	{
-		/// @bug what if the parent name changes ?
 		if (m_optics[index.row()]->absoluteLock())
 			return tr("absolute");
 		else if (m_optics[index.row()]->relativeLockParent())
@@ -167,10 +166,11 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	if (!index.isValid() || (role != Qt::EditRole) || value.isNull() || !value.isValid())
 		return false;
 
-	bool backward = false;
-
 	if (index.column() == COL_POSITION)
+	{
 		m_optics[index.row()]->setPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
+		computeBeams();
+	}
 	else if (index.column() == COL_PROPERTIES)
 	{
 		if (m_optics[index.row()]->type() == LensType)
@@ -197,34 +197,59 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 			ABCDOptics->setD(value.toList()[3].toDouble());
 			ABCDOptics->setWidth(value.toList()[4].toDouble()*Units::getUnit(UnitWidth).multiplier());
 		}
-
+		computeBeams();
 	}
 	else if (index.column() == COL_WAIST)
 	{
 		m_beams[index.row()].setWaist(value.toDouble()*Units::getUnit(UnitWaist).multiplier());
-		backward = true;
+		computeBeams(index.row(), true);
 	}
 	else if (index.column() == COL_WAIST_POSITION)
 	{
 		m_beams[index.row()].setWaistPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
-		backward = true;
+		computeBeams(index.row(), true);
 	}
 	else if (index.column() == COL_RAYLEIGH)
 	{
 		m_beams[index.row()].setRayleigh(value.toDouble()*Units::getUnit(UnitRayleigh).multiplier());
-		backward = true;
+		computeBeams(index.row(), true);
 	}
 	else if (index.column() == COL_DIVERGENCE)
 	{
 		m_beams[index.row()].setDivergence(value.toDouble()*Units::getUnit(UnitDivergence).multiplier());
-		backward = true;
+		computeBeams(index.row(), true);
 	}
 	else if (index.column() == COL_NAME)
-		m_optics[index.row()]->setName(value.toString().toUtf8().data());
+	{
+		std::string name = value.toString().toUtf8().data();
+		for (int i = 0; i < rowCount(); i++)
+			if (m_optics[i]->name() == name)
+				return false;
+		m_optics[index.row()]->setName(name);
+	}
  	else if (index.column() == COL_LOCK)
-		m_optics[index.row()]->setAbsoluteLock(value.toBool());
+	{
+		QString string = value.toString();
 
-	computeBeams(index.row(), backward);
+		qDebug() << "Model : setData : lock :" << string;
+
+		if (string == tr("absolute"))
+			m_optics[index.row()]->setAbsoluteLock(true);
+		else if (string == tr("none"))
+		{
+			m_optics[index.row()]->setAbsoluteLock(false);
+			m_optics[index.row()]->relativeUnlock();
+		}
+		else
+		{
+			for (int i = 0; i < rowCount(); i++)
+				if (QString::fromUtf8(m_optics[i]->name().c_str()) == string)
+				{
+					m_optics[index.row()]->relativeLockTo(m_optics[i]);
+					break;
+				}
+		}
+	}
 
 	return true;
 }
@@ -263,6 +288,9 @@ bool GaussianBeamModel::removeRows(int row, int count, const QModelIndex& parent
 	beginRemoveRows(parent, row, row + count -1);
 	for (int i = row + count - 1; i >= row; i--)
 	{
+		qDebug() << "deleting optics" << i;
+		delete m_optics[i];
+		qDebug() << "removing optics from list " << i;
 		m_optics.removeAt(i);
 		m_beams.removeAt(i);
 	}
@@ -325,7 +353,7 @@ void GaussianBeamModel::addOptics(Optics* optics, int row)
 void GaussianBeamModel::setOpticsPosition(int row, double position)
 {
 	m_optics[row]->setPositionCheckLock(position);
-	computeBeams(row);
+	computeBeams();
 }
 
 void GaussianBeamModel::setInputBeam(const Beam& beam, bool update)
@@ -334,7 +362,7 @@ void GaussianBeamModel::setInputBeam(const Beam& beam, bool update)
 	createBeam->setPosition(beam.waistPosition());
 	createBeam->setWaist(beam.waist());
 	if (update)
-		computeBeams(0, false);
+		computeBeams();
 }
 
 QString GaussianBeamModel::opticsName(OpticsType opticsType) const

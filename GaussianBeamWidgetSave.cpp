@@ -81,6 +81,7 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 {
 	QDomElement child = element.firstChildElement();
 	int fitRow = fitModel->rowCount() - 1;
+	QList<QString> lockTree;
 
 	while (!child.isNull())
 	{
@@ -131,17 +132,26 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 		         (child.tagName() == "flatInterface") ||
 		         (child.tagName() == "curvedInterface") ||
 		         (child.tagName() == "genericABCD"))
-			parseXmlOptics(child);
+			parseXmlOptics(child, lockTree);
 		else
 			qDebug() << " -> Unknown tag: " << child.tagName();
 
 		child = child.nextSiblingElement();
 	}
+
+	for (int i = 0; i < lockTree.size(); i++)
+		if (!lockTree[i].isEmpty())
+			/// @todo transfert this logic to OpticsBench when in operation
+			/// @todo check for and get rid of other occurences of setData outside GaussianBeamDelegate
+			model->setData(model->index(i, COL_LOCK), lockTree[i]);
+
 }
 
-void GaussianBeamWidget::parseXmlOptics(const QDomElement& element)
+void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QString>& lockTree)
 {
 	Optics* optics;
+
+	lockTree.push_back(QString());
 
 	if (element.tagName() == "inputBeam")
 		optics = new CreateBeam(1., 1., "");
@@ -173,6 +183,8 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element)
 			optics->setName(child.text().toUtf8().data());
 		else if (child.tagName() == "absoluteLock")
 			optics->setAbsoluteLock(child.text().toInt() == 1 ? true : false);
+		else if (child.tagName() == "relativeLockParent")
+			lockTree.back() = child.text();
 		else if (child.tagName() == "width")
 			optics->setWidth(child.text().toDouble());
 		else if (child.tagName() == "waist")
@@ -299,6 +311,8 @@ void GaussianBeamWidget::saveFile(const QString &path)
 		xmlWriter.writeTextElement("position", QString::number(optics.position()));
 		xmlWriter.writeTextElement("name", QString(optics.name().c_str()));
 		xmlWriter.writeTextElement("absoluteLock", QString::number(optics.absoluteLock() ? true : false));
+		if (optics.relativeLockParent())
+			xmlWriter.writeTextElement("relativeLockParent", QString(optics.relativeLockParent()->name().c_str()));
 		xmlWriter.writeEndElement();
 	}
 	xmlWriter.writeEndElement();

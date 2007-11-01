@@ -594,14 +594,14 @@ void OpticsView::paintEvent(QPaintEvent* event)
 		painter.setBrush(beamBrush);
 		drawBeam(painter, GBModel->beam(row), abs_beamRange, row == model()->rowCount()-1);
 
-		Beam cavityBeam = GBModel->cavityEigenBeam(row);
+/*		Beam cavityBeam = GBModel->cavityEigenBeam(row);
 		if (GBModel->isCavityStable() && cavityBeam.isValid())
 		{
 			painter.setPen(cavityBeamPen);
 			painter.setBrush(cavityBeamBrush);
 			drawBeam(painter, cavityBeam, abs_beamRange);
 		}
-
+*/
 
 		// Relative position
 /*		if (row != 0)
