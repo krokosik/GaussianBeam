@@ -9,7 +9,7 @@
 TEMPLATE = app
 TARGET =
 DEPENDPATH += .
-INCLUDEPATH += .
+INCLUDEPATH += . ./src
 CONFIG += qt
 QT += xml
 
@@ -24,9 +24,14 @@ CODECFORTR     = UTF-8
 CODECFORSRC    = UTF-8
 
 # Input
-HEADERS += GaussianBeam.h GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
+# src
+HEADERS += src/GaussianBeam.h src/Statistics.h
+SOURCES += src/GaussianBeam.cpp
+# gui
+HEADERS += GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
            GaussianBeamModel.h Unit.h
-SOURCES += GaussianBeam.cpp GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
+SOURCES += GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
            GaussianBeamModel.cpp Unit.cpp GaussianBeamWidgetSave.cpp
 FORMS   = GaussianBeamForm.ui
-TRANSLATIONS = GaussianBeam_fr.ts
+
+TRANSLATIONS = po/GaussianBeam_fr.ts
