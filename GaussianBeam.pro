@@ -28,10 +28,10 @@ CODECFORSRC    = UTF-8
 HEADERS += src/GaussianBeam.h src/Statistics.h
 SOURCES += src/GaussianBeam.cpp
 # gui
-HEADERS += GaussianBeamWidget.h OpticsView.h GaussianBeamDelegate.h \
-           GaussianBeamModel.h Unit.h
-SOURCES += GaussianBeamWidget.cpp main.cpp OpticsView.cpp GaussianBeamDelegate.cpp \
-           GaussianBeamModel.cpp Unit.cpp GaussianBeamWidgetSave.cpp
-FORMS   = GaussianBeamForm.ui
+HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/GaussianBeamDelegate.h \
+           gui/GaussianBeamModel.h gui/Unit.h
+SOURCES += gui/GaussianBeamWidget.cpp gui/OpticsView.cpp gui/GaussianBeamDelegate.cpp \
+           gui/GaussianBeamModel.cpp gui/Unit.cpp gui/GaussianBeamWidgetSave.cpp gui/main.cpp
+FORMS   = gui/GaussianBeamForm.ui
 
 TRANSLATIONS = po/GaussianBeam_fr.ts
