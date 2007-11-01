@@ -21,6 +21,7 @@
 
 #include "ui_GaussianBeamForm.h"
 #include "GaussianBeam.h"
+#include "Optics.h"
 
 #include <QWidget>
 

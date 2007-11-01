@@ -25,8 +25,8 @@ CODECFORSRC    = UTF-8
 
 # Input
 # src
-HEADERS += src/GaussianBeam.h src/Statistics.h
-SOURCES += src/GaussianBeam.cpp
+HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h
+SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp
 # gui
 HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/GaussianBeamDelegate.h \
            gui/GaussianBeamModel.h gui/Unit.h

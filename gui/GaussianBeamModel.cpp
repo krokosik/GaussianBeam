@@ -29,10 +29,10 @@ GaussianBeamModel::GaussianBeamModel(QObject* parent)
 	m_first_cavity_row = 0;
 	m_last_cavity_row = 0;
 	m_ring_cavity = true;
-	m_optics.clear();
+	m_bench.m_optics.clear();
 
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), rowCount());
-	m_optics[0]->setAbsoluteLock(true);
+	m_bench.m_optics[0]->setAbsoluteLock(true);
 
 	/// @todo remove this later
 	m_first_cavity_row = 1;
@@ -42,13 +42,13 @@ GaussianBeamModel::GaussianBeamModel(QObject* parent)
 
 GaussianBeamModel::~GaussianBeamModel()
 {
-	for (int i = 0; i < m_optics.size(); i++)
-		delete m_optics[i];
+	for (int i = 0; i < m_bench.m_optics.size(); i++)
+		delete m_bench.m_optics[i];
 }
 
 int GaussianBeamModel::rowCount(const QModelIndex& /*parent*/) const
 {
-	return m_optics.size();
+	return m_bench.m_optics.size();
 }
 
 int GaussianBeamModel::columnCount(const QModelIndex& /*parent*/) const
@@ -62,42 +62,42 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		return QVariant();
 
 	if (index.column() == COL_OPTICS)
-		return opticsName(m_optics[index.row()]->type());
+		return opticsName(optics(index).type());
 	else if (index.column() == COL_POSITION)
-		return m_optics[index.row()]->position()*Units::getUnit(UnitPosition).divider();
+		return optics(index).position()*Units::getUnit(UnitPosition).divider();
 	else if ((index.column() == COL_RELATIVE_POSITION) && (index.row() > 0))
-		return (m_optics[index.row()]->position() - m_optics[index.row()-1]->position())*Units::getUnit(UnitPosition).divider();
+		return (optics(index).position() - m_bench.m_optics[index.row()-1]->position())*Units::getUnit(UnitPosition).divider();
 	else if (index.column() == COL_PROPERTIES)
 	{
-		if (m_optics[index.row()]->type() == LensType)
+		if (optics(index).type() == LensType)
 		{
-			return QString("f = ") + QString::number(dynamic_cast<Lens*>(m_optics[index.row()])->focal()*Units::getUnit(UnitFocal).divider())
+			return QString("f = ") + QString::number(dynamic_cast<Lens*>(m_bench.m_optics[index.row()])->focal()*Units::getUnit(UnitFocal).divider())
 			                       + Units::getUnit(UnitFocal).string("m");
 		}
-		else if (m_optics[index.row()]->type() == CurvedMirrorType)
+		else if (optics(index).type() == CurvedMirrorType)
 		{
-			return QString("R = ") + QString::number(dynamic_cast<CurvedMirror*>(m_optics[index.row()])->curvatureRadius()*Units::getUnit(UnitCurvature).divider())
+			return QString("R = ") + QString::number(dynamic_cast<CurvedMirror*>(m_bench.m_optics[index.row()])->curvatureRadius()*Units::getUnit(UnitCurvature).divider())
 			                       + Units::getUnit(UnitCurvature).string("m");
 		}
-		else if (m_optics[index.row()]->type() == FlatInterfaceType)
+		else if (optics(index).type() == FlatInterfaceType)
 		{
-			return QString("n2/n1 = ") + QString::number(dynamic_cast<FlatInterface*>(m_optics[index.row()])->indexRatio());
+			return QString("n2/n1 = ") + QString::number(dynamic_cast<FlatInterface*>(m_bench.m_optics[index.row()])->indexRatio());
 		}
-		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
+		else if (optics(index).type() == CurvedInterfaceType)
 		{
-			return QString("n2/n1 = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->indexRatio()) +
-			       QString("\nR = ") + QString::number(dynamic_cast<CurvedInterface*>(m_optics[index.row()])->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
+			return QString("n2/n1 = ") + QString::number(dynamic_cast<CurvedInterface*>(m_bench.m_optics[index.row()])->indexRatio()) +
+			       QString("\nR = ") + QString::number(dynamic_cast<CurvedInterface*>(m_bench.m_optics[index.row()])->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
 			                       + Units::getUnit(UnitCurvature).string("m");
 		}
-		else if (m_optics[index.row()]->type() == GenericABCDType)
+		else if (optics(index).type() == GenericABCDType)
 		{
-			return QString("A = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->A()) +
-			       QString("\nB = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->B()*Units::getUnit(UnitABCD).divider())
+			return QString("A = ") + QString::number(dynamic_cast<ABCD*>(m_bench.m_optics[index.row()])->A()) +
+			       QString("\nB = ") + QString::number(dynamic_cast<ABCD*>(m_bench.m_optics[index.row()])->B()*Units::getUnit(UnitABCD).divider())
 			                         + Units::getUnit(UnitABCD).string("m") +
-			       QString("\nC = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->C()/Units::getUnit(UnitABCD).divider())
+			       QString("\nC = ") + QString::number(dynamic_cast<ABCD*>(m_bench.m_optics[index.row()])->C()/Units::getUnit(UnitABCD).divider())
 			                         + " /" + Units::getUnit(UnitABCD).string("m", false) +
-			       QString("\nD = ") + QString::number(dynamic_cast<ABCD*>(m_optics[index.row()])->D()) +
-			       QString("\nwidth = ") + QString::number(m_optics[index.row()]->width()*Units::getUnit(UnitWidth).divider())
+			       QString("\nD = ") + QString::number(dynamic_cast<ABCD*>(m_bench.m_optics[index.row()])->D()) +
+			       QString("\nwidth = ") + QString::number(optics(index).width()*Units::getUnit(UnitWidth).divider())
 			                       + Units::getUnit(UnitWidth).string("m");
 		}
 	}
@@ -110,13 +110,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 	else if (index.column() == COL_DIVERGENCE)
 		return m_beams[index.row()].divergence()*Units::getUnit(UnitDivergence).divider();
 	else if (index.column() == COL_NAME)
-		return QString::fromUtf8(m_optics[index.row()]->name().c_str());
+		return QString::fromUtf8(optics(index).name().c_str());
 	else if (index.column() == COL_LOCK)
 	{
-		if (m_optics[index.row()]->absoluteLock())
+		if (optics(index).absoluteLock())
 			return tr("absolute");
-		else if (m_optics[index.row()]->relativeLockParent())
-			return QString::fromUtf8(m_optics[index.row()]->relativeLockParent()->name().c_str());
+		else if (optics(index).relativeLockParent())
+			return QString::fromUtf8(optics(index).relativeLockParent()->name().c_str());
 		else
 			return tr("none");
 	}
@@ -168,29 +168,29 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 
 	if (index.column() == COL_POSITION)
 	{
-		m_optics[index.row()]->setPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
+		m_bench.m_optics[index.row()]->setPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
 		computeBeams();
 	}
 	else if (index.column() == COL_PROPERTIES)
 	{
-		if (m_optics[index.row()]->type() == LensType)
-			dynamic_cast<Lens*>(m_optics[index.row()])->setFocal(value.toDouble()*Units::getUnit(UnitFocal).multiplier());
-		else if (m_optics[index.row()]->type() == CurvedMirrorType)
-			dynamic_cast<CurvedMirror*>(m_optics[index.row()])->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
-		else if (m_optics[index.row()]->type() == FlatInterfaceType)
-			dynamic_cast<FlatInterface*>(m_optics[index.row()])->setIndexRatio(value.toDouble());
-//		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
-//			dynamic_cast<CurvedInterface*>(m_optics[index.row()])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
-		else if (m_optics[index.row()]->type() == CurvedInterfaceType)
+		if (optics(index).type() == LensType)
+			dynamic_cast<Lens*>(m_bench.m_optics[index.row()])->setFocal(value.toDouble()*Units::getUnit(UnitFocal).multiplier());
+		else if (optics(index).type() == CurvedMirrorType)
+			dynamic_cast<CurvedMirror*>(m_bench.m_optics[index.row()])->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
+		else if (optics(index).type() == FlatInterfaceType)
+			dynamic_cast<FlatInterface*>(m_bench.m_optics[index.row()])->setIndexRatio(value.toDouble());
+//		else if (optics(index).type() == CurvedInterfaceType)
+//			dynamic_cast<CurvedInterface*>(m_bench.m_optics[index.row()])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
+		else if (optics(index).type() == CurvedInterfaceType)
 		{
-			CurvedInterface* optics = dynamic_cast<CurvedInterface*>(m_optics[index.row()]);
+			CurvedInterface* optics = dynamic_cast<CurvedInterface*>(m_bench.m_optics[index.row()]);
 			optics->setSurfaceRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
 			optics->setIndexRatio(value.toList()[1].toDouble());
 		}
-		else if (m_optics[index.row()]->type() == GenericABCDType)
+		else if (optics(index).type() == GenericABCDType)
 		{
 			/// @todo check that the ABCD matrix is valid, e.g. by introducing bool GenericABCD::isValid()
-			GenericABCD* ABCDOptics = dynamic_cast<GenericABCD*>(m_optics[index.row()]);
+			GenericABCD* ABCDOptics = dynamic_cast<GenericABCD*>(m_bench.m_optics[index.row()]);
 			ABCDOptics->setA(value.toList()[0].toDouble());
 			ABCDOptics->setB(value.toList()[1].toDouble()*Units::getUnit(UnitABCD).multiplier());
 			ABCDOptics->setC(value.toList()[2].toDouble()/Units::getUnit(UnitABCD).multiplier());
@@ -223,9 +223,9 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	{
 		std::string name = value.toString().toUtf8().data();
 		for (int i = 0; i < rowCount(); i++)
-			if (m_optics[i]->name() == name)
+			if (m_bench.m_optics[i]->name() == name)
 				return false;
-		m_optics[index.row()]->setName(name);
+		m_bench.m_optics[index.row()]->setName(name);
 	}
  	else if (index.column() == COL_LOCK)
 	{
@@ -234,18 +234,18 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		qDebug() << "Model : setData : lock :" << string;
 
 		if (string == tr("absolute"))
-			m_optics[index.row()]->setAbsoluteLock(true);
+			m_bench.m_optics[index.row()]->setAbsoluteLock(true);
 		else if (string == tr("none"))
 		{
-			m_optics[index.row()]->setAbsoluteLock(false);
-			m_optics[index.row()]->relativeUnlock();
+			m_bench.m_optics[index.row()]->setAbsoluteLock(false);
+			m_bench.m_optics[index.row()]->relativeUnlock();
 		}
 		else
 		{
 			for (int i = 0; i < rowCount(); i++)
-				if (QString::fromUtf8(m_optics[i]->name().c_str()) == string)
+				if (QString::fromUtf8(m_bench.m_optics[i]->name().c_str()) == string)
 				{
-					m_optics[index.row()]->relativeLockTo(m_optics[i]);
+					m_bench.m_optics[index.row()]->relativeLockTo(m_bench.m_optics[i]);
 					break;
 				}
 		}
@@ -265,7 +265,7 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		(index.column() == COL_WAIST_POSITION) ||
 		(index.column() == COL_RAYLEIGH) ||
 		(index.column() == COL_DIVERGENCE) ||
-		(index.column() == COL_PROPERTIES) && (m_optics[index.row()]->type() != FlatMirrorType))
+		(index.column() == COL_PROPERTIES) && (optics(index).type() != FlatMirrorType))
 		flags |= Qt::ItemIsEditable;
 
 	return flags;
@@ -276,7 +276,7 @@ bool GaussianBeamModel::insertRows(int row, int count, const QModelIndex& parent
 	beginInsertRows(parent, row, row + count -1);
 	for (int i = row; i < row + count; i++)
 	{
-		m_optics.insert(m_optics.begin() + row,  0); /// @todo is this 0 harmfull ?
+		m_bench.m_optics.insert(m_bench.m_optics.begin() + row,  0); /// @todo is this 0 harmfull ?
 		m_beams.insert(m_beams.begin() + row, Beam());
 	}
 	endInsertRows();
@@ -289,9 +289,11 @@ bool GaussianBeamModel::removeRows(int row, int count, const QModelIndex& parent
 	for (int i = row + count - 1; i >= row; i--)
 	{
 		qDebug() << "deleting optics" << i;
-		delete m_optics[i];
+		delete m_bench.m_optics[i];
 		qDebug() << "removing optics from list " << i;
-		m_optics.removeAt(i);
+		std::vector<Optics*>::iterator it = m_bench.m_optics.begin();
+		it += i;
+		m_bench.m_optics.erase(it);
 		m_beams.removeAt(i);
 	}
 	computeBeams(row);
@@ -346,19 +348,19 @@ void GaussianBeamModel::setWavelength(double wavelength)
 void GaussianBeamModel::addOptics(Optics* optics, int row)
 {
 	insertRow(row);
-	m_optics[row] = optics;
+	m_bench.m_optics[row] = optics;
 	computeBeams(row);
 }
 
 void GaussianBeamModel::setOpticsPosition(int row, double position)
 {
-	m_optics[row]->setPositionCheckLock(position);
+	m_bench.m_optics[row]->setPositionCheckLock(position);
 	computeBeams();
 }
 
 void GaussianBeamModel::setInputBeam(const Beam& beam, bool update)
 {
-	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
+	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_bench.m_optics[0]);
 	createBeam->setPosition(beam.waistPosition());
 	createBeam->setWaist(beam.waist());
 	if (update)
@@ -395,10 +397,10 @@ void GaussianBeamModel::computeBeams(int changedRow, bool backward)
 	{
 		beam = m_beams[changedRow];
 		for (int row = changedRow + 1; row < rowCount(); row++)
-			m_beams[row] = beam = m_optics[row]->image(beam);
+			m_beams[row] = beam = m_bench.m_optics[row]->image(beam);
 		beam = m_beams[changedRow];
 		for (int row = changedRow - 1; row >= 0; row--)
-			m_beams[row] = beam = m_optics[row + 1]->antecedent(beam);
+			m_beams[row] = beam = m_bench.m_optics[row + 1]->antecedent(beam);
 		setInputBeam(beam, false);
 		emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 	}
@@ -410,7 +412,7 @@ void GaussianBeamModel::computeBeams(int changedRow, bool backward)
 			beam = m_beams[changedRow - 1];
 
 		for (int row = changedRow; row < rowCount(); row++)
-			m_beams[row] = beam = m_optics[row]->image(beam);
+			m_beams[row] = beam = m_bench.m_optics[row]->image(beam);
 		emit dataChanged(index(changedRow, 0), index(rowCount()-1, columnCount()-1));
 	}
 /*

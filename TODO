@@ -30,3 +30,5 @@ BUGS:
 CONSTANT VIGILENCE:
 	Check that the save command saves all parameters & optics
 	Translations
+	Pedantic
+	Valgrind
