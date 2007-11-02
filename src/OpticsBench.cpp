@@ -25,7 +25,60 @@
 using namespace std;
 
 OpticsBench::OpticsBench()
+	: m_cavity(1., 0., 1., 0., 0., 0.)
 {
+	m_first_cavity_row = 0;
+	m_last_cavity_row = 0;
+	m_ring_cavity = true;
+	m_optics.clear();
+
+	/// @todo remove this later
+	m_first_cavity_row = 1;
+	m_last_cavity_row = 2;
+}
+
+OpticsBench::~OpticsBench()
+{
+	// Delete optics
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		delete (*it);
+}
+
+//////////////////////////////////////////
+// Cavity stuff
+
+bool OpticsBench::isCavityStable() const
+{
+	if (m_first_cavity_row == 0)
+		return false;
+
+	if (m_cavity.stabilityCriterion1())
+	{
+		if (m_cavity.stabilityCriterion2())
+			return true;
+		else
+			cerr << "Cavity stable for 1 and not 2 !!!!";
+	}
+	else if (m_cavity.stabilityCriterion2())
+		cerr << "Cavity stable for 2 and not 1 !!!!";
+
+	return false;
+}
+
+const Beam OpticsBench::cavityEigenBeam(int row) const
+{
+	if (!isCavityStable() ||
+	   (row < m_first_cavity_row) ||
+	   (m_ring_cavity && (row >= m_last_cavity_row)) ||
+	   (!m_ring_cavity && (row > m_last_cavity_row)))
+		return Beam();
+
+	Beam beam = m_cavity.eigenMode(wavelength());
+
+	for (int i = m_first_cavity_row; i <= row; i++)
+		beam = optics(i)->image(beam);
+
+	return beam;
 }
 
 /////////////////////////////////////////////////

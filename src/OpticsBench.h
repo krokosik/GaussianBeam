@@ -29,14 +29,33 @@ class OpticsBench
 {
 public:
 	OpticsBench();
+	~OpticsBench();
 
 public:
 	int nOptics() const { return m_optics.size(); }
 	const Optics* optics(int index) const { return m_optics[index]; }
 //	Optics* optics(int index) { return m_optics[index]; }
+	double wavelength() const { return m_wavelength; }
+	void setWavelength(double wavelength) { m_wavelength = wavelength; }
 
+/// @todo make this private
 public:
 	std::vector<Optics*> m_optics;
+
+private:
+	double m_wavelength;
+	Beam m_targetBeam;
+
+/// Cavity stuff : @todo make a new class ?
+public:
+	bool isCavityStable() const;
+	const Beam cavityEigenBeam(int row) const;
+
+private:
+	GenericABCD m_cavity;
+	int m_first_cavity_row;
+	int m_last_cavity_row;
+	bool m_ring_cavity;
 };
 
 namespace GaussianBeam
