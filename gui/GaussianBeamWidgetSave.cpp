@@ -241,7 +241,7 @@ void GaussianBeamWidget::saveFile(const QString &path)
 	xmlWriter.writeDTD("<!DOCTYPE gaussianBeam>");
 	xmlWriter.writeStartElement("gaussianBeam");
 	xmlWriter.writeAttribute("version", "1.0");
-	xmlWriter.writeTextElement("wavelength", QString::number(model->wavelength()));
+	xmlWriter.writeTextElement("wavelength", QString::number(model->bench().wavelength()));
 	xmlWriter.writeStartElement("magicWaist");
 		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier()));
 		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));

@@ -25,6 +25,13 @@
 #include <vector>
 #include <list>
 
+class OpticsBenchNotify
+{
+public:
+	OpticsBenchNotify() {}
+	virtual void OpticsBenchDataChanged(int startOptics, int endOptics) = 0;
+};
+
 class OpticsBench
 {
 public:
@@ -35,16 +42,27 @@ public:
 	int nOptics() const { return m_optics.size(); }
 	const Optics* optics(int index) const { return m_optics[index]; }
 //	Optics* optics(int index) { return m_optics[index]; }
+	const Beam& beam(int row) const { return m_beams[row]; }
 	double wavelength() const { return m_wavelength; }
-	void setWavelength(double wavelength) { m_wavelength = wavelength; }
+	void setWavelength(double wavelength);
+
+	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
+
+	void registerNotify(OpticsBenchNotify* notify);
+
+private:
+	void setInputBeam(const Beam& beam, bool update);
 
 /// @todo make this private
 public:
 	std::vector<Optics*> m_optics;
+	std::vector<Beam> m_beams;
+	void computeBeams(int changedRow = 0, bool backward = false);
 
 private:
 	double m_wavelength;
 	Beam m_targetBeam;
+	std::list<OpticsBenchNotify*> m_notifyList;
 
 /// Cavity stuff : @todo make a new class ?
 public:

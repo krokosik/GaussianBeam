@@ -128,7 +128,7 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
-	model->setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
+	model->bench().setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 }
 
 void GaussianBeamWidget::updateUnits()
@@ -224,7 +224,7 @@ Beam GaussianBeamWidget::targetWaist()
 {
 	return Beam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
 	            doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
-	            model->wavelength());
+	            model->bench().wavelength());
 }
 
 void GaussianBeamWidget::displayOverlap()
@@ -232,7 +232,7 @@ void GaussianBeamWidget::displayOverlap()
 	qDebug() << "Display Overlap";
 	if (model->rowCount()-1 > 0)
 	{
-		double overlap = GaussianBeam::overlap(model->beam(model->rowCount()-1), targetWaist());
+		double overlap = GaussianBeam::overlap(model->bench().beam(model->rowCount()-1), targetWaist());
 		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
 	}
 	else
@@ -339,7 +339,7 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 
 	qDebug() << "Fitting" << positions.size() << "elements";
 
-	m_fitBeam = GaussianBeam::fitBeam(positions, radii, model->wavelength(), &rho2);
+	m_fitBeam = GaussianBeam::fitBeam(positions, radii, model->bench().wavelength(), &rho2);
 	QString text = tr("Waist") + " = " + QString::number(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
 	               tr("Position") + " = " + QString::number(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
 	               tr("R²") + " = " + QString::number(rho2);
@@ -350,7 +350,7 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 {
-	model->setInputBeam(m_fitBeam);
+	model->bench().setInputBeam(m_fitBeam);
 }
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()

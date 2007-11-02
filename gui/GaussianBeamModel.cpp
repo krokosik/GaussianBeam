@@ -26,6 +26,8 @@ GaussianBeamModel::GaussianBeamModel(QObject* parent)
 	: QAbstractTableModel(parent)
 
 {
+	m_bench.registerNotify(this);
+
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), rowCount());
 	m_bench.m_optics[0]->setAbsoluteLock(true);
 }
@@ -95,13 +97,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		}
 	}
 	else if (column == COL_WAIST)
-		return m_beams[row].waist()*Units::getUnit(UnitWaist).divider();
+		return m_bench.m_beams[row].waist()*Units::getUnit(UnitWaist).divider();
 	else if (column == COL_WAIST_POSITION)
-		return m_beams[row].waistPosition()*Units::getUnit(UnitPosition).divider();
+		return m_bench.m_beams[row].waistPosition()*Units::getUnit(UnitPosition).divider();
 	else if (column == COL_RAYLEIGH)
-		return m_beams[row].rayleigh()*Units::getUnit(UnitRayleigh).divider();
+		return m_bench.m_beams[row].rayleigh()*Units::getUnit(UnitRayleigh).divider();
 	else if (column == COL_DIVERGENCE)
-		return m_beams[row].divergence()*Units::getUnit(UnitDivergence).divider();
+		return m_bench.m_beams[row].divergence()*Units::getUnit(UnitDivergence).divider();
 	else if (column == COL_NAME)
 		return QString::fromUtf8(m_bench.optics(row)->name().c_str());
 	else if (column == COL_LOCK)
@@ -165,7 +167,7 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	if (column == COL_POSITION)
 	{
 		m_bench.m_optics[row]->setPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
-		computeBeams();
+		m_bench.computeBeams();
 	}
 	else if (column == COL_PROPERTIES)
 	{
@@ -175,8 +177,6 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 			dynamic_cast<CurvedMirror*>(m_bench.m_optics[row])->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (m_bench.optics(row)->type() == FlatInterfaceType)
 			dynamic_cast<FlatInterface*>(m_bench.m_optics[row])->setIndexRatio(value.toDouble());
-//		else if (m_bench.optics(row)->type() == CurvedInterfaceType)
-//			dynamic_cast<CurvedInterface*>(m_bench.m_optics[row])->setSurfaceRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (m_bench.optics(row)->type() == CurvedInterfaceType)
 		{
 			CurvedInterface* optics = dynamic_cast<CurvedInterface*>(m_bench.m_optics[row]);
@@ -193,27 +193,27 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 			ABCDOptics->setD(value.toList()[3].toDouble());
 			ABCDOptics->setWidth(value.toList()[4].toDouble()*Units::getUnit(UnitWidth).multiplier());
 		}
-		computeBeams();
+		m_bench.computeBeams();
 	}
 	else if (column == COL_WAIST)
 	{
-		m_beams[row].setWaist(value.toDouble()*Units::getUnit(UnitWaist).multiplier());
-		computeBeams(row, true);
+		m_bench.m_beams[row].setWaist(value.toDouble()*Units::getUnit(UnitWaist).multiplier());
+		m_bench.computeBeams(row, true);
 	}
 	else if (column == COL_WAIST_POSITION)
 	{
-		m_beams[row].setWaistPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
-		computeBeams(row, true);
+		m_bench.m_beams[row].setWaistPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
+		m_bench.computeBeams(row, true);
 	}
 	else if (column == COL_RAYLEIGH)
 	{
-		m_beams[row].setRayleigh(value.toDouble()*Units::getUnit(UnitRayleigh).multiplier());
-		computeBeams(row, true);
+		m_bench.m_beams[row].setRayleigh(value.toDouble()*Units::getUnit(UnitRayleigh).multiplier());
+		m_bench.computeBeams(row, true);
 	}
 	else if (column == COL_DIVERGENCE)
 	{
-		m_beams[row].setDivergence(value.toDouble()*Units::getUnit(UnitDivergence).multiplier());
-		computeBeams(row, true);
+		m_bench.m_beams[row].setDivergence(value.toDouble()*Units::getUnit(UnitDivergence).multiplier());
+		m_bench.computeBeams(row, true);
 	}
 	else if (column == COL_NAME)
 	{
@@ -276,7 +276,7 @@ bool GaussianBeamModel::insertRows(int row, int count, const QModelIndex& parent
 	for (int i = row; i < row + count; i++)
 	{
 		m_bench.m_optics.insert(m_bench.m_optics.begin() + row,  0); /// @todo is this 0 harmfull ?
-		m_beams.insert(m_beams.begin() + row, Beam());
+		m_bench.m_beams.insert(m_bench.m_beams.begin() + row, Beam());
 	}
 	endInsertRows();
 	return true;
@@ -287,47 +287,33 @@ bool GaussianBeamModel::removeRows(int row, int count, const QModelIndex& parent
 	beginRemoveRows(parent, row, row + count -1);
 	for (int i = row + count - 1; i >= row; i--)
 	{
-		qDebug() << "deleting optics" << i;
 		delete m_bench.m_optics[i];
-		qDebug() << "removing optics from list " << i;
-		std::vector<Optics*>::iterator it = m_bench.m_optics.begin();
-		it += i;
-		m_bench.m_optics.erase(it);
-		m_beams.removeAt(i);
+		m_bench.m_optics.erase(m_bench.m_optics.begin() + i);
+		m_bench.m_beams.erase(m_bench.m_beams.begin() + i);
 	}
-	computeBeams(row);
+	m_bench.computeBeams(row);
 	endRemoveRows();
 	return true;
 }
 
-//////////////////////////////////////////
-
-void GaussianBeamModel::setWavelength(double wavelength)
+void GaussianBeamModel::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
-	m_bench.setWavelength(wavelength);
-	computeBeams();
+	emit dataChanged(index(startOptics, 0), index(endOptics, columnCount()-1));
 }
+
+//////////////////////////////////////////
 
 void GaussianBeamModel::addOptics(Optics* optics, int row)
 {
 	insertRow(row);
 	m_bench.m_optics[row] = optics;
-	computeBeams(row);
+	m_bench.computeBeams(row);
 }
 
 void GaussianBeamModel::setOpticsPosition(int row, double position)
 {
 	m_bench.m_optics[row]->setPositionCheckLock(position);
-	computeBeams();
-}
-
-void GaussianBeamModel::setInputBeam(const Beam& beam, bool update)
-{
-	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_bench.m_optics[0]);
-	createBeam->setPosition(beam.waistPosition());
-	createBeam->setWaist(beam.waist());
-	if (update)
-		computeBeams();
+	m_bench.computeBeams();
 }
 
 QString GaussianBeamModel::opticsName(OpticsType opticsType) const
@@ -348,71 +334,4 @@ QString GaussianBeamModel::opticsName(OpticsType opticsType) const
 		return tr("Generic ABCD");
 
 	return QString();
-}
-
-void GaussianBeamModel::computeBeams(int changedRow, bool backward)
-{
-	qDebug() << "computeBeams" << wavelength();
-
-	Beam beam;
-
-	if (backward)
-	{
-		beam = m_beams[changedRow];
-		for (int row = changedRow + 1; row < rowCount(); row++)
-			m_beams[row] = beam = m_bench.m_optics[row]->image(beam);
-		beam = m_beams[changedRow];
-		for (int row = changedRow - 1; row >= 0; row--)
-			m_beams[row] = beam = m_bench.m_optics[row + 1]->antecedent(beam);
-		setInputBeam(beam, false);
-		emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
-	}
-	else
-	{
-		if (changedRow == 0)
-			beam.setWavelength(wavelength());
-		else
-			beam = m_beams[changedRow - 1];
-
-		for (int row = changedRow; row < rowCount(); row++)
-			m_beams[row] = beam = m_bench.m_optics[row]->image(beam);
-		emit dataChanged(index(changedRow, 0), index(rowCount()-1, columnCount()-1));
-	}
-/*
-	// Compute the cavity
-	if (m_first_cavity_row > 0)
-	{
-		const Optics& first_cavity_optics = optics(m_first_cavity_row);
-		const Optics& last_cavity_optics  = optics(m_last_cavity_row);
-
-		// Test coherence
-		if (!first_cavity_optics.isABCD() || ! last_cavity_optics.isABCD())
-			qDebug() << "Warning : cavity boundaries are not of ABCD type";
-		if (!(m_last_cavity_row > 0) || !(m_last_cavity_row >= m_first_cavity_row))
-			qDebug() << "Warning m_last_cavity_row seems to be wrong !";
-
-		// Compute cavity
-		m_cavity = dynamic_cast<const ABCD&>(first_cavity_optics);
-		for (int i = m_first_cavity_row + 1; i < m_last_cavity_row; i++)
-		{
-			if (optics(i).isABCD())
-				m_cavity *= dynamic_cast<const ABCD&>(optics(i));
-			FreeSpace freeSpace(optics(i+1).position() - optics(i).endPosition(), optics(i).endPosition());
-			m_cavity*= freeSpace;
-		}
-		if (m_ring_cavity)
-			for (int i = m_last_cavity_row; i > m_first_cavity_row; i--)
-			{
-				if (optics(i).isABCD())
-					m_cavity *= dynamic_cast<const ABCD&>(optics(i));
-				FreeSpace freeSpace(optics(i).endPosition() - optics(i-1).endPosition(), optics(i-1).endPosition());
-				m_cavity*= freeSpace;
-			}
-		else
-		{
-			m_cavity *= dynamic_cast<const ABCD&>(last_cavity_optics);
-			/// @todo add a user defined free space between the last and the first optics for linear cavities.
-		}
-
-	}*/
 }

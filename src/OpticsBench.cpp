@@ -44,6 +44,96 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 }
 
+void OpticsBench::registerNotify(OpticsBenchNotify* notify)
+{
+	m_notifyList.push_back(notify);
+}
+
+void OpticsBench::setWavelength(double wavelength)
+{
+	m_wavelength = wavelength;
+	computeBeams();
+}
+
+void OpticsBench::setInputBeam(const Beam& beam, bool update)
+{
+	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
+	createBeam->setPosition(beam.waistPosition());
+	createBeam->setWaist(beam.waist());
+	if (update)
+		computeBeams();
+}
+
+void OpticsBench::computeBeams(int changedRow, bool backward)
+{
+	cerr << "computeBeams " << wavelength() << endl;
+
+	Beam beam;
+
+	if (backward)
+	{
+		beam = m_beams[changedRow];
+		for (int row = changedRow + 1; row < nOptics(); row++)
+			m_beams[row] = beam = m_optics[row]->image(beam);
+		beam = m_beams[changedRow];
+		for (int row = changedRow - 1; row >= 0; row--)
+			m_beams[row] = beam = m_optics[row + 1]->antecedent(beam);
+		setInputBeam(beam, false);
+///@bug		emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
+	}
+	else
+	{
+		if (changedRow == 0)
+			beam.setWavelength(wavelength());
+		else
+			beam = m_beams[changedRow - 1];
+
+		for (int row = changedRow; row < nOptics(); row++)
+			m_beams[row] = beam = m_optics[row]->image(beam);
+///@bug		emit dataChanged(index(changedRow, 0), index(rowCount()-1, columnCount()-1));
+	}
+/*
+	// Compute the cavity
+	if (m_first_cavity_row > 0)
+	{
+		const Optics& first_cavity_optics = optics(m_first_cavity_row);
+		const Optics& last_cavity_optics  = optics(m_last_cavity_row);
+
+		// Test coherence
+		if (!first_cavity_optics.isABCD() || ! last_cavity_optics.isABCD())
+			qDebug() << "Warning : cavity boundaries are not of ABCD type";
+		if (!(m_last_cavity_row > 0) || !(m_last_cavity_row >= m_first_cavity_row))
+			qDebug() << "Warning m_last_cavity_row seems to be wrong !";
+
+		// Compute cavity
+		m_cavity = dynamic_cast<const ABCD&>(first_cavity_optics);
+		for (int i = m_first_cavity_row + 1; i < m_last_cavity_row; i++)
+		{
+			if (optics(i).isABCD())
+				m_cavity *= dynamic_cast<const ABCD&>(optics(i));
+			FreeSpace freeSpace(optics(i+1).position() - optics(i).endPosition(), optics(i).endPosition());
+			m_cavity*= freeSpace;
+		}
+		if (m_ring_cavity)
+			for (int i = m_last_cavity_row; i > m_first_cavity_row; i--)
+			{
+				if (optics(i).isABCD())
+					m_cavity *= dynamic_cast<const ABCD&>(optics(i));
+				FreeSpace freeSpace(optics(i).endPosition() - optics(i-1).endPosition(), optics(i-1).endPosition());
+				m_cavity*= freeSpace;
+			}
+		else
+		{
+			m_cavity *= dynamic_cast<const ABCD&>(last_cavity_optics);
+			/// @todo add a user defined free space between the last and the first optics for linear cavities.
+		}
+
+	}*/
+
+	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchDataChanged(changedRow, nOptics()-1);
+}
+
 //////////////////////////////////////////
 // Cavity stuff
 

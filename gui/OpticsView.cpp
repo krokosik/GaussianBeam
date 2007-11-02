@@ -312,7 +312,7 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 			if ((currentOptics.type() != CreateBeamType) && (abs_objectRight.x() < abs_position) ||
 				(currentOptics.type() == CreateBeamType))
 			{
-				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->beam(row);
+				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->bench().beam(row);
 				text += tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
 				        tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
 				break;
@@ -592,7 +592,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 		abs_beamRange = abs_beamRange.normalized();
 		painter.setPen(beamPen);
 		painter.setBrush(beamBrush);
-		drawBeam(painter, GBModel->beam(row), abs_beamRange, row == model()->rowCount()-1);
+		drawBeam(painter, GBModel->bench().beam(row), abs_beamRange, row == model()->rowCount()-1);
 
 /*		Beam cavityBeam = GBModel->cavityEigenBeam(row);
 		if (GBModel->isCavityStable() && cavityBeam.isValid())
@@ -635,7 +635,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	qDebug() << m_showTargetWaist << m_targetBeam.isValid() << m_targetBeam.waist() <<  m_targetBeam.waistPosition();
 	if (m_showTargetWaist && m_targetBeam.isValid())
 	{
-		m_targetBeam.setWavelength(dynamic_cast<GaussianBeamModel*>(model())->wavelength());
+		m_targetBeam.setWavelength(dynamic_cast<GaussianBeamModel*>(model())->bench().wavelength());
 		QRectF abs_beamRange = abs_paintArea;
 		painter.setPen(targetBeamPen);
 		painter.setBrush(targetBeamBrush);

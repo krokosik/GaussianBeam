@@ -37,7 +37,7 @@
 #include <QAbstractTableModel>
 #include <QList>
 
-class GaussianBeamModel : public QAbstractTableModel
+class GaussianBeamModel : public QAbstractTableModel, public OpticsBenchNotify
 {
 	Q_OBJECT
 
@@ -56,13 +56,11 @@ public:
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 
 public:
-	 /// @todo remove all these functionss
+	OpticsBench& bench() { return m_bench; }
+	 /// @todo remove all these functions
 	const Optics& optics(int row) const { return *(m_bench.m_optics[row]); }
 	const Optics* opticsPtr(int row) const { return m_bench.m_optics[row]; }
 	const Optics& optics(const QModelIndex& index) const { return optics(index.row()); }
-	const Beam& beam(int row) const { return m_beams[row]; }
-	double wavelength() const { return m_bench.wavelength(); }
-	void setWavelength(double wavelength);
 	/**
 	* Adds a new optics
 	* @p optics pointer to the optics to add. GaussianBeamModel takes ownership on the pointer
@@ -70,25 +68,13 @@ public:
 	*/
 	void addOptics(Optics* optics, int row);
 	void setOpticsPosition(int row, double position);
-	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
 
 private:
 	QString opticsName(OpticsType opticsType) const;
-	void computeBeams(int changedRow = 0, bool backward = false);
-	void setInputBeam(const Beam& beam, bool update);
+	void OpticsBenchDataChanged(int startOptics, int endOptics);
 
 private:
 	OpticsBench m_bench;
-
-//	QList<Optics*> m_optics;
-	QList<Beam> m_beams;
-
-//	double m_wavelength;
-
-/*	GenericABCD m_cavity;
-	int m_first_cavity_row;
-	int m_last_cavity_row;
-	bool m_ring_cavity;*/
 };
 
 #endif
