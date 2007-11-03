@@ -70,7 +70,7 @@ OpticsView::OpticsView(OpticsBench& bench, QWidget *parent)
 	m_active_object_offset = 0.;
 	m_statusLabel = 0;
 
-	m_showTargetWaist = false;
+	m_showTargetBeam = false;
 
 	setMouseTracking(true);
 }
@@ -156,10 +156,9 @@ void OpticsView::setHOffset(double hOffset)
 	viewport()->update();
 }
 
-void OpticsView::setTargetWaist(const Beam& targetBeam, bool showTargetWaist)
+void OpticsView::setShowTargetBeam(bool showTargetBeam)
 {
-	m_showTargetWaist =  showTargetWaist;
-	m_targetBeam = targetBeam;
+	m_showTargetBeam =  showTargetBeam;
 	viewport()->update();
 }
 
@@ -421,8 +420,6 @@ void OpticsView::paintEvent(QPaintEvent* event)
 {
 	//qDebug() << "Repaint" << property("Wavelength").toDouble();
 
-//	GaussianBeamModel* GBModel = dynamic_cast<GaussianBeamModel*>(model());
-
 	// View properties
 	QItemSelectionModel* selections = selectionModel();
 	QStyleOptionViewItem option = viewOptions();
@@ -633,14 +630,13 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	} // End optics for loop
 
 	// Target Beam
-	qDebug() << m_showTargetWaist << m_targetBeam.isValid() << m_targetBeam.waist() <<  m_targetBeam.waistPosition();
-	if (m_showTargetWaist && m_targetBeam.isValid())
+	const Beam& targetBeam = m_bench.targetBeam();
+	if (m_showTargetBeam && targetBeam.isValid())
 	{
-		m_targetBeam.setWavelength(m_bench.wavelength());
 		QRectF abs_beamRange = abs_paintArea;
 		painter.setPen(targetBeamPen);
 		painter.setBrush(targetBeamBrush);
-		drawBeam(painter, m_targetBeam, abs_beamRange);
+		drawBeam(painter, targetBeam, abs_beamRange);
 	}
 
 /*	for (int i = 0; i < 550; i++)

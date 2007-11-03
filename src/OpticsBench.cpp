@@ -94,7 +94,7 @@ void OpticsBench::lockTo(int index, std::string opticsName)
 			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	/// @todo emit change
+	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::setOpticsName(int index, std::string name)
@@ -104,7 +104,7 @@ void OpticsBench::setOpticsName(int index, std::string name)
 			return;
 
 	m_optics[index]->setName(name);
-	/// @todo emit change
+	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::opticsPropertyChanged(int /*index*/)
@@ -125,6 +125,12 @@ void OpticsBench::setBeam(const Beam& beam, int index)
 {
 	m_beams[index] = beam;
 	computeBeams(index, true);
+}
+
+void OpticsBench::setTargetBeam(const Beam& beam)
+{
+	m_targetBeam = beam;
+	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
@@ -191,8 +197,13 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 
 	}*/
 
+	emitChange(changedIndex, nOptics()-1);
+}
+
+void OpticsBench::emitChange(int startOptics, int endOptics)
+{
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchDataChanged(changedIndex, nOptics()-1);
+		(*it)->OpticsBenchDataChanged(startOptics, endOptics);
 }
 
 //////////////////////////////////////////

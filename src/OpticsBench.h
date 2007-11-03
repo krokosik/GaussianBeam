@@ -41,9 +41,11 @@ public:
 	~OpticsBench();
 
 public:
+	/// Parameters
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength);
 
+	/// Handle optics
 	int nOptics() const { return m_optics.size(); }
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
@@ -60,33 +62,43 @@ public:
 	Optics* opticsForPropertyChange(int index) { return m_optics[index]; }
 	void opticsPropertyChanged(int index);
 
+	/// Beams handling
 	const Beam& beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
 	void setBeam(const Beam& beam, int index);
 
+	/// Magic waist
+	const Beam& targetBeam() const { return m_targetBeam; }
+	void setTargetBeam(const Beam& beam);
+
+	/// Cavity stuff : @todo make a new class ?
+	bool isCavityStable() const;
+	const Beam cavityEigenBeam(int index) const;
+
+	/// Optics change callback
 	void registerNotify(OpticsBenchNotify* notify);
 
 private:
 	void setInputBeam(const Beam& beam, bool update);
 	void computeBeams(int changedIndex = 0, bool backward = false);
+	void emitChange(int startOptics, int endOptics);
 
 private:
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
 	std::vector<Beam> m_beams;
+
+	/// Magic waist
 	Beam m_targetBeam;
-	std::list<OpticsBenchNotify*> m_notifyList;
 
-/// Cavity stuff : @todo make a new class ?
-public:
-	bool isCavityStable() const;
-	const Beam cavityEigenBeam(int index) const;
-
-private:
+	/// Cavity
 	GenericABCD m_cavity;
 	int m_firstCavityIndex;
 	int m_lastCavityIndex;
 	bool m_ringCavity;
+
+	/// Callback
+	std::list<OpticsBenchNotify*> m_notifyList;
 };
 
 namespace GaussianBeam

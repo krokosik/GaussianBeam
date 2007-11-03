@@ -113,6 +113,7 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 			fitModel->insertRow(++fitRow);
 			parseXml(child);
 		}
+		/// @todo mode this logic to OpticsBench
 		else if (child.tagName() == "dataPosition")
 			fitModel->setData(fitModel->index(fitRow, 0), child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "dataValue")
@@ -141,10 +142,7 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 
 	for (int i = 0; i < lockTree.size(); i++)
 		if (!lockTree[i].isEmpty())
-			/// @todo transfert this logic to OpticsBench when in operation
-			/// @todo check for and get rid of other occurences of setData outside GaussianBeamDelegate
-			model->setData(model->index(i, COL_LOCK), lockTree[i]);
-
+			m_bench.lockTo(i, lockTree[i].toUtf8().data());
 }
 
 void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QString>& lockTree)

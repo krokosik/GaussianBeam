@@ -120,6 +120,8 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	// Set up default values
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
+	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
+	on_checkBox_ShowTargetWaist_toggled(checkBox_ShowTargetWaist->isChecked());
 	updateUnits();
 
 	if (!file.isEmpty())
@@ -242,20 +244,20 @@ void GaussianBeamWidget::displayOverlap()
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+	m_bench.setTargetBeam(targetWaist());
 	displayOverlap();
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	opticsView->setTargetWaist(targetWaist(), checkBox_ShowTargetWaist->checkState() == Qt::Checked);
+	m_bench.setTargetBeam(targetWaist());
 	displayOverlap();
 }
 
 void GaussianBeamWidget::on_checkBox_ShowTargetWaist_toggled(bool checked)
 {
-	opticsView->setTargetWaist(targetWaist(), checked);
+	opticsView->setShowTargetBeam(checked);
 }
 
 void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)

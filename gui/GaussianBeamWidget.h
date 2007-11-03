@@ -82,7 +82,7 @@ private:
 	void setCurrentFile(const QString& path);
 	void updateUnits();
 	void insertOptics(Optics* optics, bool resizeRow = false);
-	Beam targetWaist(); /// REMOVE
+	Beam targetWaist();
 	void displayOverlap();
 
 private:

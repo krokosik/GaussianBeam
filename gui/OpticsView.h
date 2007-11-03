@@ -47,7 +47,7 @@ public:
 	void setStatusLabel(QLabel* statusLabel) { m_statusLabel = statusLabel; }
 	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
 	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
-	void setTargetWaist(const Beam& targetBeam, bool showTargetWaist);
+	void setShowTargetBeam(bool showTargetBeam);
 	void updateViewport() { viewport()->update(); }
 
 protected slots:
@@ -85,7 +85,6 @@ private:
 	/// @todo this should remove
 	QAbstractItemModel* m_fitModel;
 	QComboBox* m_measureCombo;
-	/// @todo should this be constant ?
 	OpticsBench& m_bench;
 
 	QPainterPath m_convexLensPath;
@@ -94,8 +93,7 @@ private:
 	QPainterPath m_convexInterfacePath;
 	QPainterPath m_concaveInterfacePath;
 
-	bool m_showTargetWaist;
-	Beam m_targetBeam;
+	bool m_showTargetBeam;
 	double m_hRange;
 	double m_vRange;
 	double m_hOffset;
