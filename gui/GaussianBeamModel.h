@@ -42,7 +42,7 @@ class GaussianBeamModel : public QAbstractTableModel, public OpticsBenchNotify
 	Q_OBJECT
 
 public:
-	GaussianBeamModel(QObject* parent = 0);
+	GaussianBeamModel(OpticsBench& bench, QObject* parent = 0);
 	~GaussianBeamModel();
 
 	int rowCount(const QModelIndex& parent = QModelIndex()) const;
@@ -55,26 +55,15 @@ public:
 	bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 
-public:
-	OpticsBench& bench() { return m_bench; }
-	 /// @todo remove all these functions
-	const Optics& optics(int row) const { return *(m_bench.m_optics[row]); }
-	const Optics* opticsPtr(int row) const { return m_bench.m_optics[row]; }
-	const Optics& optics(const QModelIndex& index) const { return optics(index.row()); }
-	/**
-	* Adds a new optics
-	* @p optics pointer to the optics to add. GaussianBeamModel takes ownership on the pointer
-	* @p row the given optics will be inserted before this row
-	*/
-	void addOptics(Optics* optics, int row);
-	void setOpticsPosition(int row, double position);
-
 private:
 	QString opticsName(OpticsType opticsType) const;
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
+	void OpticsBenchOpticsAdded(int index);
+	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	OpticsBench m_bench;
+	/// @todo should this be const ?
+	OpticsBench& m_bench;
 };
 
 #endif

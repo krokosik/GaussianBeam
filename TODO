@@ -23,12 +23,14 @@ BUGS:
 	When the status bar text changes, it may resize the main window
 	Proper optics ordering in magic waist
 	Magic waist does not trigger if the input waist is after the first optics
-	0 focal length may crash the program
+*	0 focal length may crash the program
 	Check direction of the curvature radius on the graph
 	What happens to tree pointers when cloning the optics ?
+*	Test case : remove all lenses, add two lenses : crash
 
 CONSTANT VIGILENCE:
 	Check that the save command saves all parameters & optics
 	Translations
 	Pedantic
 	Valgrind
+	rowCount() -> nOptics() ?

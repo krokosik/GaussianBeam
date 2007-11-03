@@ -27,14 +27,17 @@ using namespace std;
 OpticsBench::OpticsBench()
 	: m_cavity(1., 0., 1., 0., 0., 0.)
 {
-	m_first_cavity_row = 0;
-	m_last_cavity_row = 0;
-	m_ring_cavity = true;
+	m_firstCavityIndex = 0;
+	m_lastCavityIndex = 0;
+	m_ringCavity = true;
 	m_optics.clear();
 
+	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), 0);
+	m_optics[0]->setAbsoluteLock(true);
+
 	/// @todo remove this later
-	m_first_cavity_row = 1;
-	m_last_cavity_row = 2;
+	m_firstCavityIndex = 1;
+	m_lastCavityIndex = 2;
 }
 
 OpticsBench::~OpticsBench()
@@ -55,6 +58,60 @@ void OpticsBench::setWavelength(double wavelength)
 	computeBeams();
 }
 
+void OpticsBench::addOptics(Optics* optics, int index)
+{
+	m_optics.insert(m_optics.begin() + index,  optics);
+	m_beams.insert(m_beams.begin() + index, Beam());
+	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchOpticsAdded(index);
+	computeBeams(index);
+}
+
+void OpticsBench::removeOptics(int index, int count)
+{
+	for (int i = index; i < index + count; i++)
+	{
+		delete m_optics[index];
+		m_optics.erase(m_optics.begin() + index);
+		m_beams.erase(m_beams.begin() + index);
+	}
+	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchOpticsRemoved(index, count);
+	computeBeams(index);
+}
+
+void OpticsBench::setOpticsPosition(int index, double position)
+{
+	m_optics[index]->setPositionCheckLock(position);
+	computeBeams();
+}
+
+void OpticsBench::lockTo(int index, std::string opticsName)
+{
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->name() == opticsName)
+		{
+			m_optics[index]->relativeLockTo(*it);
+			break;
+		}
+	/// @todo emit change
+}
+
+void OpticsBench::setOpticsName(int index, std::string name)
+{
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->name() == name)
+			return;
+
+	m_optics[index]->setName(name);
+	/// @todo emit change
+}
+
+void OpticsBench::opticsPropertyChanged(int /*index*/)
+{
+	computeBeams();
+}
+
 void OpticsBench::setInputBeam(const Beam& beam, bool update)
 {
 	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
@@ -64,7 +121,13 @@ void OpticsBench::setInputBeam(const Beam& beam, bool update)
 		computeBeams();
 }
 
-void OpticsBench::computeBeams(int changedRow, bool backward)
+void OpticsBench::setBeam(const Beam& beam, int index)
+{
+	m_beams[index] = beam;
+	computeBeams(index, true);
+}
+
+void OpticsBench::computeBeams(int changedIndex, bool backward)
 {
 	cerr << "computeBeams " << wavelength() << endl;
 
@@ -72,50 +135,48 @@ void OpticsBench::computeBeams(int changedRow, bool backward)
 
 	if (backward)
 	{
-		beam = m_beams[changedRow];
-		for (int row = changedRow + 1; row < nOptics(); row++)
-			m_beams[row] = beam = m_optics[row]->image(beam);
-		beam = m_beams[changedRow];
-		for (int row = changedRow - 1; row >= 0; row--)
-			m_beams[row] = beam = m_optics[row + 1]->antecedent(beam);
+		beam = m_beams[changedIndex];
+		for (int i = changedIndex + 1; i < nOptics(); i++)
+			m_beams[i] = beam = m_optics[i]->image(beam);
+		beam = m_beams[changedIndex];
+		for (int i = changedIndex - 1; i >= 0; i--)
+			m_beams[i] = beam = m_optics[i+1]->antecedent(beam);
 		setInputBeam(beam, false);
-///@bug		emit dataChanged(index(0, 0), index(rowCount()-1, columnCount()-1));
 	}
 	else
 	{
-		if (changedRow == 0)
+		if (changedIndex == 0)
 			beam.setWavelength(wavelength());
 		else
-			beam = m_beams[changedRow - 1];
+			beam = m_beams[changedIndex - 1];
 
-		for (int row = changedRow; row < nOptics(); row++)
-			m_beams[row] = beam = m_optics[row]->image(beam);
-///@bug		emit dataChanged(index(changedRow, 0), index(rowCount()-1, columnCount()-1));
+		for (int i = changedIndex; i < nOptics(); i++)
+			m_beams[i] = beam = m_optics[i]->image(beam);
 	}
 /*
 	// Compute the cavity
-	if (m_first_cavity_row > 0)
+	if (m_firstCavityIndex > 0)
 	{
-		const Optics& first_cavity_optics = optics(m_first_cavity_row);
-		const Optics& last_cavity_optics  = optics(m_last_cavity_row);
+		const Optics& first_cavity_optics = optics(m_firstCavityIndex);
+		const Optics& last_cavity_optics  = optics(m_lastCavityIndex);
 
 		// Test coherence
 		if (!first_cavity_optics.isABCD() || ! last_cavity_optics.isABCD())
 			qDebug() << "Warning : cavity boundaries are not of ABCD type";
-		if (!(m_last_cavity_row > 0) || !(m_last_cavity_row >= m_first_cavity_row))
-			qDebug() << "Warning m_last_cavity_row seems to be wrong !";
+		if (!(m_lastCavityIndex > 0) || !(m_lastCavityIndex >= m_firstCavityIndex))
+			qDebug() << "Warning m_lastCavityIndex seems to be wrong !";
 
 		// Compute cavity
 		m_cavity = dynamic_cast<const ABCD&>(first_cavity_optics);
-		for (int i = m_first_cavity_row + 1; i < m_last_cavity_row; i++)
+		for (int i = m_firstCavityIndex + 1; i < m_lastCavityIndex; i++)
 		{
 			if (optics(i).isABCD())
 				m_cavity *= dynamic_cast<const ABCD&>(optics(i));
 			FreeSpace freeSpace(optics(i+1).position() - optics(i).endPosition(), optics(i).endPosition());
 			m_cavity*= freeSpace;
 		}
-		if (m_ring_cavity)
-			for (int i = m_last_cavity_row; i > m_first_cavity_row; i--)
+		if (m_ringCavity)
+			for (int i = m_lastCavityIndex; i > m_firstCavityIndex; i--)
 			{
 				if (optics(i).isABCD())
 					m_cavity *= dynamic_cast<const ABCD&>(optics(i));
@@ -131,7 +192,7 @@ void OpticsBench::computeBeams(int changedRow, bool backward)
 	}*/
 
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchDataChanged(changedRow, nOptics()-1);
+		(*it)->OpticsBenchDataChanged(changedIndex, nOptics()-1);
 }
 
 //////////////////////////////////////////
@@ -139,7 +200,7 @@ void OpticsBench::computeBeams(int changedRow, bool backward)
 
 bool OpticsBench::isCavityStable() const
 {
-	if (m_first_cavity_row == 0)
+	if (m_firstCavityIndex == 0)
 		return false;
 
 	if (m_cavity.stabilityCriterion1())
@@ -155,17 +216,17 @@ bool OpticsBench::isCavityStable() const
 	return false;
 }
 
-const Beam OpticsBench::cavityEigenBeam(int row) const
+const Beam OpticsBench::cavityEigenBeam(int index) const
 {
 	if (!isCavityStable() ||
-	   (row < m_first_cavity_row) ||
-	   (m_ring_cavity && (row >= m_last_cavity_row)) ||
-	   (!m_ring_cavity && (row > m_last_cavity_row)))
+	   (index < m_firstCavityIndex) ||
+	   (m_ringCavity && (index >= m_lastCavityIndex)) ||
+	   (!m_ringCavity && (index > m_lastCavityIndex)))
 		return Beam();
 
 	Beam beam = m_cavity.eigenMode(wavelength());
 
-	for (int i = m_first_cavity_row; i <= row; i++)
+	for (int i = m_firstCavityIndex; i <= index; i++)
 		beam = optics(i)->image(beam);
 
 	return beam;

@@ -51,12 +51,12 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));
 
 	// Pointer creation
-	model = new GaussianBeamModel(this);
+	model = new GaussianBeamModel(m_bench, this);
 
 	// Extra widgets, not included in designer
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
-	opticsView = new OpticsView(this);
+	opticsView = new OpticsView(m_bench, this);
 #ifdef GBPLOT
 	plot = new GaussianBeamPlot(this, model);
 	splitter->addWidget(plot);
@@ -83,13 +83,13 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	opticsView->setSelectionModel(selectionModel);
 	table->resizeColumnsToContents();
 	opticsView->setStatusLabel(label_Status);
-	delegate = new GaussianBeamDelegate(this, model);
+	delegate = new GaussianBeamDelegate(this, model, m_bench);
 	table->setItemDelegate(delegate);
 	for (int i = 1; i < 3; i++)
 	{
 		m_lastLensName++;
 		QString name = "L" + QString::number(i);
-		model->addOptics(new Lens(0.02*i + 0.001, 0.1*i + 0.02, name.toUtf8().data()), model->rowCount());
+		m_bench.addOptics(new Lens(0.02*i + 0.001, 0.1*i + 0.02, name.toUtf8().data()), m_bench.nOptics());
 	}
 
 
@@ -128,7 +128,7 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
 {
-	model->bench().setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
+	m_bench.setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
 }
 
 void GaussianBeamWidget::updateUnits()
@@ -164,8 +164,8 @@ void GaussianBeamWidget::insertOptics(Optics* optics, bool resizeRow)
 	if (index.isValid())
 		row = index.row() + 1;
 
-	optics->setPosition(model->optics(row-1).position() + 0.05);
-	model->addOptics(optics, row);
+	optics->setPosition(m_bench.optics(row-1)->position() + 0.05);
+	m_bench.addOptics(optics, row);
 
 	table->resizeColumnsToContents();
 	if (resizeRow)
@@ -210,11 +210,10 @@ void GaussianBeamWidget::on_action_AddGenericABCD_triggered()
 
 void GaussianBeamWidget::on_pushButton_Remove_clicked()
 {
-	/// @todo transfer some logic to GaussianBeamModel
 	for (int row = model->rowCount() - 1; row >= 0; row--)
-		if ((model->optics(row).type() != CreateBeamType) &&
+		if ((m_bench.optics(row)->type() != CreateBeamType) &&
 		    selectionModel->isRowSelected(row, QModelIndex()))
-			model->removeRow(row);
+			m_bench.removeOptics(row);
 }
 
 ///////////////////////////////////////////////////////////
@@ -224,7 +223,7 @@ Beam GaussianBeamWidget::targetWaist()
 {
 	return Beam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
 	            doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
-	            model->bench().wavelength());
+	            m_bench.wavelength());
 }
 
 void GaussianBeamWidget::displayOverlap()
@@ -232,7 +231,7 @@ void GaussianBeamWidget::displayOverlap()
 	qDebug() << "Display Overlap";
 	if (model->rowCount()-1 > 0)
 	{
-		double overlap = GaussianBeam::overlap(model->bench().beam(model->rowCount()-1), targetWaist());
+		double overlap = GaussianBeam::overlap(m_bench.beam(model->rowCount()-1), targetWaist());
 		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
 	}
 	else
@@ -295,8 +294,8 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 	std::vector<Optics*> optics;
 
-	for (int row = 0; row < model->rowCount(); row++)
-		optics.push_back(model->optics(row).clone());
+	for (int i = 0; i < m_bench.nOptics(); i++)
+		optics.push_back(m_bench.optics(i)->clone());
 
 	if (!GaussianBeam::magicWaist(optics, target))
 	{
@@ -305,9 +304,9 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 	}
 
 	for (unsigned int l = 0; l < optics.size(); l++)
-		model->addOptics(optics[l], l);
+		m_bench.addOptics(optics[l], l);
 
-	model->removeRows(optics.size(), model->rowCount() - optics.size());
+	m_bench.removeOptics(optics.size(), m_bench.nOptics() - optics.size());
 
 	displayOverlap();
 }
@@ -339,7 +338,7 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 
 	qDebug() << "Fitting" << positions.size() << "elements";
 
-	m_fitBeam = GaussianBeam::fitBeam(positions, radii, model->bench().wavelength(), &rho2);
+	m_fitBeam = GaussianBeam::fitBeam(positions, radii, m_bench.wavelength(), &rho2);
 	QString text = tr("Waist") + " = " + QString::number(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
 	               tr("Position") + " = " + QString::number(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
 	               tr("R²") + " = " + QString::number(rho2);
@@ -350,7 +349,7 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 {
-	model->bench().setInputBeam(m_fitBeam);
+	m_bench.setInputBeam(m_fitBeam);
 }
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()

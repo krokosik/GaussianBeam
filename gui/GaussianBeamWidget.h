@@ -21,6 +21,7 @@
 
 #include "ui_GaussianBeamForm.h"
 #include "GaussianBeam.h"
+#include "OpticsBench.h"
 #include "Optics.h"
 
 #include <QWidget>
@@ -81,22 +82,23 @@ private:
 	void setCurrentFile(const QString& path);
 	void updateUnits();
 	void insertOptics(Optics* optics, bool resizeRow = false);
-	Beam targetWaist();
+	Beam targetWaist(); /// REMOVE
 	void displayOverlap();
 
 private:
 	GaussianBeamModel* model;
+	OpticsView* opticsView;
 	GaussianBeamDelegate* delegate;
 	QItemSelectionModel* selectionModel;
-	QItemSelectionModel* fitSelectionModel;
-	OpticsView* opticsView;
-	GaussianBeamPlot* plot;
 	QStandardItemModel* fitModel;
+	QItemSelectionModel* fitSelectionModel;
+	GaussianBeamPlot* plot;
 
-	Beam m_fitBeam;
+	OpticsBench m_bench;
+	Beam m_fitBeam; /// REMOVE
 	QString m_currentFile;
-	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName,
-	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName;
+	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName, /// REMOVE
+	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName; /// REMOVE
 };
 
 #endif

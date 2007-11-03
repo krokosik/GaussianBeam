@@ -19,6 +19,8 @@
 #ifndef GAUSSIANBEAMDELEGATE_H
 #define GAUSSIANBEAMDELEGATE_H
 
+#include "OpticsBench.h"
+
 #include <QItemDelegate>
 #include <QModelIndex>
 #include <QWidget>
@@ -72,7 +74,7 @@ class GaussianBeamDelegate : public QItemDelegate
 	Q_OBJECT
 
 public:
-	GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model);
+	GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench& bench);
 
 public:
 	QWidget *createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -83,6 +85,8 @@ public:
 
 private:
 	GaussianBeamModel* m_model;
+	/// @todo should this be const ?
+	OpticsBench& m_bench;
 };
 
 #endif

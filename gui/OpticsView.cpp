@@ -52,8 +52,9 @@ QColor wavelengthColor(double wavelength)
 	return Qt::black;
 }
 
-OpticsView::OpticsView(QWidget *parent)
+OpticsView::OpticsView(OpticsBench& bench, QWidget *parent)
 	: QAbstractItemView(parent)
+	, m_bench(bench)
 {
 	m_statusLabel = 0;
 	m_fitModel = 0;
@@ -193,10 +194,10 @@ QModelIndex OpticsView::indexAt(const QPoint& point) const
 {
 	for (int row = 0; row < model()->rowCount(); ++row)
 	{
-		const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
+		const Optics* currentOptics = m_bench.optics(row);
 
-		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
-		QPointF abs_ObjectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+		QPointF abs_ObjectLeft = QPointF(currentOptics->position(), 0.);
+		QPointF abs_ObjectRight = QPointF(currentOptics->position() + currentOptics->width(), 0.);
 		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
 		QPointF view_ObjectRight = abs_ObjectRight*m_abs2view;
 		QPointF view_ObjectCenter = (view_ObjectLeft + view_ObjectRight)/2.;
@@ -209,9 +210,9 @@ QModelIndex OpticsView::indexAt(const QPoint& point) const
 			view_ObjectRect.setRight(view_ObjectRight.x());
 		}
 
-		QPointF abs_objCenter = QPointF(currentOptics.position(), 0.);
+		QPointF abs_objCenter = QPointF(currentOptics->position(), 0.);
 		QPointF distFromObjCenter = QPointF(point) - abs_objCenter*m_abs2view;
-		if ((currentOptics.type() != CreateBeamType) &&
+		if ((currentOptics->type() != CreateBeamType) &&
 		    view_ObjectRect.contains(QPointF(point)))
 			return model()->index(row, 0);
 	}
@@ -274,9 +275,9 @@ void OpticsView::mousePressEvent(QMouseEvent* event)
 	QModelIndex index = indexAt(event->pos());
 	if (index.isValid())
 	{
-		const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(index.row());
+		const Optics* currentOptics = m_bench.optics(index.row());
 
-		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
+		QPointF abs_ObjectLeft = QPointF(currentOptics->position(), 0.);
 		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
 
 		m_active_object_offset = double(event->pos().x()) - view_ObjectLeft.x();
@@ -292,7 +293,7 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 	if (m_active_object >= 0)
 	{
 		QPointF pos = QPointF(event->pos()) - QPointF(m_active_object_offset, 0.);
-		dynamic_cast<GaussianBeamModel*>(model())->setOpticsPosition(m_active_object, (pos*m_view2abs).x());
+		m_bench.setOpticsPosition(m_active_object, (pos*m_view2abs).x());
 	}
 	else if (m_statusLabel)
 	{
@@ -301,18 +302,18 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 
 		for (int row = model()->rowCount() - 1; row >= 0; row--)
 		{
-			const Optics& currentOptics = dynamic_cast<GaussianBeamModel*>(model())->optics(row);
+			const Optics* currentOptics = m_bench.optics(row);
 
-			QPointF abs_objectLeft = QPointF(currentOptics.position(), 0.);
-			QPointF abs_objectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+			QPointF abs_objectLeft = QPointF(currentOptics->position(), 0.);
+			QPointF abs_objectRight = QPointF(currentOptics->position() + currentOptics->width(), 0.);
 			// Check if we are inside the optics
-			if ((currentOptics.width() > 0.) && (abs_objectLeft.x() < abs_position) && (abs_objectRight.x() > abs_position))
+			if ((currentOptics->width() > 0.) && (abs_objectLeft.x() < abs_position) && (abs_objectRight.x() > abs_position))
 				break;
 			// Check if we are lookgin at the mode created by this optics
-			if ((currentOptics.type() != CreateBeamType) && (abs_objectRight.x() < abs_position) ||
-				(currentOptics.type() == CreateBeamType))
+			if ((currentOptics->type() != CreateBeamType) && (abs_objectRight.x() < abs_position) ||
+				(currentOptics->type() == CreateBeamType))
 			{
-				const Beam& beam = dynamic_cast<GaussianBeamModel*>(model())->bench().beam(row);
+				const Beam& beam = m_bench.beam(row);
 				text += tr("Beam radius: ") + QString::number(beam.radius(abs_position)*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
 				        tr("Beam curvature: ") + QString::number(beam.curvature(abs_position)*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
 				break;
@@ -420,7 +421,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 {
 	//qDebug() << "Repaint" << property("Wavelength").toDouble();
 
-	GaussianBeamModel* GBModel = dynamic_cast<GaussianBeamModel*>(model());
+//	GaussianBeamModel* GBModel = dynamic_cast<GaussianBeamModel*>(model());
 
 	// View properties
 	QItemSelectionModel* selections = selectionModel();
@@ -500,12 +501,12 @@ void OpticsView::paintEvent(QPaintEvent* event)
 
 	for (int row = model()->rowCount()-1; row >= 0; row--)
 	{
-		const Optics& currentOptics = GBModel->optics(row);
+		const Optics* currentOptics = m_bench.optics(row);
 
 		//qDebug() << "Drawing element" << row << selections->isRowSelected(row, rootIndex());
 
-		QPointF abs_ObjectLeft = QPointF(currentOptics.position(), 0.);
-		QPointF abs_ObjectRight = QPointF(currentOptics.position() + currentOptics.width(), 0.);
+		QPointF abs_ObjectLeft = QPointF(currentOptics->position(), 0.);
+		QPointF abs_ObjectRight = QPointF(currentOptics->position() + currentOptics->width(), 0.);
 		QPointF view_ObjectLeft = abs_ObjectLeft*m_abs2view;
 		QPointF view_ObjectRight = abs_ObjectRight*m_abs2view;
 		QPointF view_ObjectCenter = (view_ObjectLeft + view_ObjectRight)/2.;
@@ -523,41 +524,41 @@ void OpticsView::paintEvent(QPaintEvent* event)
 				painter.setBrush(lensBrush);
 			painter.setPen(lensPen);
 
-			if (currentOptics.type() == LensType)
+			if (currentOptics->type() == LensType)
 			{
-				const Lens& lens = dynamic_cast<const Lens&>(currentOptics);
-				if (lens.focal() < 0.)
+				const Lens* lens = dynamic_cast<const Lens*>(currentOptics);
+				if (lens->focal() < 0.)
 					painter.drawPath(m_concaveLensPath*objectCenterMatrix);
 				else
 					painter.drawPath(m_convexLensPath*objectCenterMatrix);
 			}
-			else if (currentOptics.type() == FlatInterfaceType)
+			else if (currentOptics->type() == FlatInterfaceType)
 			{
 				painter.drawPath(m_flatInterfacePath*objectCenterMatrix);
 			}
-			else if (currentOptics.type() == FlatMirrorType)
+			else if (currentOptics->type() == FlatMirrorType)
 			{
 				QRectF view_ObjectRect = objectRect();
 				view_ObjectRect.moveCenter(view_ObjectCenter);
 				painter.setBrush(ABCDBrush);
 				painter.drawRect(view_ObjectRect);
 			}
-			else if (currentOptics.type() == CurvedMirrorType)
+			else if (currentOptics->type() == CurvedMirrorType)
 			{
 				QRectF view_ObjectRect = objectRect();
 				view_ObjectRect.moveCenter(view_ObjectCenter);
 				painter.setBrush(ABCDBrush);
 				painter.drawRect(view_ObjectRect);
 			}
-			else if (currentOptics.type() == CurvedInterfaceType)
+			else if (currentOptics->type() == CurvedInterfaceType)
 			{
-				const CurvedInterface& interface = dynamic_cast<const CurvedInterface&>(currentOptics);
-				if (interface.surfaceRadius() < 0.)
+				const CurvedInterface* interface = dynamic_cast<const CurvedInterface*>(currentOptics);
+				if (interface->surfaceRadius() < 0.)
 					painter.drawPath(m_concaveInterfacePath*objectCenterMatrix);
 				else
 					painter.drawPath(m_convexInterfacePath*objectCenterMatrix);
 			}
-			else if (currentOptics.type() == GenericABCDType)
+			else if (currentOptics->type() == GenericABCDType)
 			{
 				QRectF view_ObjectRect = objectRect();
 				view_ObjectRect.moveCenter(view_ObjectCenter);
@@ -567,10 +568,10 @@ void OpticsView::paintEvent(QPaintEvent* event)
 				painter.drawRect(view_ObjectRect);
 			}
 
-			if (currentOptics.type() != CreateBeamType)
+			if (currentOptics->type() != CreateBeamType)
 			{
 				painter.setPen(textPen);
-				QString text = QString::fromUtf8(currentOptics.name().c_str());
+				QString text = QString::fromUtf8(currentOptics->name().c_str());
 				QRectF view_textRect(0., 0., 0., 0.);
 				view_textRect.moveCenter(view_ObjectCenter - QPointF(0., view_defaultObjectHeight*0.7));
 				view_textRect = painter.boundingRect(view_textRect, Qt::AlignCenter, text);
@@ -579,7 +580,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 		}
 
 		// Input beam
-		if (currentOptics.type() == CreateBeamType)
+		if (currentOptics->type() == CreateBeamType)
 		{
 			view_ObjectRight = view_left;
 			abs_ObjectRight = abs_left;
@@ -592,7 +593,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 		abs_beamRange = abs_beamRange.normalized();
 		painter.setPen(beamPen);
 		painter.setBrush(beamBrush);
-		drawBeam(painter, GBModel->bench().beam(row), abs_beamRange, row == model()->rowCount()-1);
+		drawBeam(painter, m_bench.beam(row), abs_beamRange, row == model()->rowCount()-1);
 
 /*		Beam cavityBeam = GBModel->cavityEigenBeam(row);
 		if (GBModel->isCavityStable() && cavityBeam.isValid())
@@ -635,7 +636,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	qDebug() << m_showTargetWaist << m_targetBeam.isValid() << m_targetBeam.waist() <<  m_targetBeam.waistPosition();
 	if (m_showTargetWaist && m_targetBeam.isValid())
 	{
-		m_targetBeam.setWavelength(dynamic_cast<GaussianBeamModel*>(model())->bench().wavelength());
+		m_targetBeam.setWavelength(m_bench.wavelength());
 		QRectF abs_beamRange = abs_paintArea;
 		painter.setPen(targetBeamPen);
 		painter.setBrush(targetBeamBrush);

@@ -20,6 +20,7 @@
 #define OPTICSVIEW_H
 
 #include "GaussianBeam.h"
+#include "OpticsBench.h"
 
 #include <QAbstractItemView>
 #include <QPoint>
@@ -34,7 +35,7 @@ class OpticsView : public QAbstractItemView
 	Q_OBJECT
 
 public:
-	OpticsView(QWidget* parent = 0);
+	OpticsView(OpticsBench& bench, QWidget* parent = 0);
 
 	QRect visualRect(const QModelIndex &index) const;
 	void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
@@ -81,8 +82,11 @@ private:
 
 private:
 	QLabel* m_statusLabel;
+	/// @todo this should remove
 	QAbstractItemModel* m_fitModel;
 	QComboBox* m_measureCombo;
+	/// @todo should this be constant ?
+	OpticsBench& m_bench;
 
 	QPainterPath m_convexLensPath;
 	QPainterPath m_concaveLensPath;

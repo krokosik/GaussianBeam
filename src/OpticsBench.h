@@ -30,6 +30,8 @@ class OpticsBenchNotify
 public:
 	OpticsBenchNotify() {}
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics) = 0;
+	virtual void OpticsBenchOpticsAdded(int index) = 0;
+	virtual void OpticsBenchOpticsRemoved(int index, int count) = 0;
 };
 
 class OpticsBench
@@ -39,41 +41,52 @@ public:
 	~OpticsBench();
 
 public:
-	int nOptics() const { return m_optics.size(); }
-	const Optics* optics(int index) const { return m_optics[index]; }
-//	Optics* optics(int index) { return m_optics[index]; }
-	const Beam& beam(int row) const { return m_beams[row]; }
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength);
 
+	int nOptics() const { return m_optics.size(); }
+	const Optics* optics(int index) const { return m_optics[index]; }
+	void addOptics(Optics* optics, int index);
+	void removeOptics(int index, int count = 1);
+	void setOpticsPosition(int index, double position);
+	void setOpticsName(int index, std::string name);
+	void lockTo(int index, std::string opticsName);
+	/**
+	* Retrieve a non constant pointer to an optics for property change.
+	* When finished, call opticsPropertyChanged()
+	* If opticsBeanch propose a direct function for changing a property
+	* (name, position, lockTo), rather use these functions
+	*/
+	Optics* opticsForPropertyChange(int index) { return m_optics[index]; }
+	void opticsPropertyChanged(int index);
+
+	const Beam& beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
+	void setBeam(const Beam& beam, int index);
 
 	void registerNotify(OpticsBenchNotify* notify);
 
 private:
 	void setInputBeam(const Beam& beam, bool update);
-
-/// @todo make this private
-public:
-	std::vector<Optics*> m_optics;
-	std::vector<Beam> m_beams;
-	void computeBeams(int changedRow = 0, bool backward = false);
+	void computeBeams(int changedIndex = 0, bool backward = false);
 
 private:
 	double m_wavelength;
+	std::vector<Optics*> m_optics;
+	std::vector<Beam> m_beams;
 	Beam m_targetBeam;
 	std::list<OpticsBenchNotify*> m_notifyList;
 
 /// Cavity stuff : @todo make a new class ?
 public:
 	bool isCavityStable() const;
-	const Beam cavityEigenBeam(int row) const;
+	const Beam cavityEigenBeam(int index) const;
 
 private:
 	GenericABCD m_cavity;
-	int m_first_cavity_row;
-	int m_last_cavity_row;
-	bool m_ring_cavity;
+	int m_firstCavityIndex;
+	int m_lastCavityIndex;
+	bool m_ringCavity;
 };
 
 namespace GaussianBeam

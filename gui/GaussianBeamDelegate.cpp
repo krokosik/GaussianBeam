@@ -74,9 +74,10 @@ CurvedInterfaceWidget::CurvedInterfaceWidget(QWidget* parent)
 	setLayout(layout);
 }
 
-GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model)
+GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench& bench)
 	: QItemDelegate(parent)
 	, m_model(model)
+	, m_bench(bench)
 {
 }
 
@@ -85,7 +86,11 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 {
 	/// @todo where are all these "new" things deleted ? Check Qt example
 
-	switch (index.column())
+	int row = index.row();
+	int column = index.column();
+	const Optics* optics = m_bench.optics(row);
+
+	switch (column)
 	{
 	case COL_WAIST:
 	case COL_RAYLEIGH:
@@ -108,14 +113,12 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case COL_PROPERTIES:
 	{
-		const Optics& optics = m_model->optics(index);
-
-		if (optics.type() == CurvedInterfaceType)
+		if (optics->type() == CurvedInterfaceType)
 		{
 			CurvedInterfaceWidget* editor = new CurvedInterfaceWidget(parent);
 			return editor;
 		}
-		else if (optics.type() == GenericABCDType)
+		else if (optics->type() == GenericABCDType)
 		{
 			ABCDWidget* editor = new ABCDWidget(parent);
 			return editor;
@@ -125,22 +128,22 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->setAccelerated(true);
 		editor->setMinimum(-Unit::infinity);
 		editor->setMaximum(Unit::infinity);
-		if (optics.type() == LensType)
+		if (optics->type() == LensType)
 		{
 			editor->setPrefix("f = ");
 			editor->setSuffix(Units::getUnit(UnitFocal).string("m"));
 		}
-		else if (optics.type() == CurvedMirrorType)
+		else if (optics->type() == CurvedMirrorType)
 		{
 			editor->setPrefix("R = ");
 			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
 		}
-		else if (optics.type() == FlatInterfaceType)
+		else if (optics->type() == FlatInterfaceType)
 		{
 			editor->setMinimum(0.);
 			editor->setPrefix("n2/n1 = ");
 		}
-		else if (optics.type() == CurvedInterfaceType)
+		else if (optics->type() == CurvedInterfaceType)
 		{
 			editor->setPrefix("R = ");
 			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
@@ -154,13 +157,12 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case COL_LOCK:
 	{
-		const Optics& optics = m_model->optics(index);
 		QComboBox* editor = new QComboBox(parent);
 		editor->addItem(tr("none"));
 		editor->addItem(tr("absolute"));
 		for (int i = 0; i < m_model->rowCount(); i++)
-			if (!m_model->optics(i).relativeLockedTo(m_model->opticsPtr(index.row())) || (m_model->opticsPtr(i) == optics.relativeLockParent()))
-				editor->addItem(QString::fromUtf8(m_model->optics(i).name().c_str()));
+			if ((!m_bench.optics(i)->relativeLockedTo(optics)) || (m_bench.optics(i) == optics->relativeLockParent()))
+				editor->addItem(QString::fromUtf8(m_bench.optics(i)->name().c_str()));
 		return editor;
 	}
 	default:
@@ -178,7 +180,11 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	if (!index.isValid() || (editor == 0))
 		return;
 
-	switch (index.column())
+	int row = index.row();
+	int column = index.column();
+	const Optics* optics = m_bench.optics(row);
+
+	switch (column)
 	{
 	case COL_POSITION:
 	case COL_WAIST:
@@ -193,35 +199,33 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	}
 	case COL_PROPERTIES:
 	{
-		const Optics& optics = m_model->optics(index);
-
-		if (optics.type() == CurvedInterfaceType)
+		if (optics->type() == CurvedInterfaceType)
 		{
-			const CurvedInterface curvedInterface = dynamic_cast<const CurvedInterface&>(optics);
+			const CurvedInterface* curvedInterface = dynamic_cast<const CurvedInterface*>(optics);
 			CurvedInterfaceWidget* widget = static_cast<CurvedInterfaceWidget*>(editor);
-			widget->setSurfaceRadius(curvedInterface.surfaceRadius()*Units::getUnit(UnitCurvature).divider());
-			widget->setIndexRatio(curvedInterface.indexRatio());
+			widget->setSurfaceRadius(curvedInterface->surfaceRadius()*Units::getUnit(UnitCurvature).divider());
+			widget->setIndexRatio(curvedInterface->indexRatio());
 			break;
 		}
-		else if (optics.type() == GenericABCDType)
+		else if (optics->type() == GenericABCDType)
 		{
-			const GenericABCD ABCDOptics = dynamic_cast<const GenericABCD&>(optics);
+			const GenericABCD* ABCDOptics = dynamic_cast<const GenericABCD*>(optics);
 			ABCDWidget* widget = static_cast<ABCDWidget*>(editor);
-			widget->setA(ABCDOptics.A());
-			widget->setB(ABCDOptics.B()*Units::getUnit(UnitABCD).divider());
-			widget->setC(ABCDOptics.C()/Units::getUnit(UnitABCD).divider());
-			widget->setD(ABCDOptics.D());
-			widget->setWidth(ABCDOptics.width()*Units::getUnit(UnitWidth).divider());
+			widget->setA(ABCDOptics->A());
+			widget->setB(ABCDOptics->B()*Units::getUnit(UnitABCD).divider());
+			widget->setC(ABCDOptics->C()/Units::getUnit(UnitABCD).divider());
+			widget->setD(ABCDOptics->D());
+			widget->setWidth(ABCDOptics->width()*Units::getUnit(UnitWidth).divider());
 			break;
 		}
 
 		double value = 0.;
-		if (optics.type() == LensType)
-			value = dynamic_cast<const Lens&>(optics).focal()*Units::getUnit(UnitFocal).divider();
-		else if (optics.type() == CurvedMirrorType)
-			value = dynamic_cast<const CurvedMirror&>(optics).curvatureRadius()*Units::getUnit(UnitCurvature).divider();
-		else if (optics.type() == FlatInterfaceType)
-			value = dynamic_cast<const FlatInterface&>(optics).indexRatio();
+		if (optics->type() == LensType)
+			value = dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider();
+		else if (optics->type() == CurvedMirrorType)
+			value = dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Units::getUnit(UnitCurvature).divider();
+		else if (optics->type() == FlatInterfaceType)
+			value = dynamic_cast<const FlatInterface*>(optics)->indexRatio();
 		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;
@@ -251,7 +255,11 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	if (!index.isValid() || (editor == 0))
 		return;
 
-	switch (index.column())
+	int row = index.row();
+	int column = index.column();
+	const Optics* optics = m_bench.optics(row);
+
+	switch (column)
 	{
 	case COL_LOCK:
 	{
@@ -261,9 +269,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	}
 	case COL_PROPERTIES:
 	{
-		const Optics& optics = m_model->optics(index);
-
-		if (optics.type() == CurvedInterfaceType)
+		if (optics->type() == CurvedInterfaceType)
 		{
 			CurvedInterfaceWidget* widget = static_cast<CurvedInterfaceWidget*>(editor);
 			QList<QVariant> propertyList;
@@ -271,7 +277,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 			propertyList.push_back(widget->indexRatio());
 			model->setData(index, propertyList);
 		}
-		else if (optics.type() == GenericABCDType)
+		else if (optics->type() == GenericABCDType)
 		{
 			ABCDWidget* widget = static_cast<ABCDWidget*>(editor);
 			QList<QVariant> propertyList;

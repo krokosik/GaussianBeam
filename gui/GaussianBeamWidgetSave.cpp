@@ -213,7 +213,7 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QStrin
 		child = child.nextSiblingElement();
 	}
 
-	model->addOptics(optics, model->rowCount());
+	m_bench.addOptics(optics, m_bench.nOptics());
 }
 
 void GaussianBeamWidget::saveFile(const QString &path)
@@ -241,7 +241,7 @@ void GaussianBeamWidget::saveFile(const QString &path)
 	xmlWriter.writeDTD("<!DOCTYPE gaussianBeam>");
 	xmlWriter.writeStartElement("gaussianBeam");
 	xmlWriter.writeAttribute("version", "1.0");
-	xmlWriter.writeTextElement("wavelength", QString::number(model->bench().wavelength()));
+	xmlWriter.writeTextElement("wavelength", QString::number(m_bench.wavelength()));
 	xmlWriter.writeStartElement("magicWaist");
 		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier()));
 		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
@@ -267,52 +267,52 @@ void GaussianBeamWidget::saveFile(const QString &path)
 	xmlWriter.writeEndElement();
 	for (int row = 0; row < model->rowCount(); row++)
 	{
-		const Optics& optics = model->optics(row);
+		const Optics* optics = m_bench.optics(row);
 
-		if (optics.type() == CreateBeamType)
+		if (optics->type() == CreateBeamType)
 		{
 			xmlWriter.writeStartElement("inputBeam");
-			xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam&>(optics).waist()));
+			xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam*>(optics)->waist()));
 		}
-		else if (optics.type() == LensType)
+		else if (optics->type() == LensType)
 		{
 			xmlWriter.writeStartElement("lens");
-			xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens&>(optics).focal()));
+			xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens*>(optics)->focal()));
 		}
-		else if (optics.type() == FlatMirrorType)
+		else if (optics->type() == FlatMirrorType)
 		{
 			xmlWriter.writeStartElement("flatMirror");
 		}
-		else if (optics.type() == CurvedMirrorType)
+		else if (optics->type() == CurvedMirrorType)
 		{
 			xmlWriter.writeStartElement("curvedMirror");
-			xmlWriter.writeTextElement("curvatureRadius", QString::number(dynamic_cast<const CurvedMirror&>(optics).curvatureRadius()));
+			xmlWriter.writeTextElement("curvatureRadius", QString::number(dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()));
 		}
-		else if (optics.type() == FlatInterfaceType)
+		else if (optics->type() == FlatInterfaceType)
 		{
 			xmlWriter.writeStartElement("flatInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const FlatInterface&>(optics).indexRatio()));
+			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const FlatInterface*>(optics)->indexRatio()));
 		}
-		else if (optics.type() == CurvedInterfaceType)
+		else if (optics->type() == CurvedInterfaceType)
 		{
 			xmlWriter.writeStartElement("curvedInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface&>(optics).indexRatio()));
-			xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface&>(optics).surfaceRadius()));
+			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface*>(optics)->indexRatio()));
+			xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()));
 		}
-		else if (optics.type() == GenericABCDType)
+		else if (optics->type() == GenericABCDType)
 		{
 			xmlWriter.writeStartElement("genericABCD");
-			xmlWriter.writeTextElement("width", QString::number(optics.width()));
-			xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD&>(optics).A()));
-			xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD&>(optics).B()));
-			xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD&>(optics).C()));
-			xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD&>(optics).D()));
+			xmlWriter.writeTextElement("width", QString::number(optics->width()));
+			xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD*>(optics)->A()));
+			xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD*>(optics)->B()));
+			xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD*>(optics)->C()));
+			xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D()));
 		}
-		xmlWriter.writeTextElement("position", QString::number(optics.position()));
-		xmlWriter.writeTextElement("name", QString(optics.name().c_str()));
-		xmlWriter.writeTextElement("absoluteLock", QString::number(optics.absoluteLock() ? true : false));
-		if (optics.relativeLockParent())
-			xmlWriter.writeTextElement("relativeLockParent", QString(optics.relativeLockParent()->name().c_str()));
+		xmlWriter.writeTextElement("position", QString::number(optics->position()));
+		xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
+		xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
+		if (optics->relativeLockParent())
+			xmlWriter.writeTextElement("relativeLockParent", QString(optics->relativeLockParent()->name().c_str()));
 		xmlWriter.writeEndElement();
 	}
 	xmlWriter.writeEndElement();
