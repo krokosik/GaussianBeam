@@ -21,6 +21,8 @@
 
 #include <iostream>
 #include <cmath>
+#include <algorithm>
+#include <functional>
 
 using namespace std;
 
@@ -80,10 +82,18 @@ void OpticsBench::removeOptics(int index, int count)
 	computeBeams(index);
 }
 
-void OpticsBench::setOpticsPosition(int index, double position)
+int OpticsBench::setOpticsPosition(int index, double position)
 {
+	Optics* movedOptics = m_optics[index];
 	m_optics[index]->setPositionCheckLock(position);
+	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 	computeBeams();
+
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it) == movedOptics)
+			return it - m_optics.begin();
+
+	return index;
 }
 
 void OpticsBench::lockTo(int index, std::string opticsName)
@@ -99,6 +109,7 @@ void OpticsBench::lockTo(int index, std::string opticsName)
 
 void OpticsBench::setOpticsName(int index, std::string name)
 {
+	// Check that the name is not already attributed
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 		if ((*it)->name() == name)
 			return;
@@ -112,13 +123,12 @@ void OpticsBench::opticsPropertyChanged(int /*index*/)
 	computeBeams();
 }
 
-void OpticsBench::setInputBeam(const Beam& beam, bool update)
+void OpticsBench::setInputBeam(const Beam& beam)
 {
 	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
-	createBeam->setPosition(beam.waistPosition());
 	createBeam->setWaist(beam.waist());
-	if (update)
-		computeBeams();
+	setOpticsPosition(0, beam.waistPosition());
+	computeBeams();
 }
 
 void OpticsBench::setBeam(const Beam& beam, int index)
@@ -135,8 +145,6 @@ void OpticsBench::setTargetBeam(const Beam& beam)
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
 {
-	cerr << "computeBeams " << wavelength() << endl;
-
 	Beam beam;
 
 	if (backward)
@@ -147,7 +155,8 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 		beam = m_beams[changedIndex];
 		for (int i = changedIndex - 1; i >= 0; i--)
 			m_beams[i] = beam = m_optics[i+1]->antecedent(beam);
-		setInputBeam(beam, false);
+		CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
+		createBeam->setBeam(beam);
 	}
 	else
 	{
@@ -200,10 +209,99 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	emitChange(changedIndex, nOptics()-1);
 }
 
-void OpticsBench::emitChange(int startOptics, int endOptics)
+Beam OpticsBench::computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const
 {
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+	Beam beam;
+	beam.setWavelength(wavelength());
+
+	for (int i = 0; i <= index; i++)
+		beam = opticsVector[i]->image(beam);
+
+	return beam;
+}
+
+vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const Beam& beam) const
+{
+	double epsilon = 1e-6;
+	vector<double> result;
+
+	vector<Optics*> opticsClone;
+	for (vector<Optics*>::const_iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
+		opticsClone.push_back((*it)->clone());
+
+	double initOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
+
+	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
+	{
+		double initPosition = (*it)->position();
+		(*it)->setPosition(initPosition + epsilon);
+		double finalOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
+		(*it)->setPosition(initPosition);
+		result.push_back((finalOverlap - initOverlap)/epsilon);
+	}
+
+	return result;
+}
+
+void OpticsBench::emitChange(int startOptics, int endOptics) const
+{
+	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchDataChanged(startOptics, endOptics);
+}
+
+bool OpticsBench::magicWaist(const Tolerance& tolerance)
+{
+	vector<Optics*> opticsClone;
+	/// @todo clone function
+	for (int i = 0; i < nOptics(); i++)
+		opticsClone.push_back(optics(i)->clone());
+
+	vector<Optics*> opticsMovable;
+	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
+		if (!(*it)->absoluteLock() && !(*it)->relativeLockParent())
+			opticsMovable.push_back(*it);
+
+	const int nTry = 1000000;
+	bool found = false;
+
+	double minPos = -0.1;
+	double maxPos = 0.7;
+
+	for (int i = 0; i < nTry; i++)
+	{
+		/// @todo find a suitable RNG
+		// Randomly moves a random optics
+		int index = rand() % (opticsMovable.size());
+		double position = double(rand())/double(RAND_MAX)*(maxPos - minPos) + minPos;
+		opticsMovable[index]->setPosition(position);
+
+		// Check waist
+		Beam beam = computeSingleBeam(opticsClone, nOptics()-1);
+		if (tolerance.overlap &&
+			(GaussianBeam::overlap(beam, m_targetBeam) > tolerance.minOverlap) ||
+			(!tolerance.overlap) &&
+			(fabs(beam.waist() - m_targetBeam.waist()) < tolerance.waistTolerance*m_targetBeam.waist()) &&
+		    (fabs(beam.waistPosition() - m_targetBeam.waistPosition()) < tolerance.positionTolerance*m_targetBeam.rayleigh()))
+		{
+			cerr << "found waist : " << beam.waist() << " @ " << beam.waistPosition() << " // try = " << i << endl;
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+	{
+		cerr << "Beam not found !!!" << endl;
+		return false;
+	}
+
+	for (unsigned int l = 0; l < opticsClone.size(); l++)
+		addOptics(opticsClone[l], l);
+
+	removeOptics(opticsClone.size(), nOptics() - opticsClone.size());
+
+
+	return true;
 }
 
 //////////////////////////////////////////
@@ -246,50 +344,6 @@ const Beam OpticsBench::cavityEigenBeam(int index) const
 /////////////////////////////////////////////////
 // GaussianBeam namespace
 
-bool GaussianBeam::magicWaist(vector<Optics*>& optics, const MagicWaistTarget& target)
-{
-	const int nTry = 1000000;
-
-	for (int i = 0; i < nTry; i++)
-	{
-		// Scramble lenses
-		if (target.scramble)
-			for (unsigned int j = 0; j < 3*optics.size(); j++)
-				::swap(optics[rand() % (optics.size()-1) + 1], optics[rand() % (optics.size()-1) + 1]);
-		// Place lenses
-		Beam beam;
-		beam.setWavelength(target.beam.wavelength());
-		double previousPos = 0.;
-		for (unsigned int l = 0; l < optics.size(); l++)
-		{
-			if (!optics[l]->absoluteLock())
-			{
-				/// @todo better range determination
-				double position = double(rand())/double(RAND_MAX)*(target.beam.waistPosition() - previousPos) + previousPos;
-				optics[l]->setPosition(position);
-			}
-			beam = optics[l]->image(beam);
-			previousPos = optics[l]->position();
-			/// @bug this is a hack !
-			if ((optics[l]->type() == CreateBeamType) && (previousPos > 0.))
-				previousPos = 0.;
-		}
-		// Check waist
-		if (target.overlap &&
-			(overlap(beam, target.beam) > target.minOverlap) ||
-			(!target.overlap) &&
-			(fabs(beam.waist() - target.beam.waist()) < target.waistTolerance*target.beam.waist()) &&
-		    (fabs(beam.waistPosition() - target.beam.waistPosition()) < target.positionTolerance*target.beam.rayleigh()))
-		{
-			cerr << "found waist : " << beam.waist() << " @ " << beam.waistPosition() << " // try = " << i << endl;
-			return true;
-		}
-	}
-
-	cerr << "Beam not found !!!" << endl;
-
-	return false;
-}
 
 Beam GaussianBeam::fitBeam(vector<double> positions, vector<double> radii, double wavelength, double* rho2)
 {

@@ -85,8 +85,7 @@ public:
 
 private:
 	GaussianBeamModel* m_model;
-	/// @todo should this be const ?
-	OpticsBench& m_bench;
+	const OpticsBench& m_bench;
 };
 
 #endif

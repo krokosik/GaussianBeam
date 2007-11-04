@@ -19,23 +19,16 @@
 #ifndef GAUSSIANBEAMMODEL_H
 #define GAUSSIANBEAMMODEL_H
 
-#define COL_OPTICS 0
-#define COL_POSITION 1
-#define COL_RELATIVE_POSITION 2
-#define COL_PROPERTIES 3
-#define COL_WAIST 4
-#define COL_WAIST_POSITION 5
-#define COL_RAYLEIGH 6
-#define COL_DIVERGENCE 7
-#define COL_NAME 8
-#define COL_LOCK 9
-
 #include "OpticsBench.h"
 #include "GaussianBeam.h"
 #include "Optics.h"
 
 #include <QAbstractTableModel>
 #include <QList>
+
+enum ColumnContent {OpticsColumn, PositionColumn, RelativePositionColumn, PropertiesColumn,
+                    WaistColumn, WaistPositionColumn, RayleighColumn, DivergenceColumn,
+                    NameColumn, LockColumn, SensitivityColumn};
 
 class GaussianBeamModel : public QAbstractTableModel, public OpticsBenchNotify
 {
@@ -54,6 +47,7 @@ public:
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
 	bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
+	ColumnContent columnContent(int column) const { return m_columns[column]; }
 
 private:
 	QString opticsName(OpticsType opticsType) const;
@@ -62,8 +56,8 @@ private:
 	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	/// @todo should this be const ?
 	OpticsBench& m_bench;
+	QList<ColumnContent> m_columns;
 };
 
 #endif

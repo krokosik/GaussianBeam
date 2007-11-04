@@ -21,6 +21,9 @@
 
 #include <complex>
 
+
+/// @todo some of these are defined by the STL library
+
 inline double sqr(double x)
 {
 	return x*x;
@@ -39,13 +42,6 @@ inline double max(double x, double y)
 inline double sign(double x)
 {
 	return x < 0. ? -1. : 1.;
-}
-
-template<typename T> void swap(T& x, T& y)
-{
-	T tmp = x;
-	x = y;
-	y = tmp;
 }
 
 struct Approximation

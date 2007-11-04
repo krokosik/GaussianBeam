@@ -27,6 +27,10 @@ GaussianBeamModel::GaussianBeamModel(OpticsBench& bench, QObject* parent)
 	, m_bench(bench)
 
 {
+	m_columns << OpticsColumn << PositionColumn << RelativePositionColumn << PropertiesColumn
+	          << WaistColumn << WaistPositionColumn << RayleighColumn << DivergenceColumn
+	          << NameColumn << LockColumn;
+
 	m_bench.registerNotify(this);
 }
 
@@ -41,7 +45,7 @@ int GaussianBeamModel::rowCount(const QModelIndex& /*parent*/) const
 
 int GaussianBeamModel::columnCount(const QModelIndex& /*parent*/) const
 {
-	return 10;
+	return m_columns.size();
 }
 
 QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
@@ -50,15 +54,15 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		return QVariant();
 
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_columns[index.column()];
 
-	if (column == COL_OPTICS)
+	if (column == OpticsColumn)
 		return opticsName(m_bench.optics(row)->type());
-	else if (column == COL_POSITION)
+	else if (column == PositionColumn)
 		return m_bench.optics(row)->position()*Units::getUnit(UnitPosition).divider();
-	else if ((column == COL_RELATIVE_POSITION) && (row > 0))
+	else if ((column == RelativePositionColumn) && (row > 0))
 		return (m_bench.optics(row)->position() - m_bench.optics(row-1)->position())*Units::getUnit(UnitPosition).divider();
-	else if (column == COL_PROPERTIES)
+	else if (column == PropertiesColumn)
 	{
 		if (m_bench.optics(row)->type() == LensType)
 		{
@@ -94,17 +98,17 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			                       + Units::getUnit(UnitWidth).string("m");
 		}
 	}
-	else if (column == COL_WAIST)
+	else if (column == WaistColumn)
 		return m_bench.beam(row).waist()*Units::getUnit(UnitWaist).divider();
-	else if (column == COL_WAIST_POSITION)
+	else if (column == WaistPositionColumn)
 		return m_bench.beam(row).waistPosition()*Units::getUnit(UnitPosition).divider();
-	else if (column == COL_RAYLEIGH)
+	else if (column == RayleighColumn)
 		return m_bench.beam(row).rayleigh()*Units::getUnit(UnitRayleigh).divider();
-	else if (column == COL_DIVERGENCE)
+	else if (column == DivergenceColumn)
 		return m_bench.beam(row).divergence()*Units::getUnit(UnitDivergence).divider();
-	else if (column == COL_NAME)
+	else if (column == NameColumn)
 		return QString::fromUtf8(m_bench.optics(row)->name().c_str());
-	else if (column == COL_LOCK)
+	else if (column == LockColumn)
 	{
 		if (m_bench.optics(row)->absoluteLock())
 			return tr("absolute");
@@ -122,27 +126,27 @@ QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation,
 	if (role == Qt::DisplayRole)
 		if (orientation == Qt::Horizontal)
 		{
-			switch (section)
+			switch (m_columns[section])
 			{
-				case COL_OPTICS:
+				case OpticsColumn:
 					return tr("Optics");
-				case COL_POSITION:
+				case PositionColumn:
 					return tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)";
-				case COL_RELATIVE_POSITION:
+				case RelativePositionColumn:
 					return tr("Relative\nposition");
-				case COL_PROPERTIES:
+				case PropertiesColumn:
 					return tr("Properties");
-				case COL_WAIST:
+				case WaistColumn:
 					return tr("Waist") + " (" + Units::getUnit(UnitWaist).prefix() + "m)";
-				case COL_WAIST_POSITION:
+				case WaistPositionColumn:
 					return tr("Waist\nPosition") + " (" + Units::getUnit(UnitPosition).prefix() + "m)";
-				case COL_RAYLEIGH:
+				case RayleighColumn:
 					return tr("Rayleigh\nlength") + " (" + Units::getUnit(UnitRayleigh).prefix() + "m)";
-				case COL_DIVERGENCE:
+				case DivergenceColumn:
 					return tr("Divergence") + "\n(" + Units::getUnit(UnitDivergence).prefix() + "rad)";
-				case COL_NAME:
+				case NameColumn:
 					return tr("Name");
-				case COL_LOCK:
+				case LockColumn:
 					return tr("Lock");
 				default:
 					return QVariant();
@@ -160,11 +164,11 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		return false;
 
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_columns[index.column()];
 
-	if (column == COL_POSITION)
+	if (column == PositionColumn)
 		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier());
-	else if (column == COL_PROPERTIES)
+	else if (column == PropertiesColumn)
 	{
 		Optics* optics = m_bench.opticsForPropertyChange(row);
 
@@ -192,33 +196,33 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		}
 		m_bench.opticsPropertyChanged(row);
 	}
-	else if (column == COL_WAIST)
+	else if (column == WaistColumn)
 	{
 		Beam beam = m_bench.beam(row);
 		beam.setWaist(value.toDouble()*Units::getUnit(UnitWaist).multiplier());
 		m_bench.setBeam(beam, row);
 	}
-	else if (column == COL_WAIST_POSITION)
+	else if (column == WaistPositionColumn)
 	{
 		Beam beam = m_bench.beam(row);
 		beam.setWaistPosition(value.toDouble()*Units::getUnit(UnitPosition).multiplier());
 		m_bench.setBeam(beam, row);
 	}
-	else if (column == COL_RAYLEIGH)
+	else if (column == RayleighColumn)
 	{
 		Beam beam = m_bench.beam(row);
 		beam.setRayleigh(value.toDouble()*Units::getUnit(UnitRayleigh).multiplier());
 		m_bench.setBeam(beam, row);
 	}
-	else if (column == COL_DIVERGENCE)
+	else if (column == DivergenceColumn)
 	{
 		Beam beam = m_bench.beam(row);
 		beam.setDivergence(value.toDouble()*Units::getUnit(UnitDivergence).multiplier());
 		m_bench.setBeam(beam, row);
 	}
-	else if (column == COL_NAME)
+	else if (column == NameColumn)
 		m_bench.setOpticsName(row, value.toString().toUtf8().data());
- 	else if (column == COL_LOCK)
+ 	else if (column == LockColumn)
 	{
 		/// @todo make specific functions in OpticsBench to change this. Move this logic to OpticsBench
 		QString string = value.toString();
@@ -245,19 +249,21 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 {
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_columns[index.column()];
 
 	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
-	if ((column == COL_POSITION) ||
-		(column == COL_NAME) ||
-		(column == COL_LOCK) ||
-		(column == COL_WAIST) ||
-		(column == COL_WAIST_POSITION) ||
-		(column == COL_RAYLEIGH) ||
-		(column == COL_DIVERGENCE) ||
-		(column == COL_PROPERTIES) && (m_bench.optics(row)->type() != FlatMirrorType))
-		flags |= Qt::ItemIsEditable;
+	if ((column == PositionColumn) ||
+		(column == NameColumn) ||
+		(column == LockColumn) ||
+		(column == WaistColumn) ||
+		(column == WaistPositionColumn) ||
+		(column == RayleighColumn) ||
+		(column == DivergenceColumn) ||
+		(column == PropertiesColumn)
+		 && (m_bench.optics(row)->type() != FlatMirrorType)
+		 && (m_bench.optics(row)->type() != CreateBeamType))
+			flags |= Qt::ItemIsEditable;
 
 	return flags;
 }

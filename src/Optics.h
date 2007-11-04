@@ -134,6 +134,7 @@ public:
 public:
 	double waist() const { return m_waist; }
 	void setWaist(double waist) { m_waist = waist; }
+	void setBeam(const Beam& beam);
 
 private:
 	double m_waist;
@@ -313,5 +314,18 @@ protected:
 
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2);
 GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2);
+
+namespace std
+{
+	template<> struct less<Optics*>
+	{
+		bool operator()(Optics const* optics1, Optics const* optics2)
+		{
+			if (!optics1) return true;
+			if (!optics2) return false;
+			return optics1->position() < optics2->position();
+		}
+	};
+}
 
 #endif

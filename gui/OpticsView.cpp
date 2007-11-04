@@ -292,7 +292,7 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 	if (m_active_object >= 0)
 	{
 		QPointF pos = QPointF(event->pos()) - QPointF(m_active_object_offset, 0.);
-		m_bench.setOpticsPosition(m_active_object, (pos*m_view2abs).x());
+		m_active_object = m_bench.setOpticsPosition(m_active_object, (pos*m_view2abs).x());
 	}
 	else if (m_statusLabel)
 	{

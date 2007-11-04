@@ -230,15 +230,13 @@ Beam GaussianBeamWidget::targetWaist()
 
 void GaussianBeamWidget::displayOverlap()
 {
-	qDebug() << "Display Overlap";
 	if (model->rowCount()-1 > 0)
 	{
 		double overlap = GaussianBeam::overlap(m_bench.beam(model->rowCount()-1), targetWaist());
-		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " " + tr("%"));
+		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " %");
 	}
 	else
 		label_OverlapResult->setText("");
-	qDebug() << "end";
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
@@ -286,31 +284,16 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
 	label_MagicWaistResult->setText("");
 
-	GaussianBeam::MagicWaistTarget target;
-	target.beam = targetWaist();
-	target.overlap = radioButton_Overlap->isChecked();
-	target.minOverlap = doubleSpinBox_MinOverlap->value()*0.01;
-	target.waistTolerance = doubleSpinBox_WaistTolerance->value()*0.01;
-	target.positionTolerance = doubleSpinBox_PositionTolerance->value()*0.01;
-	target.scramble = checkBox_Scramble->isChecked();
+	Tolerance tolerance;
+	tolerance.overlap = radioButton_Overlap->isChecked();
+	tolerance.minOverlap = doubleSpinBox_MinOverlap->value()*0.01;
+	tolerance.waistTolerance = doubleSpinBox_WaistTolerance->value()*0.01;
+	tolerance.positionTolerance = doubleSpinBox_PositionTolerance->value()*0.01;
 
-	std::vector<Optics*> optics;
-
-	for (int i = 0; i < m_bench.nOptics(); i++)
-		optics.push_back(m_bench.optics(i)->clone());
-
-	if (!GaussianBeam::magicWaist(optics, target))
-	{
+	if (!m_bench.magicWaist(tolerance))
 		label_MagicWaistResult->setText(tr("Desired waist could not be found !"));
-		return;
-	}
-
-	for (unsigned int l = 0; l < optics.size(); l++)
-		m_bench.addOptics(optics[l], l);
-
-	m_bench.removeOptics(optics.size(), m_bench.nOptics() - optics.size());
-
-	displayOverlap();
+	else
+		displayOverlap();
 }
 
 ///////////////////////////////////////////////////////////
@@ -434,12 +417,10 @@ void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
 
 void GaussianBeamWidget::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
-	qDebug() << "UpdateWidget";
 	displayOverlap();
 }
 
 void GaussianBeamWidget::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
-	qDebug() << "UpdateView";
 	opticsView->updateViewport();
 }

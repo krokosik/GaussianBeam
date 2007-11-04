@@ -16,8 +16,8 @@ QT += xml
 plot {
 	LIBS += -lqwt-qt4
 	DEFINES += GBPLOT
-	HEADERS += GaussianBeamPlot.h
-	SOURCES += GaussianBeamPlot.cpp
+	HEADERS += gui/GaussianBeamPlot.h
+	SOURCES += gui/GaussianBeamPlot.cpp
 }
 
 CODECFORTR     = UTF-8

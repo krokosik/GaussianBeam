@@ -87,14 +87,14 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	/// @todo where are all these "new" things deleted ? Check Qt example
 
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{
-	case COL_WAIST:
-	case COL_RAYLEIGH:
-	case COL_DIVERGENCE:
+	case WaistColumn:
+	case RayleighColumn:
+	case DivergenceColumn:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
@@ -102,8 +102,8 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->setMaximum(Unit::infinity);
 		return editor;
 	}
-	case COL_POSITION:
-	case COL_WAIST_POSITION:
+	case PositionColumn:
+	case WaistPositionColumn:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
@@ -111,7 +111,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->setMaximum(Unit::infinity);
 		return editor;
 	}
-	case COL_PROPERTIES:
+	case PropertiesColumn:
 	{
 		if (optics->type() == CurvedInterfaceType)
 		{
@@ -150,12 +150,12 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		}
 		return editor;
 	}
-	case COL_NAME:
+	case NameColumn:
 	{
 		QLineEdit* editor = new QLineEdit(parent);
 		return editor;
 	}
-	case COL_LOCK:
+	case LockColumn:
 	{
 		QComboBox* editor = new QComboBox(parent);
 		editor->addItem(tr("none"));
@@ -175,29 +175,28 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
 	/// @todo why static cast ?
-	qDebug() << "setEditorData" << m_model->data(index, Qt::DisplayRole);
 
 	if (!index.isValid() || (editor == 0))
 		return;
 
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{
-	case COL_POSITION:
-	case COL_WAIST:
-	case COL_WAIST_POSITION:
-	case COL_RAYLEIGH:
-	case COL_DIVERGENCE:
+	case PositionColumn:
+	case WaistColumn:
+	case WaistPositionColumn:
+	case RayleighColumn:
+	case DivergenceColumn:
 	{
 		double value = m_model->data(index, Qt::DisplayRole).toDouble();
 		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;
 	}
-	case COL_PROPERTIES:
+	case PropertiesColumn:
 	{
 		if (optics->type() == CurvedInterfaceType)
 		{
@@ -230,14 +229,14 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		spinBox->setValue(value);
 		break;
 	}
-	case COL_NAME:
+	case NameColumn:
 	{
 		QString name = m_model->data(index, Qt::DisplayRole).toString();
 		QLineEdit* lineEdit = static_cast<QLineEdit*>(editor);
 		lineEdit->setText(name);
 		break;
 	}
-	case COL_LOCK:
+	case LockColumn:
 	{
 		QString value = m_model->data(index, Qt::DisplayRole).toString();
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
@@ -256,18 +255,18 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 		return;
 
 	int row = index.row();
-	int column = index.column();
+	ColumnContent column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{
-	case COL_LOCK:
+	case LockColumn:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
 		model->setData(index, comboBox->itemText(comboBox->currentIndex()));
 		break;
 	}
-	case COL_PROPERTIES:
+	case PropertiesColumn:
 	{
 		if (optics->type() == CurvedInterfaceType)
 		{

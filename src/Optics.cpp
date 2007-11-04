@@ -145,6 +145,12 @@ Beam CreateBeam::antecedent(const Beam& outputBeam) const
 	return Beam(m_waist, position(), outputBeam.wavelength());
 }
 
+void CreateBeam::setBeam(const Beam& beam)
+{
+	setPosition(beam.waistPosition());
+	setWaist(beam.waist());
+}
+
 /////////////////////////////////////////////////
 // ABCD class
 

@@ -34,6 +34,15 @@ public:
 	virtual void OpticsBenchOpticsRemoved(int index, int count) = 0;
 };
 
+struct Tolerance
+{
+	/// True for tolerance on overlap, false for tolerance on waist and position
+	bool overlap;
+	double minOverlap;
+	double waistTolerance;
+	double positionTolerance;
+};
+
 class OpticsBench
 {
 public:
@@ -50,26 +59,33 @@ public:
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
 	void removeOptics(int index, int count = 1);
-	void setOpticsPosition(int index, double position);
+	/**
+	* Set the optics at @p index to position @p position. Takes care of locks,
+	* exclusion areas, and optics ordering.
+	* @return the new index of the optics
+	*/
+	int setOpticsPosition(int index, double position);
 	void setOpticsName(int index, std::string name);
 	void lockTo(int index, std::string opticsName);
 	/**
 	* Retrieve a non constant pointer to an optics for property change.
 	* When finished, call opticsPropertyChanged()
-	* If opticsBeanch propose a direct function for changing a property
-	* (name, position, lockTo), rather use these functions
+	* If opticsBench proposes a direct function for changing a property
+	* (position, name, lockTo), rather use these functions.
 	*/
 	Optics* opticsForPropertyChange(int index) { return m_optics[index]; }
 	void opticsPropertyChanged(int index);
 
 	/// Beams handling
 	const Beam& beam(int index) const { return m_beams[index]; }
-	void setInputBeam(const Beam& beam) { setInputBeam(beam, true); }
+	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
+	std::vector<double> sensitivity() const { return gradient(m_optics, m_beams.back()); }
 
 	/// Magic waist
 	const Beam& targetBeam() const { return m_targetBeam; }
 	void setTargetBeam(const Beam& beam);
+	bool magicWaist(const Tolerance& tolerance);
 
 	/// Cavity stuff : @todo make a new class ?
 	bool isCavityStable() const;
@@ -79,9 +95,10 @@ public:
 	void registerNotify(OpticsBenchNotify* notify);
 
 private:
-	void setInputBeam(const Beam& beam, bool update);
 	void computeBeams(int changedIndex = 0, bool backward = false);
-	void emitChange(int startOptics, int endOptics);
+	Beam computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const;
+	void emitChange(int startOptics, int endOptics) const;
+	std::vector<double> gradient(const std::vector<Optics*>& opticsVector, const Beam& beam) const;
 
 private:
 	double m_wavelength;
@@ -103,25 +120,6 @@ private:
 
 namespace GaussianBeam
 {
-	struct MagicWaistTarget
-	{
-		Beam beam;
-		/// True for tolerance on overlap, false for tolerance on waist and position
-		bool overlap;
-		double minOverlap;
-		double waistTolerance;
-		double positionTolerance;
-		bool scramble;
-	};
-
-	/**
-	* Find a lens arrangement to produce @p targetBeam from @p inputBeam
-	* @p optics vector of optics to use
-	* @p target data structure gathering target properties
-	* @return true for success
-	*/
-	bool magicWaist(std::vector<Optics*>& optics, const MagicWaistTarget& target);
-
 	/**
 	* Find the waist radius and position for a given set of radii measurement of a Gaussian beam
 	* It fits the given data with a linear fit, and finds the only hyperbola
