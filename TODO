@@ -24,7 +24,6 @@ BUGS:
 	Proper optics ordering in magic waist
 	Magic waist does not trigger if the input waist is after the first optics
 *	0 focal length may crash the program
-	Check direction of the curvature radius on the graph
 	What happens to tree pointers when cloning the optics ?
 *	Test case : remove all lenses, add two lenses : crash
 

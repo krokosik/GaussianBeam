@@ -95,6 +95,9 @@ public:
 	void registerNotify(OpticsBenchNotify* notify);
 
 private:
+	std::vector<Optics*> cloneOptics() const;
+	void lockTo(std::vector<Optics*>& opticsVector, int index, std::string opticsName) const;
+	void setOpticsPosition(std::vector<Optics*>& opticsVector, int index, double position) const;
 	void computeBeams(int changedIndex = 0, bool backward = false);
 	Beam computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const;
 	void emitChange(int startOptics, int endOptics) const;

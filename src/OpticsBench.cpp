@@ -85,8 +85,7 @@ void OpticsBench::removeOptics(int index, int count)
 int OpticsBench::setOpticsPosition(int index, double position)
 {
 	Optics* movedOptics = m_optics[index];
-	m_optics[index]->setPositionCheckLock(position);
-	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
+	setOpticsPosition(m_optics, index, position);
 	computeBeams();
 
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
@@ -96,15 +95,26 @@ int OpticsBench::setOpticsPosition(int index, double position)
 	return index;
 }
 
-void OpticsBench::lockTo(int index, std::string opticsName)
+void OpticsBench::setOpticsPosition(vector<Optics*>& opticsVector, int index, double position) const
 {
-	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+	opticsVector[index]->setPositionCheckLock(position);
+	sort(opticsVector.begin() + 1, opticsVector.end(), less<Optics*>());
+}
+
+void OpticsBench::lockTo(int index, string opticsName)
+{
+	lockTo(m_optics, index, opticsName);
+	emitChange(0, nOptics()-1);
+}
+
+void OpticsBench::lockTo(vector<Optics*>& opticsVector, int index, string opticsName) const
+{
+	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
 		if ((*it)->name() == opticsName)
 		{
-			m_optics[index]->relativeLockTo(*it);
+			opticsVector[index]->relativeLockTo(*it);
 			break;
 		}
-	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::setOpticsName(int index, std::string name)
@@ -209,6 +219,20 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	emitChange(changedIndex, nOptics()-1);
 }
 
+vector<Optics*> OpticsBench::cloneOptics() const
+{
+	vector<Optics*> opticsClone;
+
+	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		opticsClone.push_back((*it)->clone());
+
+	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->relativeLockParent())
+			lockTo(opticsClone, it - m_optics.begin(), (*it)->relativeLockParent()->name());
+
+	return opticsClone;
+}
+
 Beam OpticsBench::computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const
 {
 	Beam beam;
@@ -239,6 +263,9 @@ vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const 
 		(*it)->setPosition(initPosition);
 		result.push_back((finalOverlap - initOverlap)/epsilon);
 	}
+ 
+	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
+		delete (*it);
 
 	return result;
 }
@@ -251,17 +278,14 @@ void OpticsBench::emitChange(int startOptics, int endOptics) const
 
 bool OpticsBench::magicWaist(const Tolerance& tolerance)
 {
-	vector<Optics*> opticsClone;
-	/// @todo clone function
-	for (int i = 0; i < nOptics(); i++)
-		opticsClone.push_back(optics(i)->clone());
+	vector<Optics*> opticsClone = cloneOptics();
 
-	vector<Optics*> opticsMovable;
+	vector<int> opticsMovable;
 	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
 		if (!(*it)->absoluteLock() && !(*it)->relativeLockParent())
-			opticsMovable.push_back(*it);
+			opticsMovable.push_back(it - opticsClone.begin());
 
-	const int nTry = 1000000;
+	const int nTry = 500000;
 	bool found = false;
 
 	double minPos = -0.1;
@@ -273,7 +297,7 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 		// Randomly moves a random optics
 		int index = rand() % (opticsMovable.size());
 		double position = double(rand())/double(RAND_MAX)*(maxPos - minPos) + minPos;
-		opticsMovable[index]->setPosition(position);
+		setOpticsPosition(opticsClone, opticsMovable[index], position);
 
 		// Check waist
 		Beam beam = computeSingleBeam(opticsClone, nOptics()-1);
@@ -289,19 +313,27 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 		}
 	}
 
-	if (!found)
+	if (found)
 	{
+		/// @todo gradient method
+		/// @todo is there a better way to identify an otpics than a name ? Create a UID ?
+		for (vector<Optics*>::iterator itClone = opticsClone.begin(); itClone != opticsClone.end(); itClone++)
+			for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+				if ((*itClone)->name() == (*it)->name())
+				{
+					(*it)->setPosition((*itClone)->position());
+					break;
+				}
+		sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
+		computeBeams();
+    }
+	else
 		cerr << "Beam not found !!!" << endl;
-		return false;
-	}
 
-	for (unsigned int l = 0; l < opticsClone.size(); l++)
-		addOptics(opticsClone[l], l);
+	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
+		delete (*it);
 
-	removeOptics(opticsClone.size(), nOptics() - opticsClone.size());
-
-
-	return true;
+	return found;
 }
 
 //////////////////////////////////////////
