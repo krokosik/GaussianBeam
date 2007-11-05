@@ -90,9 +90,15 @@ public:
 	/**
 	* Move the optics to @p position while taking care of locks :
 	* - move the whole lock tree
-	* - if the lock tree is abolutly locked, don't do anything
+	* - if the lock tree is abolutly locked, don't do anything,
+	*   except if @p respectAbsoluteLock is set to false
 	*/
-	void setPositionCheckLock(double position);
+	void setPositionCheckLock(double position, bool respectAbsoluteLock = true);
+	/**
+	* Erase the locking tree structure of this optics withour affecting ascendant or descendant.
+	* This is usefull for preserving or recreating the locking tree after cloning.
+	*/
+	void eraseLockingTree();
 
 private:
 	/// @todo this is not clean. Think...

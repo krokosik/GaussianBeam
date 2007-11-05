@@ -102,8 +102,6 @@ bool Optics::isRelativeLockDescendant(const Optics* const optics) const
 	if (optics == this)
 		return true;
 
-	cerr << "Checking if " << name() << " is connected to " << optics->name() << endl;
-
 	for (list<Optics*>::const_iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
 		if ((*it)->isRelativeLockDescendant(optics))
 			return true;
@@ -119,12 +117,18 @@ void Optics::moveDescendant(double distance)
 		(*it)->moveDescendant(distance);
 }
 
-void Optics::setPositionCheckLock(double pos)
+void Optics::setPositionCheckLock(double pos, bool respectAbsoluteLock)
 {
-	if (relativeLockedTreeAbsoluteLock())
+	if (relativeLockedTreeAbsoluteLock() && respectAbsoluteLock)
 		return;
 
 	relativeLockRoot()->moveDescendant(pos - position());
+}
+
+void Optics::eraseLockingTree()
+{
+	m_relativeLockChildren.clear();
+	m_relativeLockParent = 0;
 }
 
 /////////////////////////////////////////////////

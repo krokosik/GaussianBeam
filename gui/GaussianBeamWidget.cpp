@@ -121,7 +121,7 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
-	on_checkBox_ShowTargetWaist_toggled(checkBox_ShowTargetWaist->isChecked());
+	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
 
 	if (!file.isEmpty())
@@ -212,6 +212,7 @@ void GaussianBeamWidget::on_action_AddGenericABCD_triggered()
 
 void GaussianBeamWidget::on_pushButton_Remove_clicked()
 {
+	/// @bug this does not work for block selection with MAJ !
 	for (int row = model->rowCount() - 1; row >= 0; row--)
 		if ((m_bench.optics(row)->type() != CreateBeamType) &&
 		    selectionModel->isRowSelected(row, QModelIndex()))
@@ -253,7 +254,7 @@ void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double val
 	displayOverlap();
 }
 
-void GaussianBeamWidget::on_checkBox_ShowTargetWaist_toggled(bool checked)
+void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 {
 	opticsView->setShowTargetBeam(checked);
 }

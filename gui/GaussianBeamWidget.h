@@ -55,7 +55,7 @@ protected slots:
 	void on_pushButton_FitAddRow_clicked();
 	void on_pushButton_FitRemoveRow_clicked();
 	void on_checkBox_ShowGraph_toggled(bool checked);
-	void on_checkBox_ShowTargetWaist_toggled(bool checked);
+	void on_checkBox_ShowTargetBeam_toggled(bool checked);
 	void on_doubleSpinBox_Wavelength_valueChanged(double value);
 	void on_doubleSpinBox_HRange_valueChanged(double value);
 	void on_doubleSpinBox_VRange_valueChanged(double value);

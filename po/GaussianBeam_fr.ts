@@ -197,11 +197,6 @@
         <translation> % Rayleigh</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamForm.ui" line="403"/>
-        <source>Show target waist</source>
-        <translation>Monter le waist cible</translation>
-    </message>
-    <message>
         <location filename="../gui/GaussianBeamForm.ui" line="511"/>
         <source>Add row</source>
         <translation>Ajouter une ligne</translation>
@@ -211,109 +206,124 @@
         <source>Remove row</source>
         <translation>Enlever une ligne</translation>
     </message>
+    <message>
+        <location filename="../gui/GaussianBeamForm.ui" line="403"/>
+        <source>Show target beam</source>
+        <translation>Montrer le faisceau cible</translation>
+    </message>
 </context>
 <context>
     <name>GaussianBeamModel</name>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="128"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="135"/>
         <source>Optics</source>
         <translation>Optique</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="132"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="139"/>
         <source>Relative
 position</source>
         <translation>Position
 relative</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="144"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="153"/>
         <source>Name</source>
         <translation>Nom</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="146"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="155"/>
         <source>Lock</source>
         <translation>Vérouillage</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="297"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="308"/>
         <source>Input beam</source>
         <translation>Faisceau incident</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="299"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="310"/>
         <source>Lens</source>
         <translation>Lentille</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="305"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="316"/>
         <source>Flat interface</source>
         <translation>Interface plane</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="307"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="318"/>
         <source>Curved interface</source>
         <translation>Interface courbe</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="134"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="141"/>
         <source>Properties</source>
         <translation>Propriétés</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="130"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="137"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="136"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="143"/>
         <source>Waist</source>
         <translation>Waist</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="138"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="145"/>
         <source>Waist
 Position</source>
         <translation>Position du
 waist</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="140"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="147"/>
         <source>Rayleigh
 length</source>
         <translation>Longueur de
 Rayleigh</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="142"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="149"/>
         <source>Divergence</source>
         <translation>Divergence</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="301"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="312"/>
         <source>Flat Mirror</source>
         <translation>Miroir plan</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="303"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="314"/>
         <source>Curved Mirror</source>
         <translation>Miroir courbe</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="309"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="320"/>
         <source>Generic ABCD</source>
         <translation>ABCD générique</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="225"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="234"/>
         <source>absolute</source>
         <translation>absolu</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamModel.cpp" line="231"/>
+        <location filename="../gui/GaussianBeamModel.cpp" line="240"/>
         <source>none</source>
         <translation>aucun</translation>
+    </message>
+    <message>
+        <location filename="../gui/GaussianBeamModel.cpp" line="151"/>
+        <source>Sensitivity</source>
+        <translation>Sensibilité</translation>
+    </message>
+    <message>
+        <location filename="../gui/GaussianBeamModel.cpp" line="151"/>
+        <source>m&#xc2;&#xb2;</source>
+        <translation>m²</translation>
     </message>
 </context>
 <context>
@@ -329,17 +339,17 @@ Rayleigh</translation>
         <translation>Diamètre @ 1/e²</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamWidget.cpp" line="327"/>
+        <location filename="../gui/GaussianBeamWidget.cpp" line="328"/>
         <source>Waist</source>
         <translation>Waist</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamWidget.cpp" line="328"/>
+        <location filename="../gui/GaussianBeamWidget.cpp" line="329"/>
         <source>Position</source>
         <translation>Position</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamWidget.cpp" line="329"/>
+        <location filename="../gui/GaussianBeamWidget.cpp" line="330"/>
         <source>R&#xc2;&#xb2;</source>
         <translation>R²</translation>
     </message>
@@ -405,12 +415,12 @@ Rayleigh</translation>
         <translation>Valeur</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamWidget.cpp" line="294"/>
+        <location filename="../gui/GaussianBeamWidget.cpp" line="295"/>
         <source>Desired waist could not be found !</source>
         <translation>Le waist désiré n&apos;a pas été trouvé !</translation>
     </message>
     <message>
-        <location filename="../gui/GaussianBeamWidget.cpp" line="236"/>
+        <location filename="../gui/GaussianBeamWidget.cpp" line="237"/>
         <source>Overlap: </source>
         <translation>Recouvrement : </translation>
     </message>

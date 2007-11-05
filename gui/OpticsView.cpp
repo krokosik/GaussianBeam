@@ -358,12 +358,17 @@ void OpticsView::drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs
 
 	if (beam.waist()*vScale() > 1.)
 	{
+		/** @bug this prevents a lockup for double roundup errors.
+		* Test case : remove all lenses, add two lenses. The program crashed becaus maxZ-minZ = 1e-18
+		* In future version of hyperbolic drwaing, check that this does not appear.
+		*/
+		double epsilon = 1e-6;
 		Approximation approximation;
 		approximation.minZ = abs_beamRange.left();
 		approximation.maxZ = abs_beamRange.right();
 		approximation.resolution = 1./vScale();
 
-		if (approximation.minZ < approximation.maxZ)
+		if (approximation.minZ + epsilon < approximation.maxZ)
 		{
 			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
 			QPolygonF beamPolygonUp, beamPolygonDown;
@@ -418,8 +423,6 @@ void OpticsView::drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs
 
 void OpticsView::paintEvent(QPaintEvent* event)
 {
-	//qDebug() << "Repaint" << property("Wavelength").toDouble();
-
 	// View properties
 	QItemSelectionModel* selections = selectionModel();
 	QStyleOptionViewItem option = viewOptions();
@@ -500,7 +503,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 	{
 		const Optics* currentOptics = m_bench.optics(row);
 
-		//qDebug() << "Drawing element" << row << selections->isRowSelected(row, rootIndex());
+		//qDebug() << "Drawing element" << row << currentOptics->name().c_str() << currentOptics->position();
 
 		QPointF abs_ObjectLeft = QPointF(currentOptics->position(), 0.);
 		QPointF abs_ObjectRight = QPointF(currentOptics->position() + currentOptics->width(), 0.);
@@ -627,6 +630,7 @@ void OpticsView::paintEvent(QPaintEvent* event)
 */
 		abs_lastObjectLeft = abs_ObjectLeft;
 		view_lastObjectLeft = view_ObjectLeft;
+
 	} // End optics for loop
 
 	// Target Beam
@@ -645,5 +649,4 @@ void OpticsView::paintEvent(QPaintEvent* event)
 		painter.drawLine(i, 10, i, 100);
 	}
 */
-
 }

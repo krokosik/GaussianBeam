@@ -64,7 +64,7 @@ public:
 	* exclusion areas, and optics ordering.
 	* @return the new index of the optics
 	*/
-	int setOpticsPosition(int index, double position);
+	int setOpticsPosition(int index, double position, bool respectAbsoluteLock = true);
 	void setOpticsName(int index, std::string name);
 	void lockTo(int index, std::string opticsName);
 	/**
@@ -80,7 +80,7 @@ public:
 	const Beam& beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
-	std::vector<double> sensitivity() const { return gradient(m_optics, m_beams.back()); }
+	double sensitivity(int index) const { return m_sensitivity[index]; }
 
 	/// Magic waist
 	const Beam& targetBeam() const { return m_targetBeam; }
@@ -97,16 +97,18 @@ public:
 private:
 	std::vector<Optics*> cloneOptics() const;
 	void lockTo(std::vector<Optics*>& opticsVector, int index, std::string opticsName) const;
-	void setOpticsPosition(std::vector<Optics*>& opticsVector, int index, double position) const;
+	void setOpticsPosition(std::vector<Optics*>& opticsVector, int index, double position, bool respectAbsoluteLock = true) const;
+	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
 	Beam computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const;
 	void emitChange(int startOptics, int endOptics) const;
-	std::vector<double> gradient(const std::vector<Optics*>& opticsVector, const Beam& beam) const;
+	std::vector<double> gradient(const std::vector<Optics*>& opticsVector, const Beam& beam, bool checkLock, bool curvature) const;
 
 private:
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
 	std::vector<Beam> m_beams;
+	std::vector<double> m_sensitivity;
 
 	/// Magic waist
 	Beam m_targetBeam;

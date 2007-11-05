@@ -85,8 +85,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>250</width>
-          <height>403</height>
+          <width>246</width>
+          <height>383</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -263,7 +263,7 @@
           <x>0</x>
           <y>0</y>
           <width>591</width>
-          <height>505</height>
+          <height>476</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -398,9 +398,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="checkBox_ShowTargetWaist" >
+          <widget class="QCheckBox" name="checkBox_ShowTargetBeam" >
            <property name="text" >
-            <string>Show target waist</string>
+            <string>Show target beam</string>
            </property>
           </widget>
          </item>
@@ -478,8 +478,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>607</width>
-          <height>408</height>
+          <width>189</width>
+          <height>318</height>
          </rect>
         </property>
         <attribute name="label" >

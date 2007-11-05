@@ -29,7 +29,7 @@ GaussianBeamModel::GaussianBeamModel(OpticsBench& bench, QObject* parent)
 {
 	m_columns << OpticsColumn << PositionColumn << RelativePositionColumn << PropertiesColumn
 	          << WaistColumn << WaistPositionColumn << RayleighColumn << DivergenceColumn
-	          << NameColumn << LockColumn;
+	          << SensitivityColumn << NameColumn << LockColumn;
 
 	m_bench.registerNotify(this);
 }
@@ -106,6 +106,9 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		return m_bench.beam(row).rayleigh()*Units::getUnit(UnitRayleigh).divider();
 	else if (column == DivergenceColumn)
 		return m_bench.beam(row).divergence()*Units::getUnit(UnitDivergence).divider();
+	else if (column == SensitivityColumn)
+		return fabs(m_bench.sensitivity(row))*100./sqr(Units::getUnit(UnitPosition).divider());
+		//return QString::number(fabs(m_bench.sensitivity(row))*100./sqr(Units::getUnit(UnitPosition).divider()), 'f', 2);
 	else if (column == NameColumn)
 		return QString::fromUtf8(m_bench.optics(row)->name().c_str());
 	else if (column == LockColumn)
@@ -144,6 +147,8 @@ QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation,
 					return tr("Rayleigh\nlength") + " (" + Units::getUnit(UnitRayleigh).prefix() + "m)";
 				case DivergenceColumn:
 					return tr("Divergence") + "\n(" + Units::getUnit(UnitDivergence).prefix() + "rad)";
+				case SensitivityColumn:
+					return tr("Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).prefix() + tr("m²") + ")";
 				case NameColumn:
 					return tr("Name");
 				case LockColumn:
@@ -167,7 +172,7 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	ColumnContent column = m_columns[index.column()];
 
 	if (column == PositionColumn)
-		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier());
+		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier(), false);
 	else if (column == PropertiesColumn)
 	{
 		Optics* optics = m_bench.opticsForPropertyChange(row);

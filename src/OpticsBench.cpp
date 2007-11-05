@@ -20,6 +20,7 @@
 #include "Statistics.h"
 
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include <algorithm>
 #include <functional>
@@ -82,10 +83,10 @@ void OpticsBench::removeOptics(int index, int count)
 	computeBeams(index);
 }
 
-int OpticsBench::setOpticsPosition(int index, double position)
+int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
 {
 	Optics* movedOptics = m_optics[index];
-	setOpticsPosition(m_optics, index, position);
+	setOpticsPosition(m_optics, index, position, respectAbsoluteLock);
 	computeBeams();
 
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
@@ -95,9 +96,9 @@ int OpticsBench::setOpticsPosition(int index, double position)
 	return index;
 }
 
-void OpticsBench::setOpticsPosition(vector<Optics*>& opticsVector, int index, double position) const
+void OpticsBench::setOpticsPosition(vector<Optics*>& opticsVector, int index, double position, bool respectAbsoluteLock) const
 {
-	opticsVector[index]->setPositionCheckLock(position);
+	opticsVector[index]->setPositionCheckLock(position, respectAbsoluteLock);
 	sort(opticsVector.begin() + 1, opticsVector.end(), less<Optics*>());
 }
 
@@ -176,8 +177,15 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 			beam = m_beams[changedIndex - 1];
 
 		for (int i = changedIndex; i < nOptics(); i++)
+		{
 			m_beams[i] = beam = m_optics[i]->image(beam);
+			//cerr << "Beam i waist = " << beam.waist() << " position = " << beam.waistPosition() << endl;
+		}
 	}
+
+	m_sensitivity = gradient(m_optics, m_beams.back(), false/*CheckLock*/, true/*Curvature*/);
+//	for (unsigned int i = 0; i < m_sensitivity.size(); i++)
+//		cerr << m_sensitivity[i] << endl;
 /*
 	// Compute the cavity
 	if (m_firstCavityIndex > 0)
@@ -224,7 +232,10 @@ vector<Optics*> OpticsBench::cloneOptics() const
 	vector<Optics*> opticsClone;
 
 	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
+	{
 		opticsClone.push_back((*it)->clone());
+		opticsClone.back()->eraseLockingTree();
+	}
 
 	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
 		if ((*it)->relativeLockParent())
@@ -244,24 +255,30 @@ Beam OpticsBench::computeSingleBeam(const std::vector<Optics*>& opticsVector, in
 	return beam;
 }
 
-vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const Beam& beam) const
+vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const Beam& beam, bool checkLock, bool curvature) const
 {
 	double epsilon = 1e-6;
 	vector<double> result;
 
-	vector<Optics*> opticsClone;
-	for (vector<Optics*>::const_iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
-		opticsClone.push_back((*it)->clone());
+	vector<Optics*> opticsClone = cloneOptics();
 
 	double initOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
 
 	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
 	{
 		double initPosition = (*it)->position();
-		(*it)->setPosition(initPosition + epsilon);
-		double finalOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
-		(*it)->setPosition(initPosition);
-		result.push_back((finalOverlap - initOverlap)/epsilon);
+		if (checkLock)
+			(*it)->setPositionCheckLock(initPosition + epsilon);
+		else
+			(*it)->setPosition(initPosition + epsilon);
+		double finalOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsClone, opticsClone.size() - 1));
+		if (checkLock)
+			(*it)->setPositionCheckLock(initPosition);
+		else
+			(*it)->setPosition(initPosition);
+		double slope = (finalOverlap - initOverlap)/(curvature ? sqr(epsilon) : epsilon);
+		result.push_back(slope);
+		//cerr << setprecision(20) << initOverlap << " " << finalOverlap << " " << epsilon << endl;
 	}
  
 	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
@@ -278,6 +295,9 @@ void OpticsBench::emitChange(int startOptics, int endOptics) const
 
 bool OpticsBench::magicWaist(const Tolerance& tolerance)
 {
+//	for (int i = 0; i < nOptics(); i++)
+//		cerr << "m_optics[" << i << "] " << m_optics[i] << " has parent " << m_optics[i]->relativeLockParent() << endl;
+
 	vector<Optics*> opticsClone = cloneOptics();
 
 	vector<int> opticsMovable;
@@ -330,7 +350,7 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 	else
 		cerr << "Beam not found !!!" << endl;
 
-	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
+	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
 		delete (*it);
 
 	return found;

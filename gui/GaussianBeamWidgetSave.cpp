@@ -98,7 +98,7 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 		else if (child.tagName() == "positionTolerance")
 			doubleSpinBox_PositionTolerance->setValue(child.text().toDouble()*100.);
 		else if (child.tagName() == "showTargetWaist")
-			checkBox_ShowTargetWaist->setCheckState(Qt::CheckState(child.text().toInt()));
+			checkBox_ShowTargetBeam->setCheckState(Qt::CheckState(child.text().toInt()));
 		else if (child.tagName() == "waistFit") ////////////////
 		{
 			fitModel->removeRows(0, fitModel->rowCount());
@@ -243,7 +243,7 @@ void GaussianBeamWidget::saveFile(const QString &path)
 		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
 		xmlWriter.writeTextElement("targetPosition", QString::number(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier()));
 		xmlWriter.writeTextElement("positionTolerance", QString::number(doubleSpinBox_PositionTolerance->value()/100.));
-		xmlWriter.writeTextElement("showTargetWaist", QString::number(checkBox_ShowTargetWaist->checkState()));
+		xmlWriter.writeTextElement("showTargetWaist", QString::number(checkBox_ShowTargetBeam->checkState()));
 	xmlWriter.writeEndElement();
 	xmlWriter.writeStartElement("waistFit");
 		xmlWriter.writeTextElement("fitDataType", QString::number(comboBox_FitData->currentIndex()));
