@@ -70,7 +70,7 @@ void OpticsBench::addOptics(Optics* optics, int index)
 	computeBeams(index);
 }
 
-void OpticsBench::removeOptics(int index, int count)
+void OpticsBench::removeOptics(int index, int count, bool compute)
 {
 	for (int i = index; i < index + count; i++)
 	{
@@ -78,9 +78,12 @@ void OpticsBench::removeOptics(int index, int count)
 		m_optics.erase(m_optics.begin() + index);
 		m_beams.erase(m_beams.begin() + index);
 	}
+
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsRemoved(index, count);
-	computeBeams(index);
+
+	if (compute)
+		computeBeams(index);
 }
 
 int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
@@ -280,7 +283,7 @@ vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const 
 		result.push_back(slope);
 		//cerr << setprecision(20) << initOverlap << " " << finalOverlap << " " << epsilon << endl;
 	}
- 
+
 	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
 		delete (*it);
 

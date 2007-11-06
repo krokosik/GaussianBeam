@@ -58,7 +58,8 @@ public:
 	int nOptics() const { return m_optics.size(); }
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
-	void removeOptics(int index, int count = 1);
+	/// @todo remove this compute and ensure loads still works
+	void removeOptics(int index, int count = 1, bool compute = true);
 	/**
 	* Set the optics at @p index to position @p position. Takes care of locks,
 	* exclusion areas, and optics ordering.
