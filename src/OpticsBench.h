@@ -53,13 +53,16 @@ public:
 	/// Parameters
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength);
+	double leftBoundary() { return m_leftBoundary; }
+	void setLeftBoundary(double leftBoundary) { m_leftBoundary = leftBoundary; }
+	double rightBoundary() { return m_rightBoundary; }
+	void setRightBoundary(double rightBoundary) { m_rightBoundary = rightBoundary; }
 
 	/// Handle optics
 	int nOptics() const { return m_optics.size(); }
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
-	/// @todo remove this compute and ensure loads still works
-	void removeOptics(int index, int count = 1, bool compute = true);
+	void removeOptics(int index, int count = 1);
 	/**
 	* Set the optics at @p index to position @p position. Takes care of locks,
 	* exclusion areas, and optics ordering.
@@ -110,6 +113,7 @@ private:
 	std::vector<Optics*> m_optics;
 	std::vector<Beam> m_beams;
 	std::vector<double> m_sensitivity;
+	double m_leftBoundary, m_rightBoundary;
 
 	/// Magic waist
 	Beam m_targetBeam;

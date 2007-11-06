@@ -70,7 +70,7 @@ void GaussianBeamWidget::openFile(const QString &path)
 	}
 
 	// Parse elements
-	m_bench.removeOptics(0, model->rowCount(), false);
+	m_bench.removeOptics(0, model->rowCount());
 	parseXml(root);
 	file.close();
 

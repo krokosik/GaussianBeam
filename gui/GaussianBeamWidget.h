@@ -81,7 +81,7 @@ private:
 	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
 	void setCurrentFile(const QString& path);
 	void updateUnits();
-	void insertOptics(Optics* optics, bool resizeRow = false);
+	void insertOptics(Optics* optics);
 	Beam targetWaist();
 	void displayOverlap();
 

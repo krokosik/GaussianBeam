@@ -121,6 +121,9 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
+	on_doubleSpinBox_HRange_valueChanged(doubleSpinBox_HRange->value());
+	on_doubleSpinBox_VRange_valueChanged(doubleSpinBox_VRange->value());
+	on_doubleSpinBox_HOffset_valueChanged(doubleSpinBox_HOffset->value());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
 
@@ -159,7 +162,7 @@ void GaussianBeamWidget::on_pushButton_Add_clicked()
 	menu.exec(pushButton_Add->mapToGlobal(QPoint(0, pushButton_Add->height())));
 }
 
-void GaussianBeamWidget::insertOptics(Optics* optics, bool resizeRow)
+void GaussianBeamWidget::insertOptics(Optics* optics)
 {
 	QModelIndex index = table->selectionModel()->currentIndex();
 	int row = model->rowCount();
@@ -170,8 +173,6 @@ void GaussianBeamWidget::insertOptics(Optics* optics, bool resizeRow)
 	m_bench.addOptics(optics, row);
 
 	table->resizeColumnsToContents();
-	if (resizeRow)
-		table->resizeRowToContents(row);
 }
 
 void GaussianBeamWidget::on_action_AddLens_triggered()
@@ -201,13 +202,13 @@ void GaussianBeamWidget::on_action_AddFlatInterface_triggered()
 void GaussianBeamWidget::on_action_AddCurvedInterface_triggered()
 {
 	QString name = "C" + QString::number(++m_lastCurvedInterfaceName);
-	insertOptics(new CurvedInterface(0.1, 1.5, 0.0, name.toUtf8().data()), true);
+	insertOptics(new CurvedInterface(0.1, 1.5, 0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_action_AddGenericABCD_triggered()
 {
 	QString name = "G" + QString::number(++m_lastGenericABCDName);
-	insertOptics(new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, 0.0, name.toUtf8().data()), true);
+	insertOptics(new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, 0.0, name.toUtf8().data()));
 }
 
 void GaussianBeamWidget::on_pushButton_Remove_clicked()
@@ -390,7 +391,9 @@ void GaussianBeamWidget::on_pushButton_SaveAs_clicked()
 
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
-	opticsView->setHRange(value*Units::getUnit(UnitHRange).multiplier());
+	double HRange = value*Units::getUnit(UnitHRange).multiplier();
+	opticsView->setHRange(HRange);
+	m_bench.setRightBoundary(m_bench.leftBoundary() + HRange);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
@@ -400,7 +403,11 @@ void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
 
 void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
 {
-	opticsView->setHOffset(value*Units::getUnit(UnitHRange).multiplier());
+	double HOffset = value*Units::getUnit(UnitHRange).multiplier();
+	double HRange = doubleSpinBox_HRange->value()*Units::getUnit(UnitHRange).multiplier();
+	opticsView->setHOffset(HOffset);
+	m_bench.setLeftBoundary(HOffset);
+	m_bench.setRightBoundary(HOffset + HRange);
 }
 
 void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)

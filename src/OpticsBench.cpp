@@ -70,7 +70,7 @@ void OpticsBench::addOptics(Optics* optics, int index)
 	computeBeams(index);
 }
 
-void OpticsBench::removeOptics(int index, int count, bool compute)
+void OpticsBench::removeOptics(int index, int count)
 {
 	for (int i = index; i < index + count; i++)
 	{
@@ -82,8 +82,7 @@ void OpticsBench::removeOptics(int index, int count, bool compute)
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsRemoved(index, count);
 
-	if (compute)
-		computeBeams(index);
+	computeBeams(index);
 }
 
 int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
@@ -139,6 +138,9 @@ void OpticsBench::opticsPropertyChanged(int /*index*/)
 
 void OpticsBench::setInputBeam(const Beam& beam)
 {
+	if (m_optics.size() <= 0)
+		addOptics(new CreateBeam(180e-6, 10e-3, "w0"), 0);
+
 	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
 	createBeam->setWaist(beam.waist());
 	setOpticsPosition(0, beam.waistPosition());
@@ -159,6 +161,9 @@ void OpticsBench::setTargetBeam(const Beam& beam)
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
 {
+	if (m_optics.size() == 0)
+		return;
+
 	Beam beam;
 
 	if (backward)
@@ -311,8 +316,10 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 	const int nTry = 500000;
 	bool found = false;
 
-	double minPos = -0.1;
-	double maxPos = 0.7;
+	const double minPos = m_leftBoundary;
+	const double maxPos = m_rightBoundary;
+
+	cerr << m_leftBoundary << " LR " << m_rightBoundary << endl;
 
 	for (int i = 0; i < nTry; i++)
 	{
