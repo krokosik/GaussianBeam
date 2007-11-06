@@ -419,6 +419,7 @@ void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
 void GaussianBeamWidget::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
 	displayOverlap();
+	table->resizeRowsToContents();
 }
 
 void GaussianBeamWidget::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
