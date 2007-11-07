@@ -16,32 +16,32 @@
    Boston, MA 02110-1301, USA.
 */
 
+#ifndef GAUSSIANBEAMWINDOWS_H
+#define GAUSSIANBEAMWINDOW_H
+
 #include "GaussianBeamWidget.h"
-#include "GaussianBeamWindow.h"
+#include "ui_GaussianBeamWindow.h"
 
-#include <QApplication>
-#include <QTextCodec>
-#include <QTranslator>
+#include <QMainWindow>
 
-int main(int argc, char *argv[])
+class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow
 {
-	QApplication app(argc, argv);
+	Q_OBJECT
 
-	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
-	QTranslator translator;
-	QString locale = QLocale::system().name();
-	translator.load(QString("GaussianBeam_") + locale);
-	app.installTranslator(&translator);
+public:
+	GaussianBeamWindow(const QString& fileName);
 
-	///@todo parse other arguments ?
-	QString file;
-	if (argc > 1)
-		file = argv[1];
+protected slots:
+	void on_action_Open_triggered();
+	void on_action_Save_triggered();
+	void on_action_SaveAs_triggered();
 
-	//GaussianBeamWidget widget(file);
-	GaussianBeamWindow window(file);
+private:
+	QToolBar* m_fileToolBar;
 
-	//widget.show();
-	window.show();
-	return app.exec();
-}
+	GaussianBeamWidget m_widget;
+
+	QString m_currentFile;
+};
+
+#endif

@@ -1,1 +1,11 @@
-<RCC/>
+<RCC>
+    <qresource prefix="/" >
+        <file>images/document-new.png</file>
+        <file>images/document-open.png</file>
+        <file>images/document-print.png</file>
+        <file>images/document-save-as.png</file>
+        <file>images/document-save.png</file>
+        <file>images/edit-add.png</file>
+        <file>images/edit-delete.png</file>
+    </qresource>
+</RCC>

@@ -16,32 +16,36 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "GaussianBeamWidget.h"
 #include "GaussianBeamWindow.h"
 
-#include <QApplication>
-#include <QTextCodec>
-#include <QTranslator>
+#include <QDebug>
+#include <QToolBar>
 
-int main(int argc, char *argv[])
+GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
+	: QMainWindow()
+	, m_widget(fileName, this)
 {
-	QApplication app(argc, argv);
+	setupUi(this);
 
-	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
-	QTranslator translator;
-	QString locale = QLocale::system().name();
-	translator.load(QString("GaussianBeam_") + locale);
-	app.installTranslator(&translator);
+	m_fileToolBar = addToolBar(tr("File"));
+	m_fileToolBar->addAction(action_Open);
+	m_fileToolBar->addAction(action_Save);
+	m_fileToolBar->addAction(action_SaveAs);
 
-	///@todo parse other arguments ?
-	QString file;
-	if (argc > 1)
-		file = argv[1];
+	setCentralWidget(&m_widget);
+}
 
-	//GaussianBeamWidget widget(file);
-	GaussianBeamWindow window(file);
+void GaussianBeamWindow::on_action_Open_triggered()
+{
+	qDebug() << "Open";
+}
 
-	//widget.show();
-	window.show();
-	return app.exec();
+void GaussianBeamWindow::on_action_Save_triggered()
+{
+	qDebug() << "Save";
+}
+
+void GaussianBeamWindow::on_action_SaveAs_triggered()
+{
+	qDebug() << "Save as";
 }

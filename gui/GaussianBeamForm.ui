@@ -638,8 +638,6 @@
    </property>
   </action>
  </widget>
- <resources>
-  <include location="GaussianBeam.qrc" />
- </resources>
+ <resources/>
  <connections/>
 </ui>

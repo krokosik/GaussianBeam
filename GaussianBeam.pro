@@ -29,9 +29,10 @@ HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h
 SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp
 # gui
 HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/GaussianBeamDelegate.h \
-           gui/GaussianBeamModel.h gui/Unit.h
+           gui/GaussianBeamModel.h gui/GaussianBeamWindow.h gui/Unit.h
 SOURCES += gui/GaussianBeamWidget.cpp gui/OpticsView.cpp gui/GaussianBeamDelegate.cpp \
-           gui/GaussianBeamModel.cpp gui/Unit.cpp gui/GaussianBeamWidgetSave.cpp gui/main.cpp
-FORMS   = gui/GaussianBeamForm.ui
+           gui/GaussianBeamModel.cpp gui/GaussianBeamWindow.cpp gui/Unit.cpp \
+           gui/GaussianBeamWidgetSave.cpp gui/main.cpp gui/GaussianBeam.qrc
+FORMS    = gui/GaussianBeamForm.ui gui/GaussianBeamWindow.ui
 
 TRANSLATIONS = po/GaussianBeam_fr.ts
