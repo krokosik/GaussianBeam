@@ -20,32 +20,77 @@
 
 #include <QDebug>
 #include <QToolBar>
+#include <QFile>
+#include <QFileDialog>
 
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	: QMainWindow()
-	, m_widget(fileName, this)
+	, m_widget(this)
 {
+	m_currentFile = QString();
+
 	setupUi(this);
 
 	m_fileToolBar = addToolBar(tr("File"));
+	m_fileToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 	m_fileToolBar->addAction(action_Open);
 	m_fileToolBar->addAction(action_Save);
 	m_fileToolBar->addAction(action_SaveAs);
 
 	setCentralWidget(&m_widget);
+
+	if (!fileName.isEmpty())
+		openFile(fileName);
 }
 
 void GaussianBeamWindow::on_action_Open_triggered()
 {
-	qDebug() << "Open";
+	openFile();
 }
 
 void GaussianBeamWindow::on_action_Save_triggered()
 {
-	qDebug() << "Save";
+	saveFile(m_currentFile);
 }
 
 void GaussianBeamWindow::on_action_SaveAs_triggered()
 {
-	qDebug() << "Save as";
+	saveFile();
+}
+
+void GaussianBeamWindow::openFile(const QString& path)
+{
+	QString fileName = path;
+
+	if (fileName.isNull())
+		fileName = QFileDialog::getOpenFileName(this, tr("Choose a data file"), "", "*.xml");
+	if (fileName.isEmpty())
+		return;
+
+	m_widget.openFile(fileName);
+	setCurrentFile(fileName);
+}
+
+void GaussianBeamWindow::saveFile(const QString& path)
+{
+	QString fileName = path;
+
+	if (fileName.isNull())
+		fileName = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::currentPath(), "*.xml");
+	if (fileName.isEmpty())
+		return;
+	if (!fileName.endsWith(".xml"))
+		fileName += ".xml";
+
+	m_widget.saveFile(fileName);
+	setCurrentFile(fileName);
+}
+
+void GaussianBeamWindow::setCurrentFile(const QString& path)
+{
+	m_currentFile = path;
+	if (!m_currentFile.isEmpty())
+		setWindowTitle(QFileInfo(m_currentFile).fileName() + " - GaussianBeam");
+	else
+		setWindowTitle("GaussianBeam");
 }

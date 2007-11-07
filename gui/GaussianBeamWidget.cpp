@@ -31,14 +31,12 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QMenu>
-#include <QFileInfo>
 
 #include <cmath>
 
-GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
+GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	: QWidget(parent)
 {
-	m_currentFile = QString();
 	m_lastLensName = 0;
 	m_lastFlatMirrorName = 0;
 	m_lastCurvedMirrorName = 0;
@@ -126,9 +124,6 @@ GaussianBeamWidget::GaussianBeamWidget(QString file, QWidget *parent)
 	on_doubleSpinBox_HOffset_valueChanged(doubleSpinBox_HOffset->value());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
-
-	if (!file.isEmpty())
-		openFile(file);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
@@ -364,31 +359,6 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 
 ///////////////////////////////////////////////////////////
 // DISPLAY PAGE
-
-void GaussianBeamWidget::setCurrentFile(const QString& path)
-{
-	m_currentFile = path;
-	if (!m_currentFile.isEmpty())
-		setWindowTitle(QFileInfo(m_currentFile).fileName() + " - GaussianBeam");
-	else
-		setWindowTitle("GaussianBeam");
-}
-
-void GaussianBeamWidget::on_pushButton_Open_clicked()
-{
-	openFile();
-}
-
-void GaussianBeamWidget::on_pushButton_Save_clicked()
-{
-	saveFile(m_currentFile);
-}
-
-void GaussianBeamWidget::on_pushButton_SaveAs_clicked()
-{
-	saveFile();
-}
-
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
 	double HRange = value*Units::getUnit(UnitHRange).multiplier();

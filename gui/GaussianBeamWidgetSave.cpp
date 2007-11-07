@@ -22,21 +22,13 @@
 
 #include <QDebug>
 #include <QFile>
-#include <QFileDialog>
 #include <QMessageBox>
 #include <QStandardItemModel>
 #include <QtXml/QDomDocument>
 #include <QtXml/QXmlStreamWriter>
 
-void GaussianBeamWidget::openFile(const QString &path)
+void GaussianBeamWidget::openFile(const QString& fileName)
 {
-	QString fileName = path;
-
-	if (fileName.isNull())
-		fileName = QFileDialog::getOpenFileName(this, tr("Choose a data file"), "", "*.xml");
-	if (fileName.isEmpty())
-		return;
-
 	QFile file(fileName);
 	if (!(file.open(QFile::ReadOnly | QFile::Text)))
 	{
@@ -73,8 +65,6 @@ void GaussianBeamWidget::openFile(const QString &path)
 	m_bench.removeOptics(0, model->rowCount());
 	parseXml(root);
 	file.close();
-
-	setCurrentFile(fileName);
 }
 
 void GaussianBeamWidget::parseXml(const QDomElement& element)
@@ -212,18 +202,8 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QStrin
 	m_bench.addOptics(optics, m_bench.nOptics());
 }
 
-void GaussianBeamWidget::saveFile(const QString &path)
+void GaussianBeamWidget::saveFile(const QString& fileName)
 {
-	QString fileName = path;
-
-	if (fileName.isNull())
-		fileName = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::currentPath(), "*.xml");
-	if (fileName.isEmpty())
-		return;
-	if (!fileName.endsWith(".xml"))
-		fileName += ".xml";
-
-
 	QFile file(fileName);
 	if (!file.open(QFile::WriteOnly | QFile::Text))
 	{
@@ -313,6 +293,4 @@ void GaussianBeamWidget::saveFile(const QString &path)
 	xmlWriter.writeEndElement();
 	xmlWriter.writeEndDocument();
 	file.close();
-
-	setCurrentFile(fileName);
 }

@@ -40,15 +40,16 @@ class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
 	Q_OBJECT
 
 public:
-	GaussianBeamWidget(QString file = QString(), QWidget* parent = 0);
+	GaussianBeamWidget(QWidget* parent = 0);
+
+public:
+	void openFile(const QString& fileName = QString());
+	void saveFile(const QString& fileName = QString());
 
 protected slots:
 	void on_pushButton_Add_clicked();
 	void on_pushButton_Remove_clicked();
 	void on_pushButton_MagicWaist_clicked();
-	void on_pushButton_Save_clicked();
-	void on_pushButton_SaveAs_clicked();
-	void on_pushButton_Open_clicked();
 	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
 	void on_pushButton_SetTargetBeam_clicked();
@@ -75,11 +76,8 @@ protected slots:
 	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
 private:
-	void openFile(const QString& path = QString());
-	void saveFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
 	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
-	void setCurrentFile(const QString& path);
 	void updateUnits();
 	void insertOptics(Optics* optics);
 	Beam targetWaist();
@@ -96,7 +94,6 @@ private:
 
 	OpticsBench m_bench;
 	Beam m_fitBeam; /// REMOVE
-	QString m_currentFile;
 	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName, /// REMOVE
 	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName; /// REMOVE
 };

@@ -37,6 +37,11 @@ protected slots:
 	void on_action_SaveAs_triggered();
 
 private:
+	void openFile(const QString& path = QString());
+	void saveFile(const QString& path = QString());
+	void setCurrentFile(const QString& path);
+
+private:
 	QToolBar* m_fileToolBar;
 
 	GaussianBeamWidget m_widget;
