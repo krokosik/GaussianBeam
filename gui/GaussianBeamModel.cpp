@@ -94,7 +94,7 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			       QString("\nC = ") + QString::number(optics->C()/Units::getUnit(UnitABCD).divider())
 			                         + " /" + Units::getUnit(UnitABCD).string("m", false) +
 			       QString("\nD = ") + QString::number(optics->D()) +
-			       QString("\nwidth = ") + QString::number(m_bench.optics(row)->width()*Units::getUnit(UnitWidth).divider())
+			       QString("\n") + tr("width") + " = " + QString::number(m_bench.optics(row)->width()*Units::getUnit(UnitWidth).divider())
 			                       + Units::getUnit(UnitWidth).string("m");
 		}
 	}
