@@ -54,7 +54,9 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	// Extra widgets, not included in designer
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
-	opticsView = new OpticsView(m_bench, this);
+	opticsItemView = new OpticsItemView(m_bench, this);
+	OpticsScene* opticsScene = new OpticsScene(m_bench, this);
+	OpticsView* opticsView = new OpticsView(opticsScene);
 #ifdef GBPLOT
 	plot = new GaussianBeamPlot(this, model);
 	splitter->addWidget(plot);
@@ -66,6 +68,7 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	checkBox_ShowGraph->setVisible(false);
 	checkBox_ShowGraph->setEnabled(false);
 #endif
+	splitter->addWidget(opticsItemView);
 	splitter->addWidget(opticsView);
 	layout->addWidget(splitter);
 	layout->setMargin(0);
@@ -73,14 +76,13 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 
 	// Create model & views
 	table->setModel(model);
-	opticsView->setModel(model);
+	opticsItemView->setModel(model);
 	table->setSelectionBehavior(QAbstractItemView::SelectRows);
 	table->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	selectionModel = new QItemSelectionModel(model);
 	table->setSelectionModel(selectionModel);
-	opticsView->setSelectionModel(selectionModel);
+	opticsItemView->setSelectionModel(selectionModel);
 	table->resizeColumnsToContents();
-	opticsView->setStatusLabel(label_Status);
 	delegate = new GaussianBeamDelegate(this, model, m_bench);
 	table->setItemDelegate(delegate);
 	for (int i = 1; i < 3; i++)
@@ -105,8 +107,8 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 	comboBox_FitData->insertItem(0, tr("Radius @ 1/e²"));
 	comboBox_FitData->insertItem(1, tr("Diameter @ 1/e²"));
 	comboBox_FitData->setCurrentIndex(1);
-	opticsView->setFitModel(fitModel);
-	opticsView->setMeasureCombo(comboBox_FitData);
+	opticsItemView->setFitModel(fitModel);
+	opticsItemView->setMeasureCombo(comboBox_FitData);
 
 	// Connect slots
 	/// @bug this does not react ?
@@ -252,7 +254,7 @@ void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double val
 
 void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 {
-	opticsView->setShowTargetBeam(checked);
+	opticsItemView->setShowTargetBeam(checked);
 }
 
 void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)
@@ -362,20 +364,20 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
 	double HRange = value*Units::getUnit(UnitHRange).multiplier();
-	opticsView->setHRange(HRange);
+	opticsItemView->setHRange(HRange);
 	m_bench.setRightBoundary(m_bench.leftBoundary() + HRange);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
 {
-	opticsView->setVRange(value*Units::getUnit(UnitVRange).multiplier());
+	opticsItemView->setVRange(value*Units::getUnit(UnitVRange).multiplier());
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
 {
 	double HOffset = value*Units::getUnit(UnitHRange).multiplier();
 	double HRange = doubleSpinBox_HRange->value()*Units::getUnit(UnitHRange).multiplier();
-	opticsView->setHOffset(HOffset);
+	opticsItemView->setHOffset(HOffset);
 	m_bench.setLeftBoundary(HOffset);
 	m_bench.setRightBoundary(HOffset + HRange);
 }
@@ -401,5 +403,5 @@ void GaussianBeamWidget::updateWidget(const QModelIndex& /*topLeft*/, const QMod
 
 void GaussianBeamWidget::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
-	opticsView->updateViewport();
+	opticsItemView->updateViewport();
 }

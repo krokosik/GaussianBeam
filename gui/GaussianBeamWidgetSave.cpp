@@ -27,13 +27,13 @@
 #include <QtXml/QDomDocument>
 #include <QtXml/QXmlStreamWriter>
 
-void GaussianBeamWidget::openFile(const QString& fileName)
+bool GaussianBeamWidget::openFile(const QString& fileName)
 {
 	QFile file(fileName);
 	if (!(file.open(QFile::ReadOnly | QFile::Text)))
 	{
 		QMessageBox::warning(this, tr("Opening file"), tr("Cannot read file %1:\n%2.").arg(fileName).arg(file.errorString()));
-		return;
+		return false;
 	}
 
 	// Parsing XML file
@@ -45,7 +45,7 @@ void GaussianBeamWidget::openFile(const QString& fileName)
 	if (!domDocument.setContent(&file, true, &errorStr, &errorLine, &errorColumn))
 	{
 		QMessageBox::information(window(), tr("XML error"), tr("Parse error at line %1, column %2:\n%3").arg(errorLine).arg(errorColumn).arg(errorStr));
-		return;
+		return false;
 	}
 
 	// XML version
@@ -53,18 +53,20 @@ void GaussianBeamWidget::openFile(const QString& fileName)
 	if (root.tagName() != "gaussianBeam")
 	{
 		QMessageBox::information(window(), tr("XML error"), tr("The file is not an Gaussian Beam file."));
-		return;
+		return false;
 	}
 	if (root.hasAttribute("version") && root.attribute("version").toDouble() > 1.)
 	{
 		QMessageBox::information(window(), tr("XML error"), tr("Your version of Gaussian Beam is too old."));
-		return;
+		return false;
 	}
 
 	// Parse elements
 	m_bench.removeOptics(0, model->rowCount());
 	parseXml(root);
 	file.close();
+
+	return true;
 }
 
 void GaussianBeamWidget::parseXml(const QDomElement& element)
@@ -202,13 +204,13 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QStrin
 	m_bench.addOptics(optics, m_bench.nOptics());
 }
 
-void GaussianBeamWidget::saveFile(const QString& fileName)
+bool GaussianBeamWidget::saveFile(const QString& fileName)
 {
 	QFile file(fileName);
 	if (!file.open(QFile::WriteOnly | QFile::Text))
 	{
 		QMessageBox::warning(this, tr("Saving file"), tr("Cannot write file %1:\n%2.").arg(fileName).arg(file.errorString()));
-		return;
+		return false;
 	}
 
 	QXmlStreamWriter xmlWriter(&file);
@@ -292,5 +294,7 @@ void GaussianBeamWidget::saveFile(const QString& fileName)
 	}
 	xmlWriter.writeEndElement();
 	xmlWriter.writeEndDocument();
+
 	file.close();
+	return true;
 }

@@ -22,20 +22,86 @@
 #include "GaussianBeam.h"
 #include "OpticsBench.h"
 
-#include <QAbstractItemView>
 #include <QPoint>
 #include <QPainterPath>
 
-class QLabel;
+#include <QGraphicsItem>
+#include <QGraphicsView>
+#include <QStatusBar>
+
 class QAbstractItemModel;
 class QComboBox;
 
-class OpticsView : public QAbstractItemView
+class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
+{
+public:
+	OpticsScene(OpticsBench& bench, QObject* parent = 0);
+
+private:
+	void OpticsBenchDataChanged(int startOptics, int endOptics);
+	void OpticsBenchOpticsAdded(int index);
+	void OpticsBenchOpticsRemoved(int index, int count);
+
+private:
+	OpticsBench& m_bench;
+};
+
+class OpticsView : public QGraphicsView
 {
 	Q_OBJECT
 
 public:
-	OpticsView(OpticsBench& bench, QWidget* parent = 0);
+	OpticsView(QGraphicsScene* scene);
+
+/// Inherited protected functions
+protected:
+	void resizeEvent(QResizeEvent* event);
+	void drawBackground(QPainter* painter, const QRectF& rect);
+};
+
+/// @todo don't forget prepareGeometryChange()
+class OpticsItem : public QGraphicsItem
+{
+public:
+	OpticsItem(const Optics* optics, OpticsBench& bench);
+
+/// Inherited public functions
+public:
+	QRectF boundingRect() const;
+	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+
+/// Inherited protected functions
+protected:
+	QVariant itemChange(GraphicsItemChange change, const QVariant& value);
+
+public:
+	const Optics* optics() const { return m_optics; }
+
+private:
+	const Optics* m_optics;
+	OpticsBench& m_bench;
+
+};
+
+class BeamItem : public QGraphicsItem
+{
+public:
+	BeamItem();
+
+/// Inherited public functions
+public:
+	QRectF boundingRect() const;
+	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+};
+
+#include <QAbstractItemView>
+
+class OpticsItemView : public QAbstractItemView
+{
+	Q_OBJECT
+
+public:
+	OpticsItemView(OpticsBench& bench, QWidget* parent = 0);
 
 	QRect visualRect(const QModelIndex &index) const;
 	void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
@@ -44,7 +110,7 @@ public:
 	void setHRange(double hRange);
 	void setVRange(double vRange);
 	void setHOffset(double hOffset);
-	void setStatusLabel(QLabel* statusLabel) { m_statusLabel = statusLabel; }
+	void setStatusBar(QStatusBar* statusBar) { m_statusBar = statusBar; }
 	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
 	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
 	void setShowTargetBeam(bool showTargetBeam);
@@ -81,7 +147,7 @@ private:
 	void drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs_beamRange, bool drawText = false);
 
 private:
-	QLabel* m_statusLabel;
+	QStatusBar* m_statusBar;
 	/// @todo this should remove
 	QAbstractItemModel* m_fitModel;
 	QComboBox* m_measureCombo;

@@ -23,7 +23,6 @@ WISHLIST:
 	grid
 
 BUGS:
-	When the status bar text changes, it may resize the main window
 	Proper magic waist boundaries
 *	0 focal length may crash the program
 

@@ -17,6 +17,7 @@
 */
 
 #include "GaussianBeamWindow.h"
+#include "OpticsView.h"
 
 #include <QDebug>
 #include <QToolBar>
@@ -37,7 +38,12 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_fileToolBar->addAction(action_Save);
 	m_fileToolBar->addAction(action_SaveAs);
 
+
+
 	setCentralWidget(&m_widget);
+
+	statusBar()->showMessage(tr("Ready"));
+	m_widget.opticsItemView->setStatusBar(statusBar());
 
 	if (!fileName.isEmpty())
 		openFile(fileName);
@@ -67,8 +73,11 @@ void GaussianBeamWindow::openFile(const QString& path)
 	if (fileName.isEmpty())
 		return;
 
-	m_widget.openFile(fileName);
-	setCurrentFile(fileName);
+	if (m_widget.openFile(fileName))
+	{
+		setCurrentFile(fileName);
+		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("loaded"));
+	}
 }
 
 void GaussianBeamWindow::saveFile(const QString& path)
@@ -82,8 +91,11 @@ void GaussianBeamWindow::saveFile(const QString& path)
 	if (!fileName.endsWith(".xml"))
 		fileName += ".xml";
 
-	m_widget.saveFile(fileName);
-	setCurrentFile(fileName);
+	if (m_widget.saveFile(fileName))
+	{
+		setCurrentFile(fileName);
+		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("saved"));
+	}
 }
 
 void GaussianBeamWindow::setCurrentFile(const QString& path)

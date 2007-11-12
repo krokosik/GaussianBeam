@@ -23,15 +23,20 @@
 
 using namespace std;
 
+int Optics::m_lastId = 0;
+
 Optics::Optics(OpticsType type, bool ABCD, double position, string name)
-	: m_type(type)
+	: m_id(++m_lastId)
+	, m_type(type)
 	, m_ABCD(ABCD)
 	, m_position(position)
 	, m_width(0.)
 	, m_name(name)
 	, m_absoluteLock(false)
 	, m_relativeLockParent(0)
-{}
+{
+	cerr << "Creating optics with id " << m_id << endl;
+}
 
 Optics::~Optics()
 {

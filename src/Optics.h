@@ -49,6 +49,7 @@ public:
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
 	bool isABCD() const { return m_ABCD; }
+	int id() const { return m_id; }
 	/**
 	* Query absolute lock
 	* @return true if the lock is absolute, false otherwise
@@ -117,6 +118,7 @@ protected:
 	void setType(OpticsType type) { m_type = type; }
 
 private:
+	int m_id;
 	OpticsType m_type;
 	bool m_ABCD;
 	double m_position;
@@ -125,6 +127,7 @@ private:
 	bool m_absoluteLock;
 	Optics* m_relativeLockParent;
 	std::list<Optics*> m_relativeLockChildren;
+	static int m_lastId;
 };
 
 class CreateBeam : public Optics

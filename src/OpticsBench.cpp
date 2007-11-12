@@ -50,6 +50,17 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 }
 
+int OpticsBench::opticsIndex(const Optics* optics) const
+{
+	/// @todo implement a lookup table
+	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if (*it == optics)
+			return it - m_optics.begin();
+
+	cerr << "Error : looking for an optics that is no more in the optics list" << endl;
+	return -1;
+}
+
 void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 {
 	m_notifyList.push_back(notify);

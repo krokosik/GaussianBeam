@@ -23,6 +23,8 @@
 #include <QTextCodec>
 #include <QTranslator>
 
+#include "OpticsView.h"
+
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
@@ -38,10 +40,7 @@ int main(int argc, char *argv[])
 	if (argc > 1)
 		file = argv[1];
 
-	//GaussianBeamWidget widget(file);
 	GaussianBeamWindow window(file);
-
-	//widget.show();
 	window.show();
 	return app.exec();
 }

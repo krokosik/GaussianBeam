@@ -30,7 +30,7 @@ enum ColumnContent {OpticsColumn, PositionColumn, RelativePositionColumn, Proper
                     WaistColumn, WaistPositionColumn, RayleighColumn, DivergenceColumn,
                     NameColumn, LockColumn, SensitivityColumn};
 
-class GaussianBeamModel : public QAbstractTableModel, public OpticsBenchNotify
+class GaussianBeamModel : public QAbstractTableModel, private OpticsBenchNotify
 {
 	Q_OBJECT
 

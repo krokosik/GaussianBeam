@@ -30,7 +30,7 @@ class QStandardItemModel;
 class QDomElement;
 class QAction;
 
-class OpticsView;
+class OpticsItemView;
 class GaussianBeamPlot;
 class GaussianBeamDelegate;
 class GaussianBeamModel;
@@ -43,8 +43,8 @@ public:
 	GaussianBeamWidget(QWidget* parent = 0);
 
 public:
-	void openFile(const QString& fileName = QString());
-	void saveFile(const QString& fileName = QString());
+	bool openFile(const QString& fileName = QString());
+	bool saveFile(const QString& fileName = QString());
 
 protected slots:
 	void on_pushButton_Add_clicked();
@@ -83,9 +83,11 @@ private:
 	Beam targetWaist();
 	void displayOverlap();
 
+public:
+	OpticsItemView* opticsItemView;
+
 private:
 	GaussianBeamModel* model;
-	OpticsView* opticsView;
 	GaussianBeamDelegate* delegate;
 	QItemSelectionModel* selectionModel;
 	QStandardItemModel* fitModel;

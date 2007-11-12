@@ -60,6 +60,7 @@ public:
 
 	/// Handle optics
 	int nOptics() const { return m_optics.size(); }
+	int opticsIndex(const Optics* optics) const;
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
 	void removeOptics(int index, int count = 1);
