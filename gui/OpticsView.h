@@ -31,6 +31,8 @@
 
 class QAbstractItemModel;
 class QComboBox;
+class OpticsItem;
+class BeamItem;
 
 class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 {
@@ -44,6 +46,8 @@ private:
 
 private:
 	OpticsBench& m_bench;
+	QList<OpticsItem*> m_opticsItems;
+	QList<BeamItem*> m_beamItems;
 };
 
 class OpticsView : public QGraphicsView
@@ -75,10 +79,12 @@ protected:
 	QVariant itemChange(GraphicsItemChange change, const QVariant& value);
 
 public:
+	void setUpdate(bool update) { m_update = update; }
 	const Optics* optics() const { return m_optics; }
 
 private:
 	const Optics* m_optics;
+	bool m_update;
 	OpticsBench& m_bench;
 
 };
@@ -86,12 +92,21 @@ private:
 class BeamItem : public QGraphicsItem
 {
 public:
-	BeamItem();
+	BeamItem(const Beam& beam);
 
 /// Inherited public functions
 public:
 	QRectF boundingRect() const;
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+
+public:
+	void setLeftBound(double leftBound) { m_leftBound = leftBound; }
+	void setRightBound(double rightBound) { m_rightBound = rightBound; }
+
+private:
+	const Beam& m_beam;
+	double m_leftBound;
+	double m_rightBound;
 };
 
 #include <QAbstractItemView>

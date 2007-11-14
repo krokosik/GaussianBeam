@@ -71,14 +71,21 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
-	foreach (QGraphicsItem* item, items())
+	for (int i = startOptics; i <= endOptics; i++)
 	{
-		OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(item);
-/*		int index = opticsItem->index();
-		if ((index >= startOptics) && (index <= endOptics))
-		{
-			opticsItem->setPos(m_bench.optics(index)->position(), 0.);
-		}*/
+		const Optics* optics = m_bench.optics(i);
+		m_opticsItems[i]->setUpdate(false);
+		m_opticsItems[i]->setPos(optics->position(), 0.);
+		m_opticsItems[i]->setUpdate(true);
+		m_beamItems[i]->setPos(m_bench.beam(i).waistPosition(), 0.);
+		if (i == 0)
+			m_beamItems[i]->setLeftBound(sceneRect().left());
+		else
+			m_beamItems[i]->setLeftBound(optics->position() + optics->width());
+		if (i == m_bench.nOptics()-1)
+			m_beamItems[i]->setRightBound(sceneRect().right());
+		else
+			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position() + m_bench.optics(i+1)->width());
 	}
 
 }
@@ -86,12 +93,23 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 void OpticsScene::OpticsBenchOpticsAdded(int index)
 {
 	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
+	BeamItem* beamItem = new BeamItem(m_bench.beam(index));
+	m_opticsItems.insert(index, opticsItem);
+	m_beamItems.insert(index, beamItem);
+	/// @todo is this necessary ?
 	opticsItem->setPos(m_bench.optics(index)->position(), 0.);
 	addItem(opticsItem);
 }
 
 void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 {
+	for (int i = index; i <= index + count; i++)
+	{
+		removeItem(m_opticsItems[i]);
+		removeItem(m_beamItems[i]);
+		m_opticsItems.removeAt(i);
+		m_beamItems.removeAt(i);
+	}
 }
 
 /////////////////////////////////////////////////
@@ -151,6 +169,7 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench& bench)
 	setCursor(Qt::OpenHandCursor);
 	setFlag(ItemIsMovable);
 	setZValue(1);
+	m_update = true;
 }
 
 QRectF OpticsItem::boundingRect() const
@@ -160,7 +179,7 @@ QRectF OpticsItem::boundingRect() const
 
 QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value)
 {
-	if (change == ItemPositionChange && scene())
+	if ((change == ItemPositionChange && scene()) && m_update)
 	{
 		QPointF newPos = value.toPointF();
 		QRectF rect = scene()->sceneRect();
@@ -184,6 +203,23 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 /////////////////////////////////////////////////
 // BeamView class
 
+BeamItem::BeamItem(const Beam& beam)
+	: QGraphicsItem()
+	, m_beam(beam)
+{
+}
+
+QRectF BeamItem::boundingRect() const
+{
+	QRectF result = scene()->sceneRect();
+	result.setLeft(m_leftBound);
+	result.setRight(m_rightBound);
+	return result;
+}
+
+void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
+{
+}
 
 /////////////////////////////////////////////////
 // OpticsItemView class
