@@ -207,6 +207,7 @@ BeamItem::BeamItem(const Beam& beam)
 	: QGraphicsItem()
 	, m_beam(beam)
 {
+	m_drawText = true;
 }
 
 QRectF BeamItem::boundingRect() const
@@ -219,6 +220,92 @@ QRectF BeamItem::boundingRect() const
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
+	QColor beamColor = wavelengthColor(m_beam.wavelength());
+	QPen beamPen = painter->pen();
+	beamColor.setAlpha(beamPen.color().alpha());
+	beamPen.setColor(beamColor);
+	painter->setPen(beamPen);
+	QBrush beamBrush = painter->brush();
+	beamColor.setAlpha(beamBrush.color().alpha());
+	beamBrush.setColor(beamColor);
+	painter->setBrush(beamBrush);
+	QPen textPen(Qt::black, 1);
+
+	QRectF view_beamRange = m_abs2view.mapRect(abs_beamRange).normalized();
+	QPointF abs_waistPos = QPointF(beam.waistPosition(), 0.);
+	QPointF view_waistPos = abs_waistPos*m_abs2view;
+
+	QPointF abs_left(m_hOffset, 0.);
+	QPointF view_left = abs_left*m_abs2view;
+
+//	double max_ray = 4.;
+//	double max_w0  = sqrt(1. + sqr(max_ray));
+
+	//QRectF abs_waistRect(0., 0., 2.*beam.rayleigh()*max_ray, 2.*beam.waist()*max_w0);
+	//abs_waistRect.moveCenter(abs_waistPos);
+
+	if (beam.waist()*vScale() > 1.)
+	{
+		/** @bug this prevents a lockup for double roundup errors.
+		* Test case : remove all lenses, add two lenses. The program crashed becaus maxZ-minZ = 1e-18
+		* In future version of hyperbolic drwaing, check that this does not appear.
+		*/
+		double epsilon = 1e-6;
+		Approximation approximation;
+		approximation.minZ = abs_beamRange.left();
+		approximation.maxZ = abs_beamRange.right();
+		approximation.resolution = 1./vScale();
+
+		if (approximation.minZ + epsilon < approximation.maxZ)
+		{
+			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
+			QPolygonF beamPolygonUp, beamPolygonDown;
+			for (double z = approximation.minZ; z <= approximation.maxZ; z = beam.approxNextPosition(z, approximation))
+			{
+				//qDebug() << z;
+				beamPolygonUp.append(QPointF(z, beam.radius(z)));
+				beamPolygonDown.prepend(QPointF(z, -beam.radius(z)));
+				if (z == approximation.maxZ)
+					break;
+			}
+			beamPolygonUp.append(QPointF(approximation.maxZ, beam.radius(approximation.maxZ)));
+			beamPolygonDown.prepend(QPointF(approximation.maxZ, -beam.radius(approximation.maxZ)));
+			QPainterPath path;
+			path.moveTo(beamPolygonUp[0]);
+			path.addPolygon(beamPolygonUp);
+			path.lineTo(beamPolygonDown[0]);
+			path.addPolygon(beamPolygonDown);
+			path.lineTo(beamPolygonUp[0]);
+
+			path = path*m_abs2view;
+			painter->drawPath(path);
+		}
+	}
+	else
+	{
+		double sgn = sign((abs_beamRange.right() - abs_waistPos.x())*(abs_beamRange.left() - abs_waistPos.x()));
+		double view_rightRadius = beam.radius(abs_beamRange.right())*vScale();
+		double view_leftRadius = beam.radius(abs_beamRange.left())*vScale();
+
+		QPolygonF ray;
+		ray << QPointF(view_beamRange.left(), view_left.y() + view_leftRadius)
+			<< QPointF(view_beamRange.right(), view_left.y() + sgn*view_rightRadius)
+			<< QPointF(view_beamRange.right(), view_left.y() - sgn*view_rightRadius)
+			<< QPointF(view_beamRange.left(), view_left.y() - view_leftRadius);
+		painter->drawConvexPolygon(ray);
+	}
+
+	// Waist label
+	if (m_drawText)
+	{
+		painter->setPen(textPen);
+		QPointF view_waistTop(view_waistPos.x(), view_waistPos.y() - beam.waist()*vScale());
+		painter->drawLine(view_waistPos, view_waistTop);
+		QString text; text.setNum(round(beam.waist()*Units::getUnit(UnitWaist).divider()));
+		QRectF view_textRect(0., 0., 100., 15.);
+		view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
+		painter->drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
+	}
 }
 
 /////////////////////////////////////////////////

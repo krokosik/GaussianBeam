@@ -107,6 +107,7 @@ private:
 	const Beam& m_beam;
 	double m_leftBound;
 	double m_rightBound;
+	bool m_drawText;
 };
 
 #include <QAbstractItemView>
