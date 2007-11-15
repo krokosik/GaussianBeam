@@ -48,6 +48,32 @@ struct Tolerance
 	double positionTolerance;
 };
 
+class Fit
+{
+public:
+	Fit();
+
+public:
+	std::string name() const { return m_name; }
+	void setName(std::string name) { m_name = name; }
+	void setData(int index, double position, double value);
+	const Beam& beam(double wavelength) const;
+	double rho2(double wavelength) const;
+
+private:
+	/// @bug this function does not refresh the cache values when
+	// the wavelength changes
+	void fitBeam(double wavelength) const;
+
+private:
+	std::string m_name;
+	std::vector<double> m_positions;
+	std::vector<double> m_values;
+	mutable bool m_dirty;
+	mutable Beam m_beam;
+	mutable double m_rho2;
+};
+
 class OpticsBench
 {
 public:

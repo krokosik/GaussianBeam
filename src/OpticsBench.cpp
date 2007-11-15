@@ -27,10 +27,67 @@
 
 using namespace std;
 
+/////////////////////////////////////////////////
+// OpticsBenchNotify
+
 OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
 	: m_bench(opticsBench)
 {
 }
+
+/////////////////////////////////////////////////
+// Fit
+
+Fit::Fit()
+{
+	m_name = "Fit";
+	m_dirty = true;
+}
+
+void Fit::setData(int index, double position, double value)
+{
+	m_dirty = true;
+}
+
+const Beam& Fit::beam(double wavelength) const
+{
+	if (m_dirty)
+		fitBeam(wavelength);
+
+	return m_beam;
+}
+
+double Fit::rho2(double wavelength) const
+{
+	if (m_dirty)
+		fitBeam(wavelength);
+
+	return m_rho2;
+}
+
+void Fit::fitBeam(double wavelength) const
+{
+	///@todo What about 0 points ?
+	Statistics stats(m_positions, m_values);
+
+	// Some point whithin the fit
+	const double z = stats.meanX;
+	// beam radius at z
+	const double fz = stats.m*z + stats.p;
+	// derivative of the beam radius at z
+	const double fpz = stats.m;
+	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
+	const double alpha = M_PI*fz*fpz/wavelength;
+	// waist
+	double waist = fz/sqrt(1. + sqr(alpha));
+	m_beam = Beam(waist, 0., wavelength);
+	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
+	m_rho2 = stats.rho2;
+	m_dirty = false;
+}
+
+/////////////////////////////////////////////////
+// OpticsBench
 
 OpticsBench::OpticsBench()
 	: m_cavity(1., 0., 1., 0., 0., 0.)
