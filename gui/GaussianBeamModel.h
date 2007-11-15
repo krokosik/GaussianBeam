@@ -56,7 +56,6 @@ private:
 	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	OpticsBench& m_bench;
 	QList<ColumnContent> m_columns;
 };
 

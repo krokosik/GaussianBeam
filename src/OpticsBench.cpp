@@ -27,6 +27,11 @@
 
 using namespace std;
 
+OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
+	: m_bench(opticsBench)
+{
+}
+
 OpticsBench::OpticsBench()
 	: m_cavity(1., 0., 1., 0., 0., 0.)
 {
@@ -64,6 +69,8 @@ int OpticsBench::opticsIndex(const Optics* optics) const
 void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 {
 	m_notifyList.push_back(notify);
+	for (int i = 0; i < nOptics(); i++)
+		notify->OpticsBenchOpticsAdded(i);
 }
 
 void OpticsBench::setWavelength(double wavelength)

@@ -24,7 +24,7 @@
 
 GaussianBeamModel::GaussianBeamModel(OpticsBench& bench, QObject* parent)
 	: QAbstractTableModel(parent)
-	, m_bench(bench)
+	, OpticsBenchNotify(bench)
 
 {
 	m_columns << OpticsColumn << PositionColumn << RelativePositionColumn << PropertiesColumn
@@ -294,6 +294,7 @@ void GaussianBeamModel::OpticsBenchDataChanged(int startOptics, int endOptics)
 
 void GaussianBeamModel::OpticsBenchOpticsAdded(int index)
 {
+	qDebug() << "GaussianBeamModel::OpticsBenchOpticsAdded";
 	insertRows(index, 1);
 }
 

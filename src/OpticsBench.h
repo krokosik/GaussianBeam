@@ -25,13 +25,18 @@
 #include <vector>
 #include <list>
 
+class OpticsBench;
+
 class OpticsBenchNotify
 {
 public:
-	OpticsBenchNotify() {}
+	OpticsBenchNotify(OpticsBench& opticsBench);
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics) = 0;
 	virtual void OpticsBenchOpticsAdded(int index) = 0;
 	virtual void OpticsBenchOpticsRemoved(int index, int count) = 0;
+
+protected:
+	OpticsBench& m_bench;
 };
 
 struct Tolerance

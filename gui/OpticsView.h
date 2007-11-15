@@ -45,7 +45,6 @@ private:
 	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	OpticsBench& m_bench;
 	QList<OpticsItem*> m_opticsItems;
 	QList<BeamItem*> m_beamItems;
 };

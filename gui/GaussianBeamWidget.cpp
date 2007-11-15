@@ -50,13 +50,13 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 
 	// Pointer creation
 	model = new GaussianBeamModel(m_bench, this);
+	OpticsScene* opticsScene = new OpticsScene(m_bench, this);
+	OpticsView* opticsView = new OpticsView(opticsScene);
 
 	// Extra widgets, not included in designer
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
 	opticsItemView = new OpticsItemView(m_bench, this);
-	OpticsScene* opticsScene = new OpticsScene(m_bench, this);
-	OpticsView* opticsView = new OpticsView(opticsScene);
 #ifdef GBPLOT
 	plot = new GaussianBeamPlot(this, model);
 	splitter->addWidget(plot);
