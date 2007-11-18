@@ -50,8 +50,8 @@ GaussianBeamWidget::GaussianBeamWidget(QWidget *parent)
 
 	// Pointer creation
 	model = new GaussianBeamModel(m_bench, this);
-	OpticsScene* opticsScene = new OpticsScene(m_bench, this);
-	OpticsView* opticsView = new OpticsView(opticsScene);
+	opticsScene = new OpticsScene(m_bench, this);
+	opticsView = new OpticsView(opticsScene);
 
 	// Extra widgets, not included in designer
 	QVBoxLayout* layout = new QVBoxLayout(this);
@@ -363,23 +363,27 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 // DISPLAY PAGE
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
-	double HRange = value*Units::getUnit(UnitHRange).multiplier();
-	opticsItemView->setHRange(HRange);
-	m_bench.setRightBoundary(m_bench.leftBoundary() + HRange);
+	double horizontalRange = value*Units::getUnit(UnitHRange).multiplier();
+	opticsItemView->setHRange(horizontalRange);
+	opticsScene->setHorizontalRange(horizontalRange);
+	m_bench.setRightBoundary(m_bench.leftBoundary() + horizontalRange);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
 {
-	opticsItemView->setVRange(value*Units::getUnit(UnitVRange).multiplier());
+	double verticalRange = value*Units::getUnit(UnitVRange).multiplier();
+	opticsItemView->setVRange(verticalRange);
+	opticsScene->setVerticalRange(verticalRange);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
 {
-	double HOffset = value*Units::getUnit(UnitHRange).multiplier();
-	double HRange = doubleSpinBox_HRange->value()*Units::getUnit(UnitHRange).multiplier();
-	opticsItemView->setHOffset(HOffset);
-	m_bench.setLeftBoundary(HOffset);
-	m_bench.setRightBoundary(HOffset + HRange);
+	double horizontalOffset = value*Units::getUnit(UnitHRange).multiplier();
+	double horizontalRange = doubleSpinBox_HRange->value()*Units::getUnit(UnitHRange).multiplier();
+	opticsItemView->setHOffset(horizontalOffset);
+	opticsScene->setHorizontalOffset(horizontalOffset);
+	m_bench.setLeftBoundary(horizontalOffset);
+	m_bench.setRightBoundary(horizontalOffset + horizontalRange);
 }
 
 void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)

@@ -86,7 +86,7 @@
           <x>0</x>
           <y>0</y>
           <width>607</width>
-          <height>418</height>
+          <height>422</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -198,8 +198,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>591</width>
-          <height>476</height>
+          <width>183</width>
+          <height>456</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -522,22 +522,6 @@
        </property>
        <widget class="QTableView" name="table" />
        <widget class="QWidget" native="1" name="widget" />
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_Status" >
-       <property name="toolTip" >
-        <string/>
-       </property>
-       <property name="frameShape" >
-        <enum>QFrame::Panel</enum>
-       </property>
-       <property name="frameShadow" >
-        <enum>QFrame::Raised</enum>
-       </property>
-       <property name="text" >
-        <string/>
-       </property>
       </widget>
      </item>
     </layout>

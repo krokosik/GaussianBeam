@@ -31,6 +31,8 @@ class QDomElement;
 class QAction;
 
 class OpticsItemView;
+class OpticsView;
+class OpticsScene;
 class GaussianBeamPlot;
 class GaussianBeamDelegate;
 class GaussianBeamModel;
@@ -85,6 +87,8 @@ private:
 
 public:
 	OpticsItemView* opticsItemView;
+	OpticsView* opticsView;
+	OpticsScene* opticsScene;
 
 private:
 	GaussianBeamModel* model;

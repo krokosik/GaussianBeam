@@ -42,32 +42,48 @@ Fit::Fit()
 {
 	m_name = "Fit";
 	m_dirty = true;
+	m_lastWavelength = 0.;
 }
 
 void Fit::setData(int index, double position, double value)
 {
+	if (m_positions.size() <= index)
+	{
+		m_positions.resize(index + 1);
+		m_values.resize(index + 1);
+	}
+
+	m_positions[index] = position;
+	m_values[index] = value;
+	m_dirty = true;
+}
+
+void Fit::clear()
+{
+	m_positions.clear();
+	m_values.clear();
 	m_dirty = true;
 }
 
 const Beam& Fit::beam(double wavelength) const
 {
-	if (m_dirty)
-		fitBeam(wavelength);
-
+	fitBeam(wavelength);
 	return m_beam;
 }
 
 double Fit::rho2(double wavelength) const
 {
-	if (m_dirty)
-		fitBeam(wavelength);
-
+	fitBeam(wavelength);
 	return m_rho2;
 }
 
 void Fit::fitBeam(double wavelength) const
 {
-	///@todo What about 0 points ?
+	if (!m_dirty && (wavelength == m_lastWavelength) || m_positions.empty())
+		return;
+
+	cerr << "Fit::fitBeam recomputing fit" << endl;
+
 	Statistics stats(m_positions, m_values);
 
 	// Some point whithin the fit
@@ -84,6 +100,7 @@ void Fit::fitBeam(double wavelength) const
 	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
 	m_rho2 = stats.rho2;
 	m_dirty = false;
+	m_lastWavelength = wavelength;
 }
 
 /////////////////////////////////////////////////
@@ -110,6 +127,14 @@ OpticsBench::~OpticsBench()
 	// Delete optics
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 		delete (*it);
+}
+
+Fit& OpticsBench::fit(int index)
+{
+	if (index >= m_fits.size())
+		m_fits.resize(index + 1);
+
+	return m_fits[index];
 }
 
 int OpticsBench::opticsIndex(const Optics* optics) const
@@ -262,7 +287,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 		for (int i = changedIndex; i < nOptics(); i++)
 		{
 			m_beams[i] = beam = m_optics[i]->image(beam);
-			//cerr << "Beam i waist = " << beam.waist() << " position = " << beam.waistPosition() << endl;
+			cerr << "  Beam i waist = " << beam.waist() << " position = " << beam.waistPosition() << endl;
 		}
 	}
 

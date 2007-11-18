@@ -44,6 +44,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	statusBar()->showMessage(tr("Ready"));
 	m_widget.opticsItemView->setStatusBar(statusBar());
+	m_widget.opticsView->setStatusBar(statusBar());
 
 	if (!fileName.isEmpty())
 		openFile(fileName);

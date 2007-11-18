@@ -57,12 +57,11 @@ public:
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
 	void setData(int index, double position, double value);
+	void clear();
 	const Beam& beam(double wavelength) const;
 	double rho2(double wavelength) const;
 
 private:
-	/// @bug this function does not refresh the cache values when
-	// the wavelength changes
 	void fitBeam(double wavelength) const;
 
 private:
@@ -72,6 +71,7 @@ private:
 	mutable bool m_dirty;
 	mutable Beam m_beam;
 	mutable double m_rho2;
+	mutable double m_lastWavelength;
 };
 
 class OpticsBench
@@ -114,9 +114,13 @@ public:
 
 	/// Beams handling
 	const Beam& beam(int index) const { return m_beams[index]; }
+	const Beam* beamPtr(int index) const { return &(m_beams[index]); }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
 	double sensitivity(int index) const { return m_sensitivity[index]; }
+
+	/// Waist fit
+	Fit& fit(int index);
 
 	/// Magic waist
 	const Beam& targetBeam() const { return m_targetBeam; }
@@ -146,6 +150,9 @@ private:
 	std::vector<Beam> m_beams;
 	std::vector<double> m_sensitivity;
 	double m_leftBoundary, m_rightBoundary;
+
+	/// Waist fit
+	std::vector<Fit> m_fits;
 
 	/// Magic waist
 	Beam m_targetBeam;

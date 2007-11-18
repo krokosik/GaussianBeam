@@ -12,6 +12,7 @@ DEPENDPATH += .
 INCLUDEPATH += . ./src
 CONFIG += qt
 QT += xml
+QMAKE_CXXFLAGS += -pedantic -Wno-sign-compare -Wno-long-long
 
 plot {
 	LIBS += -lqwt-qt4

@@ -39,14 +39,21 @@ class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 public:
 	OpticsScene(OpticsBench& bench, QObject* parent = 0);
 
+public:
+	void setVerticalRange(double verticalRange);
+	void setHorizontalRange(double horizontalRange);
+	void setHorizontalOffset(double horizontalOffset);
+
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	QList<OpticsItem*> m_opticsItems;
 	QList<BeamItem*> m_beamItems;
+	double m_verticalRange;
+	double m_horizontalRange;
+	double m_horizontalOffset;
 };
 
 class OpticsView : public QGraphicsView
@@ -56,10 +63,17 @@ class OpticsView : public QGraphicsView
 public:
 	OpticsView(QGraphicsScene* scene);
 
+public:
+	void setStatusBar(QStatusBar* statusBar) { m_statusBar = statusBar; }
+
 /// Inherited protected functions
 protected:
 	void resizeEvent(QResizeEvent* event);
 	void drawBackground(QPainter* painter, const QRectF& rect);
+	void mouseMoveEvent(QMouseEvent* e);
+
+private:
+	QStatusBar* m_statusBar;
 };
 
 /// @todo don't forget prepareGeometryChange()
@@ -80,6 +94,7 @@ protected:
 public:
 	void setUpdate(bool update) { m_update = update; }
 	const Optics* optics() const { return m_optics; }
+	void setOptics(const Optics* optics) { m_optics = optics; }
 
 private:
 	const Optics* m_optics;
@@ -91,7 +106,7 @@ private:
 class BeamItem : public QGraphicsItem
 {
 public:
-	BeamItem(const Beam& beam);
+	BeamItem(const Beam* beam);
 
 /// Inherited public functions
 public:
@@ -99,11 +114,15 @@ public:
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 public:
-	void setLeftBound(double leftBound) { m_leftBound = leftBound; }
-	void setRightBound(double rightBound) { m_rightBound = rightBound; }
+	double leftBound() const { return m_leftBound; }
+	double rightBound() const { return m_rightBound; }
+	void setLeftBound(double leftBound);
+	void setRightBound(double rightBound);
+	const Beam* beam() const { return m_beam; }
+	void setBeam(const Beam* beam) { m_beam = beam; }
 
 private:
-	const Beam& m_beam;
+	const Beam* m_beam;
 	double m_leftBound;
 	double m_rightBound;
 	bool m_drawText;

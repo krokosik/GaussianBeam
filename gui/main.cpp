@@ -23,8 +23,6 @@
 #include <QTextCodec>
 #include <QTranslator>
 
-#include "OpticsView.h"
-
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);

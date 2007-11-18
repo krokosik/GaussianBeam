@@ -60,25 +60,54 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 	, OpticsBenchNotify(bench)
 {
 	setItemIndexMethod(QGraphicsScene::NoIndex);
-
-	double sceneHeight = 0.001;
-	double sceneWidth  = 0.7;
-	double sceneOffset = -0.1;
-	setSceneRect(sceneOffset, -sceneHeight/2., sceneWidth, sceneHeight);
-
 	m_bench.registerNotify(this);
+}
+
+void OpticsScene::setVerticalRange(double verticalRange)
+{
+	setSceneRect(sceneRect().left(), -verticalRange/2., sceneRect().width(), verticalRange);
+}
+
+void OpticsScene::setHorizontalRange(double horizontalRange)
+{
+	setSceneRect(sceneRect().left(), sceneRect().top(), horizontalRange, sceneRect().height());
+	if (!m_beamItems.isEmpty())
+		m_beamItems.back()->setRightBound(sceneRect().right());
+}
+
+void OpticsScene::setHorizontalOffset(double horizontalOffset)
+{
+	setSceneRect(horizontalOffset, sceneRect().top(), sceneRect().width(), sceneRect().height());
+	if (!m_beamItems.isEmpty())
+	{
+		m_beamItems.front()->setLeftBound(sceneRect().left());
+		m_beamItems.back()->setRightBound(sceneRect().right());
+	}
 }
 
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
-	qDebug() << "OpticsBenchDataChanged" << startOptics << endOptics << m_opticsItems.size();
-	for (int i = startOptics; i <= endOptics; i++)
+	qDebug() << "OpticsBenchDataChanged" << startOptics << endOptics;
+
+	foreach (QGraphicsItem* graphicsItem, items())
+	{
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
+		{
+			int opticsIndex = m_bench.opticsIndex(opticsItem->optics());
+			if ((opticsIndex >= startOptics) && (opticsIndex <= endOptics))
+			{
+				opticsItem->setUpdate(false);
+				opticsItem->setPos(opticsItem->optics()->position(), 0.);
+				opticsItem->setUpdate(true);
+			}
+		}
+	}
+
+	for (int i = qMax(0, startOptics-1); i <= endOptics; i++)
 	{
 		const Optics* optics = m_bench.optics(i);
-		m_opticsItems[i]->setUpdate(false);
-		m_opticsItems[i]->setPos(optics->position(), 0.);
-		m_opticsItems[i]->setUpdate(true);
-		m_beamItems[i]->setPos(m_bench.beam(i).waistPosition(), 0.);
+		m_beamItems[i]->setBeam(m_bench.beamPtr(i));
+		m_beamItems[i]->setPos(0., 0.);
 		if (i == 0)
 			m_beamItems[i]->setLeftBound(sceneRect().left());
 		else
@@ -87,31 +116,34 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(sceneRect().right());
 		else
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position() + m_bench.optics(i+1)->width());
+		qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
 	}
 }
 
 void OpticsScene::OpticsBenchOpticsAdded(int index)
 {
-	qDebug() << "OpticsBenchOpticsAdded";
-
 	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
-	BeamItem* beamItem = new BeamItem(m_bench.beam(index));
-	m_opticsItems.insert(index, opticsItem);
+	BeamItem* beamItem = new BeamItem(m_bench.beamPtr(index));
 	m_beamItems.insert(index, beamItem);
 	addItem(opticsItem);
-
-	qDebug() << " => size" << m_opticsItems.size();
+	addItem(beamItem);
 }
 
 void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 {
-	for (int i = index; i <= index + count; i++)
+	qDebug() << "OpticsScene::OpticsBenchOpticsRemoved";
+	foreach (QGraphicsItem* graphicsItem, items())
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
+			if (m_bench.opticsIndex(opticsItem->optics()) == -1)
+				removeItem(graphicsItem);
+
+	for (int i = index; i < index + count; i++)
 	{
-		removeItem(m_opticsItems[i]);
+		qDebug() << "removing optics" << i << m_beamItems.size();
 		removeItem(m_beamItems[i]);
-		m_opticsItems.removeAt(i);
 		m_beamItems.removeAt(i);
 	}
+	qDebug() << "OpticsScene::OpticsBenchOpticsRemoved END";
 }
 
 /////////////////////////////////////////////////
@@ -124,9 +156,31 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setBackgroundBrush(Qt::white);
 }
 
+void OpticsView::mouseMoveEvent(QMouseEvent* event)
+{
+	if (m_statusBar)
+	{
+		QPointF position = mapToScene(event->pos());
+		position.setY(0.);
+		QString text = tr("Position: ") + QString::number(position.x()*Units::getUnit(UnitPosition).divider(), 'f', 2) + " " + tr("mm") + "    ";
+
+		foreach (QGraphicsItem* graphicsItem, items())
+			if (BeamItem* beamItem = dynamic_cast<BeamItem*>(graphicsItem))
+				if (beamItem->boundingRect().contains(position))
+				{
+					text += tr("Beam radius: ") + QString::number(beamItem->beam()->radius(position.x())*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
+							tr("Beam curvature: ") + QString::number(beamItem->beam()->curvature(position.x())*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
+					break;
+				}
+
+		m_statusBar->showMessage(text);
+	}
+
+	QGraphicsView::mouseMoveEvent(event);
+}
+
 void OpticsView::resizeEvent(QResizeEvent* event)
 {
-	qDebug() << "Resize event";
 	fitInView(scene()->sceneRect());
 	QGraphicsView::resizeEvent(event);
 }
@@ -140,7 +194,7 @@ void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 
 	QBrush backgroundBrush(Qt::white);
 	painter->fillRect(rect, backgroundBrush);
-
+/*
 	QPen opticalAxisPen(Qt::lightGray, 2.*pixelHeight, Qt::DashDotLine, Qt::FlatCap, Qt::RoundJoin);
 	QVector<qreal> opticalAxisDashPattern;
 	opticalAxisDashPattern << 3.*ratio << ratio << ratio << ratio;
@@ -157,7 +211,7 @@ void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 	painter->setPen(verticalAxisPen);
 	/// @todo idem
 	painter->setPen(verticalAxisPen);
-	painter->drawLine(QPointF(0., scene()->sceneRect().top()), QPointF(0., rect.bottom()));
+	painter->drawLine(QPointF(0., scene()->sceneRect().top()), QPointF(0., rect.bottom()));*/
 }
 
 /////////////////////////////////////////////////
@@ -182,7 +236,7 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench& bench)
 
 QRectF OpticsItem::boundingRect() const
 {
-	return QRectF(-0.01, -0.00025, 0.02, 0.0005);
+	return QRectF(-0.01, -0.002, 0.02, 0.004);
 }
 
 QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value)
@@ -212,11 +266,23 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 /////////////////////////////////////////////////
 // BeamView class
 
-BeamItem::BeamItem(const Beam& beam)
+BeamItem::BeamItem(const Beam* beam)
 	: QGraphicsItem()
 	, m_beam(beam)
 {
 	m_drawText = true;
+}
+
+void BeamItem::setLeftBound(double leftBound)
+{
+	m_leftBound = leftBound;
+	prepareGeometryChange();
+}
+
+void BeamItem::setRightBound(double rightBound)
+{
+	m_rightBound = rightBound;
+	prepareGeometryChange();
 }
 
 QRectF BeamItem::boundingRect() const
@@ -229,7 +295,7 @@ QRectF BeamItem::boundingRect() const
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
-	QColor beamColor = wavelengthColor(m_beam.wavelength());
+	QColor beamColor = wavelengthColor(m_beam->wavelength());
 	QPen beamPen = painter->pen();
 	beamColor.setAlpha(beamPen.color().alpha());
 	beamPen.setColor(beamColor);
@@ -238,25 +304,12 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	beamColor.setAlpha(beamBrush.color().alpha());
 	beamBrush.setColor(beamColor);
 	painter->setBrush(beamBrush);
-	QPen textPen(Qt::black, 1);
-/*
-	QRectF view_beamRange = m_abs2view.mapRect(abs_beamRange).normalized();
-	QPointF abs_waistPos = QPointF(beam.waistPosition(), 0.);
-	QPointF view_waistPos = abs_waistPos*m_abs2view;
+	QPen textPen(Qt::black);
 
-	QPointF abs_left(m_hOffset, 0.);
-	QPointF view_left = abs_left*m_abs2view;
-*/
-//	double max_ray = 4.;
-//	double max_w0  = sqrt(1. + sqr(max_ray));
-
-	//QRectF abs_waistRect(0., 0., 2.*beam.rayleigh()*max_ray, 2.*beam.waist()*max_w0);
-	//abs_waistRect.moveCenter(abs_waistPos);
-
-	double waistPosition = m_beam.waistPosition();
-
+	double waistPosition = m_beam->waistPosition();
+ 
 	/// @todo check degree of details
-	if (m_beam.waist() > 0.0000001/* *vScale() > 1.*/)
+//	if (m_beam->waist() > 0.0000001/* *vScale() > 1.*/)
 	{
 		/** @bug this prevents a lockup for double roundup errors.
 		* Test case : remove all lenses, add two lenses. The program crashed becaus maxZ-minZ = 1e-18
@@ -264,24 +317,24 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		*/
 		double epsilon = 1e-6;
 		Approximation approximation;
-		approximation.minZ = m_rightBound;
-		approximation.maxZ = m_leftBound;
+		approximation.minZ = m_leftBound;
+		approximation.maxZ = m_rightBound;
 		/// @todo approximation.resolution = 1./vScale();
 
 		if (approximation.minZ + epsilon < approximation.maxZ)
 		{
 			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
 			QPolygonF beamPolygonUp, beamPolygonDown;
-			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam.approxNextPosition(z, approximation))
+			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam->approxNextPosition(z, approximation))
 			{
 				//qDebug() << z;
-				beamPolygonUp.append(QPointF(z, m_beam.radius(z)));
-				beamPolygonDown.prepend(QPointF(z, -m_beam.radius(z)));
+				beamPolygonUp.append(QPointF(z, m_beam->radius(z)));
+				beamPolygonDown.prepend(QPointF(z, -m_beam->radius(z)));
 				if (z == approximation.maxZ)
 					break;
 			}
-			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam.radius(approximation.maxZ)));
-			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam.radius(approximation.maxZ)));
+			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam->radius(approximation.maxZ)));
+			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam->radius(approximation.maxZ)));
 			QPainterPath path;
 			path.moveTo(beamPolygonUp[0]);
 			path.addPolygon(beamPolygonUp);
@@ -292,11 +345,11 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 			painter->drawPath(path);
 		}
 	}
-	else
+//	else
 	{
 		double sgn = sign((m_rightBound - waistPosition)*(m_leftBound - waistPosition));
-		double rightRadius = m_beam.radius(m_rightBound);
-		double leftRadius = m_beam.radius(m_leftBound);
+		double rightRadius = m_beam->radius(m_rightBound);
+		double leftRadius = m_beam->radius(m_leftBound);
 
 		QPolygonF ray;
 		ray << QPointF(m_leftBound, leftRadius)
@@ -311,12 +364,12 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	if (m_drawText)
 	{
 		painter->setPen(textPen);
-		QPointF view_waistTop(waistPosition, - m_beam.waist());
-		painter->drawLine(pos(), view_waistTop);
-		QString text; text.setNum(round(m_beam.waist()*Units::getUnit(UnitWaist).divider()));
-		QRectF view_textRect(0., 0., 100., 15.);
-		view_textRect.moveCenter(view_waistTop - QPointF(0., 15.));
-		painter->drawText(view_textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
+		QPointF waistTop(waistPosition, - m_beam->waist());
+		painter->drawLine(QPointF(waistPosition, 0.), waistTop);
+		/*QString text; text.setNum(round(m_beam->waist()*Units::getUnit(UnitWaist).divider()));
+		QRectF textRect(0., 0., 100., 15.);
+		textRect.moveCenter(waistTop - QPointF(0., 15.));
+		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);*/
 	}
 }
 
