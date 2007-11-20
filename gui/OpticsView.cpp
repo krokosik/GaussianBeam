@@ -61,6 +61,7 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 {
 	setItemIndexMethod(QGraphicsScene::NoIndex);
 	m_bench.registerNotify(this);
+	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
 }
 
 void OpticsScene::setVerticalRange(double verticalRange)
@@ -85,6 +86,11 @@ void OpticsScene::setHorizontalOffset(double horizontalOffset)
 	}
 }
 
+void OpticsScene::showTargetBeam(bool show)
+{
+	m_targetBeamItem->setVisible(show);
+}
+
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
 	qDebug() << "OpticsBenchDataChanged" << startOptics << endOptics;
@@ -106,7 +112,7 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 	for (int i = qMax(0, startOptics-1); i <= endOptics; i++)
 	{
 		const Optics* optics = m_bench.optics(i);
-		m_beamItems[i]->setBeam(m_bench.beamPtr(i));
+		//m_beamItems[i]->setBeam(m_bench.beam(i));
 		m_beamItems[i]->setPos(0., 0.);
 		if (i == 0)
 			m_beamItems[i]->setLeftBound(sceneRect().left());
@@ -123,7 +129,7 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 void OpticsScene::OpticsBenchOpticsAdded(int index)
 {
 	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
-	BeamItem* beamItem = new BeamItem(m_bench.beamPtr(index));
+	BeamItem* beamItem = new BeamItem(m_bench.beam(index));
 	m_beamItems.insert(index, beamItem);
 	addItem(opticsItem);
 	addItem(beamItem);
@@ -168,8 +174,8 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 			if (BeamItem* beamItem = dynamic_cast<BeamItem*>(graphicsItem))
 				if (beamItem->boundingRect().contains(position))
 				{
-					text += tr("Beam radius: ") + QString::number(beamItem->beam()->radius(position.x())*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
-							tr("Beam curvature: ") + QString::number(beamItem->beam()->curvature(position.x())*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
+					text += tr("Beam radius: ") + QString::number(beamItem->beam().radius(position.x())*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
+							tr("Beam curvature: ") + QString::number(beamItem->beam().curvature(position.x())*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
 					break;
 				}
 
@@ -266,7 +272,7 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 /////////////////////////////////////////////////
 // BeamView class
 
-BeamItem::BeamItem(const Beam* beam)
+BeamItem::BeamItem(const Beam& beam)
 	: QGraphicsItem()
 	, m_beam(beam)
 {
@@ -295,7 +301,7 @@ QRectF BeamItem::boundingRect() const
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
-	QColor beamColor = wavelengthColor(m_beam->wavelength());
+	QColor beamColor = wavelengthColor(m_beam.wavelength());
 	QPen beamPen = painter->pen();
 	beamColor.setAlpha(beamPen.color().alpha());
 	beamPen.setColor(beamColor);
@@ -306,10 +312,10 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	painter->setBrush(beamBrush);
 	QPen textPen(Qt::black);
 
-	double waistPosition = m_beam->waistPosition();
+	double waistPosition = m_beam.waistPosition();
  
 	/// @todo check degree of details
-//	if (m_beam->waist() > 0.0000001/* *vScale() > 1.*/)
+//	if (m_beam.waist() > 0.0000001/* *vScale() > 1.*/)
 	{
 		/** @bug this prevents a lockup for double roundup errors.
 		* Test case : remove all lenses, add two lenses. The program crashed becaus maxZ-minZ = 1e-18
@@ -325,16 +331,16 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		{
 			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
 			QPolygonF beamPolygonUp, beamPolygonDown;
-			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam->approxNextPosition(z, approximation))
+			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam.approxNextPosition(z, approximation))
 			{
 				//qDebug() << z;
-				beamPolygonUp.append(QPointF(z, m_beam->radius(z)));
-				beamPolygonDown.prepend(QPointF(z, -m_beam->radius(z)));
+				beamPolygonUp.append(QPointF(z, m_beam.radius(z)));
+				beamPolygonDown.prepend(QPointF(z, -m_beam.radius(z)));
 				if (z == approximation.maxZ)
 					break;
 			}
-			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam->radius(approximation.maxZ)));
-			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam->radius(approximation.maxZ)));
+			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam.radius(approximation.maxZ)));
+			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam.radius(approximation.maxZ)));
 			QPainterPath path;
 			path.moveTo(beamPolygonUp[0]);
 			path.addPolygon(beamPolygonUp);
@@ -348,8 +354,8 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 //	else
 	{
 		double sgn = sign((m_rightBound - waistPosition)*(m_leftBound - waistPosition));
-		double rightRadius = m_beam->radius(m_rightBound);
-		double leftRadius = m_beam->radius(m_leftBound);
+		double rightRadius = m_beam.radius(m_rightBound);
+		double leftRadius = m_beam.radius(m_leftBound);
 
 		QPolygonF ray;
 		ray << QPointF(m_leftBound, leftRadius)
@@ -364,9 +370,9 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	if (m_drawText)
 	{
 		painter->setPen(textPen);
-		QPointF waistTop(waistPosition, - m_beam->waist());
+		QPointF waistTop(waistPosition, - m_beam.waist());
 		painter->drawLine(QPointF(waistPosition, 0.), waistTop);
-		/*QString text; text.setNum(round(m_beam->waist()*Units::getUnit(UnitWaist).divider()));
+		/*QString text; text.setNum(round(m_beam.waist()*Units::getUnit(UnitWaist).divider()));
 		QRectF textRect(0., 0., 100., 15.);
 		textRect.moveCenter(waistTop - QPointF(0., 15.));
 		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);*/

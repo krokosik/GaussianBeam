@@ -43,6 +43,7 @@ public:
 	void setVerticalRange(double verticalRange);
 	void setHorizontalRange(double horizontalRange);
 	void setHorizontalOffset(double horizontalOffset);
+	void showTargetBeam(bool show = true);
 
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
@@ -51,6 +52,7 @@ private:
 
 private:
 	QList<BeamItem*> m_beamItems;
+	BeamItem* m_targetBeamItem;
 	double m_verticalRange;
 	double m_horizontalRange;
 	double m_horizontalOffset;
@@ -106,7 +108,7 @@ private:
 class BeamItem : public QGraphicsItem
 {
 public:
-	BeamItem(const Beam* beam);
+	BeamItem(const Beam& beam);
 
 /// Inherited public functions
 public:
@@ -118,11 +120,11 @@ public:
 	double rightBound() const { return m_rightBound; }
 	void setLeftBound(double leftBound);
 	void setRightBound(double rightBound);
-	const Beam* beam() const { return m_beam; }
-	void setBeam(const Beam* beam) { m_beam = beam; }
+	const Beam& beam() const { return m_beam; }
+//	void setBeam(const Beam* beam) { m_beam = beam; }
 
 private:
-	const Beam* m_beam;
+	const Beam& m_beam;
 	double m_leftBound;
 	double m_rightBound;
 	bool m_drawText;
