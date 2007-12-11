@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>GaussianBeamForm</class>
- <widget class="QWidget" name="GaussianBeamForm" >
+ <class>GaussianBeamWidget</class>
+ <widget class="QWidget" name="GaussianBeamWidget" >
   <property name="geometry" >
    <rect>
     <x>0</x>
@@ -67,8 +67,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>248</width>
-          <height>457</height>
+          <width>246</width>
+          <height>177</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -180,8 +180,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>248</width>
-          <height>457</height>
+          <width>183</width>
+          <height>456</height>
          </rect>
         </property>
         <attribute name="label" >

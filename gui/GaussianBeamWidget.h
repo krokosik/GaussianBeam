@@ -19,7 +19,7 @@
 #ifndef GAUSSIANBEAMWIDGET_H
 #define GAUSSIANBEAMWIDGET_H
 
-#include "ui_GaussianBeamForm.h"
+#include "ui_GaussianBeamWidget.h"
 #include "src/GaussianBeam.h"
 #include "src/OpticsBench.h"
 #include "src/Optics.h"
@@ -37,7 +37,7 @@ class GaussianBeamPlot;
 class GaussianBeamDelegate;
 class GaussianBeamModel;
 
-class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
+class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamWidget
 {
 	Q_OBJECT
 

@@ -33,7 +33,7 @@ HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/GaussianBeamDelegate.h 
 SOURCES += gui/GaussianBeamWidget.cpp gui/OpticsView.cpp gui/GaussianBeamDelegate.cpp \
            gui/GaussianBeamModel.cpp gui/GaussianBeamWindow.cpp gui/Unit.cpp \
            gui/GaussianBeamWidgetSave.cpp gui/main.cpp
-FORMS    = gui/GaussianBeamForm.ui gui/GaussianBeamWindow.ui
+FORMS    = gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui
 RESOURCES = gui/GaussianBeamRessource.qrc
 
 TRANSLATIONS = po/GaussianBeam_fr.ts
