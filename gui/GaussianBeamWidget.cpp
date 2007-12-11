@@ -300,32 +300,28 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 void GaussianBeamWidget::on_pushButton_Fit_clicked()
 {
-	std::vector<double> positions, radii;
-	double rho2;
 	double factor = 1.;
 	if (comboBox_FitData->currentIndex() == 1)
 		factor = 0.5;
 
+	Fit& fit = m_bench.fit(0);
+	fit.clear();
+
 	for (int row = 0; row < fitModel->rowCount(); ++row)
-		if (factor*fitModel->data(fitModel->index(row, 1)).toDouble() != 0.)
+		if (fitModel->data(fitModel->index(row, 1)).toDouble() != 0.)
 		{
-			qDebug() << fitModel->data(fitModel->index(row, 0)).toDouble() << fitModel->data(fitModel->index(row, 1)).toDouble();
-			positions.push_back(fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier());
-			radii.push_back(factor*fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier());
+			double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
+			double radius = factor*fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
+			fit.addData(position, radius);
 		}
 
-	if (positions.size() <= 1)
-	{
-		qDebug() << "Empty fit";
+	if (fit.size() <= 1)
 		return;
-	}
 
-	qDebug() << "Fitting" << positions.size() << "elements";
-
-	m_fitBeam = GaussianBeam::fitBeam(positions, radii, m_bench.wavelength(), &rho2);
-	QString text = tr("Waist") + " = " + QString::number(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
-	               tr("Position") + " = " + QString::number(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
-	               tr("R²") + " = " + QString::number(rho2);
+	Beam fitBeam = fit.beam(m_bench.wavelength()); //GaussianBeam::fitBeam(positions, radii, m_bench.wavelength(), &rho2);
+	QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
+	               tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
+	               tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
 	label_FitResult->setText(text);
 	pushButton_SetInputBeam->setEnabled(true);
 	pushButton_SetTargetBeam->setEnabled(true);
@@ -333,18 +329,19 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 {
-	m_bench.setInputBeam(m_fitBeam);
+	m_bench.setInputBeam(m_bench.fit(0).beam(m_bench.wavelength()));
 }
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
-	doubleSpinBox_TargetWaist->setValue(m_fitBeam.waist()*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_TargetPosition->setValue(m_fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider());
+	Beam fitBeam = m_bench.fit(0).beam(m_bench.wavelength());
+
+	doubleSpinBox_TargetWaist->setValue(fitBeam.waist()*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_TargetPosition->setValue(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider());
 }
 
 void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
 {
-	qDebug() << "AddRow";
 	QModelIndex index = fitTable->selectionModel()->currentIndex();
 	int row = fitModel->rowCount();
 	if (index.isValid())
@@ -361,6 +358,7 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 
 ///////////////////////////////////////////////////////////
 // DISPLAY PAGE
+
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
 	double horizontalRange = value*Units::getUnit(UnitHRange).multiplier();

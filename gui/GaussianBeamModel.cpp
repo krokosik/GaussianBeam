@@ -172,7 +172,18 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	ColumnContent column = m_columns[index.column()];
 
 	if (column == PositionColumn)
-		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier(), false);
+		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier(), row != 0);
+	else if (column == RelativePositionColumn)
+	{
+		if (row == 0)
+			return false;
+
+		const Optics* optics = m_bench.optics(row);
+		const Optics* preceedingOptics = m_bench.optics(row-1);
+		if (optics->relativeLockedTo(preceedingOptics))
+			return false;
+		m_bench.setOpticsPosition(row, value.toDouble()*Units::getUnit(UnitPosition).multiplier() + preceedingOptics->position());
+	}
 	else if (column == PropertiesColumn)
 	{
 		Optics* optics = m_bench.opticsForPropertyChange(row);
@@ -185,9 +196,10 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 			dynamic_cast<FlatInterface*>(optics)->setIndexRatio(value.toDouble());
 		else if (optics->type() == CurvedInterfaceType)
 		{
-			CurvedInterface* optics = dynamic_cast<CurvedInterface*>(optics);
-			optics->setSurfaceRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
-			optics->setIndexRatio(value.toList()[1].toDouble());
+			qDebug() << "setData for CurvedInterfaceType" << value.toList()[0].toDouble() << value.toList()[1].toDouble();
+			CurvedInterface* curvedInterfaceOptics = dynamic_cast<CurvedInterface*>(optics);
+			curvedInterfaceOptics->setSurfaceRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
+			curvedInterfaceOptics->setIndexRatio(value.toList()[1].toDouble());
 		}
 		else if (m_bench.optics(row)->type() == GenericABCDType)
 		{
@@ -258,8 +270,7 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 
 	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
-	if ((column == PositionColumn) ||
-		(column == NameColumn) ||
+	if ((column == NameColumn) ||
 		(column == LockColumn) ||
 		(column == WaistColumn) ||
 		(column == WaistPositionColumn) ||
@@ -269,6 +280,25 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		 && (m_bench.optics(row)->type() != FlatMirrorType)
 		 && (m_bench.optics(row)->type() != CreateBeamType))
 			flags |= Qt::ItemIsEditable;
+
+	if (column == PositionColumn)
+	{
+		if (row == 0)
+			flags |= Qt::ItemIsEditable;
+
+		const Optics* optics = m_bench.optics(row);
+		if (!optics->relativeLockTreeAbsoluteLock())
+			flags |= Qt::ItemIsEditable;
+	}
+
+	if ((column == RelativePositionColumn) && (row != 0))
+	{
+		const Optics* optics = m_bench.optics(row);
+		const Optics* preceedingOptics = m_bench.optics(row-1);
+		if (!optics->relativeLockedTo(preceedingOptics) &&
+		    !optics->relativeLockTreeAbsoluteLock())
+			flags |= Qt::ItemIsEditable;
+	}
 
 	return flags;
 }

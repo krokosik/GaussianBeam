@@ -103,6 +103,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		return editor;
 	}
 	case PositionColumn:
+	case RelativePositionColumn:
 	case WaistPositionColumn:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
@@ -186,6 +187,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	switch (column)
 	{
 	case PositionColumn:
+	case RelativePositionColumn:
 	case WaistColumn:
 	case WaistPositionColumn:
 	case RayleighColumn:

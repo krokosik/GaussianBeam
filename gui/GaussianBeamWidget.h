@@ -99,7 +99,6 @@ private:
 	GaussianBeamPlot* plot;
 
 	OpticsBench m_bench;
-	Beam m_fitBeam; /// REMOVE
 	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName, /// REMOVE
 	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName; /// REMOVE
 };

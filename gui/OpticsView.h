@@ -41,6 +41,8 @@ public:
 
 public:
 	void setVerticalRange(double verticalRange);
+	double verticalRange() { return m_verticalRange; }
+	void setFormat(double format);
 	void setHorizontalRange(double horizontalRange);
 	void setHorizontalOffset(double horizontalOffset);
 	void showTargetBeam(bool show = true);
@@ -54,8 +56,7 @@ private:
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
 	double m_verticalRange;
-	double m_horizontalRange;
-	double m_horizontalOffset;
+	double m_format;
 };
 
 class OpticsView : public QGraphicsView

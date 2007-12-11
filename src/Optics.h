@@ -76,7 +76,7 @@ public:
 	/**
 	* @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
 	*/
-	bool relativeLockedTreeAbsoluteLock() const { return relativeLockRootConst()->absoluteLock(); }
+	bool relativeLockTreeAbsoluteLock() const { return relativeLockRootConst()->absoluteLock(); }
 	/**
 	* Lock the optics to the given @p optics. Only works if @p optics is not within the locking tree of this optics.
 	* If the locking succeeds, the absolute lock is set to false.

@@ -45,7 +45,7 @@ Fit::Fit()
 	m_lastWavelength = 0.;
 }
 
-void Fit::setData(int index, double position, double value)
+void Fit::setData(unsigned int index, double position, double value)
 {
 	if (m_positions.size() <= index)
 	{
@@ -55,6 +55,13 @@ void Fit::setData(int index, double position, double value)
 
 	m_positions[index] = position;
 	m_values[index] = value;
+	m_dirty = true;
+}
+
+void Fit::addData(double position, double value)
+{
+	m_positions.push_back(position);
+	m_values.push_back(value);
 	m_dirty = true;
 }
 
@@ -94,9 +101,7 @@ void Fit::fitBeam(double wavelength) const
 	const double fpz = stats.m;
 	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
 	const double alpha = M_PI*fz*fpz/wavelength;
-	// waist
-	double waist = fz/sqrt(1. + sqr(alpha));
-	m_beam = Beam(waist, 0., wavelength);
+	m_beam = Beam(fz/sqrt(1. + sqr(alpha)), 0., wavelength);
 	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
 	m_rho2 = stats.rho2;
 	m_dirty = false;
@@ -120,6 +125,8 @@ OpticsBench::OpticsBench()
 	/// @todo remove this later
 	m_firstCavityIndex = 1;
 	m_lastCavityIndex = 2;
+
+	m_fits.push_back(Fit());
 }
 
 OpticsBench::~OpticsBench()
@@ -129,7 +136,12 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 }
 
-Fit& OpticsBench::fit(int index)
+int OpticsBench::nFit()
+{
+	return m_fits.size();
+}
+
+Fit& OpticsBench::fit(unsigned int index)
 {
 	if (index >= m_fits.size())
 		m_fits.resize(index + 1);
@@ -165,9 +177,12 @@ void OpticsBench::addOptics(Optics* optics, int index)
 {
 	m_optics.insert(m_optics.begin() + index,  optics);
 	m_beams.insert(m_beams.begin() + index, Beam());
+	cerr << "WAIST addOptics 1 " << m_beams[index].waist() << "\n";
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsAdded(index);
+	cerr << "WAIST addOptics 2 " << m_beams[index].waist() << "\n";
 	computeBeams(index);
+	cerr << "WAIST addOptics 3 " << m_beams[index].waist() << "\n";
 }
 
 void OpticsBench::removeOptics(int index, int count)
@@ -243,7 +258,7 @@ void OpticsBench::setInputBeam(const Beam& beam)
 
 	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
 	createBeam->setWaist(beam.waist());
-	setOpticsPosition(0, beam.waistPosition());
+	setOpticsPosition(0, beam.waistPosition(), false);
 	computeBeams();
 }
 
@@ -413,6 +428,9 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 		if (!(*it)->absoluteLock() && !(*it)->relativeLockParent())
 			opticsMovable.push_back(it - opticsClone.begin());
 
+	if (opticsMovable.empty())
+		return false;
+
 	const int nTry = 500000;
 	bool found = false;
 
@@ -446,7 +464,7 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 	if (found)
 	{
 		/// @todo gradient method
-		/// @todo is there a better way to identify an otpics than a name ? Create a UID ?
+		/// @todo is there a better way to identify an optics than a name ? Create a UID ?
 		for (vector<Optics*>::iterator itClone = opticsClone.begin(); itClone != opticsClone.end(); itClone++)
 			for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 				if ((*itClone)->name() == (*it)->name())
@@ -505,32 +523,6 @@ const Beam OpticsBench::cavityEigenBeam(int index) const
 
 /////////////////////////////////////////////////
 // GaussianBeam namespace
-
-
-Beam GaussianBeam::fitBeam(vector<double> positions, vector<double> radii, double wavelength, double* rho2)
-{
-	Beam beam;
-	beam.setWavelength(wavelength);
-
-	Statistics stats(positions, radii);
-
-	// Some point whithin the fit
-	const double z = stats.meanX;
-	// beam radius at z
-	const double fz = stats.m*z + stats.p;
-	// derivative of the beam radius at z
-	const double fpz = stats.m;
-	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
-	const double alpha = M_PI*fz*fpz/wavelength;
-	// waist
-	beam.setWaist(fz/sqrt(1. + sqr(alpha)));
-	beam.setWaistPosition(z - beam.rayleigh()*alpha);
-
-	if (rho2)
-		*rho2 = stats.rho2;
-
-	return beam;
-}
 
 double GaussianBeam::overlap(const Beam& beam1, const Beam& beam2, double z)
 {

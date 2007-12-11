@@ -48,6 +48,11 @@ struct Tolerance
 	double positionTolerance;
 };
 
+/**
+* Find the waist radius and position for a given set of radii measurement of a Gaussian beam
+* It fits the given data with a linear fit, and finds the only hyperbola
+* that is tangent to the resulting line
+*/
 class Fit
 {
 public:
@@ -55,8 +60,12 @@ public:
 
 public:
 	std::string name() const { return m_name; }
+	int size() const { return m_positions.size(); }
+	double position(unsigned int index) const { return m_positions[index]; }
+	double radius(unsigned int index) const { return m_values[index]; }
 	void setName(std::string name) { m_name = name; }
-	void setData(int index, double position, double value);
+	void setData(unsigned int index, double position, double value);
+	void addData(double position, double value);
 	void clear();
 	const Beam& beam(double wavelength) const;
 	double rho2(double wavelength) const;
@@ -120,7 +129,8 @@ public:
 	double sensitivity(int index) const { return m_sensitivity[index]; }
 
 	/// Waist fit
-	Fit& fit(int index);
+	int nFit();
+	Fit& fit(unsigned int index);
 
 	/// Magic waist
 	const Beam& targetBeam() const { return m_targetBeam; }
@@ -149,6 +159,8 @@ private:
 	std::vector<Optics*> m_optics;
 	std::vector<Beam> m_beams;
 	std::vector<double> m_sensitivity;
+
+	/// Exclusion area
 	double m_leftBoundary, m_rightBoundary;
 
 	/// Waist fit
@@ -169,17 +181,6 @@ private:
 
 namespace GaussianBeam
 {
-	/**
-	* Find the waist radius and position for a given set of radii measurement of a Gaussian beam
-	* It fits the given data with a linear fit, and finds the only hyperbola
-	* that is tangent to the resulting line
-	* @p positions vector of positions
-	* @p radii vector of radii @ 1/e^2
-	* @p wavelength wavelength
-	* @p rho2 a pointer to a double set to the squared correlation coefficient
-	*/
-	Beam fitBeam(std::vector<double> positions, std::vector<double> radii, double wavelength, double* rho2 = 0);
-
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
 	* This overlap does not depend on @p z if both beams have the same wavelength,

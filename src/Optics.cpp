@@ -124,7 +124,7 @@ void Optics::moveDescendant(double distance)
 
 void Optics::setPositionCheckLock(double pos, bool respectAbsoluteLock)
 {
-	if (relativeLockedTreeAbsoluteLock() && respectAbsoluteLock)
+	if (relativeLockTreeAbsoluteLock() && respectAbsoluteLock)
 		return;
 
 	relativeLockRoot()->moveDescendant(pos - position());
