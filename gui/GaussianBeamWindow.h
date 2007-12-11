@@ -19,8 +19,13 @@
 #ifndef GAUSSIANBEAMWINDOWS_H
 #define GAUSSIANBEAMWINDOW_H
 
-#include "GaussianBeamWidget.h"
+#include "gui/GaussianBeamWidget.h"
+#include "gui/GaussianBeamModel.h"
+#include "gui/GaussianBeamDelegate.h"
+#include "gui/OpticsView.h"
 #include "ui_GaussianBeamWindow.h"
+#include "src/Optics.h"
+#include "src/OpticsBench.h"
 
 #include <QMainWindow>
 
@@ -31,20 +36,41 @@ class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow
 public:
 	GaussianBeamWindow(const QString& fileName);
 
+public slots:
+	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
+
 protected slots:
-	void on_action_Open_triggered();
-	void on_action_Save_triggered();
-	void on_action_SaveAs_triggered();
+	void on_action_Open_triggered()               { openFile();                        }
+	void on_action_Save_triggered()               { saveFile(m_currentFile);           }
+	void on_action_SaveAs_triggered()             { saveFile();                        }
+	void on_action_AddOptics_triggered();
+	void on_action_RemoveOptics_triggered();
+	void on_action_AddLens_triggered()            { insertOptics(LensType);            }
+	void on_action_AddFlatMirror_triggered()      { insertOptics(FlatMirrorType);      }
+	void on_action_AddCurvedMirror_triggered()    { insertOptics(CurvedMirrorType);    }
+	void on_action_AddFlatInterface_triggered()   { insertOptics(FlatInterfaceType);   }
+	void on_action_AddCurvedInterface_triggered() { insertOptics(CurvedInterfaceType); }
+	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
 
 private:
 	void openFile(const QString& path = QString());
 	void saveFile(const QString& path = QString());
 	void setCurrentFile(const QString& path);
+	void insertOptics(OpticsType opticsType);
 
 private:
 	QToolBar* m_fileToolBar;
 
-	GaussianBeamWidget m_widget;
+	OpticsBench m_bench;
+	GaussianBeamWidget* m_widget;
+	GaussianBeamModel* m_model;
+	QItemSelectionModel* m_selectionModel;
+	QTableView* m_table;
+	OpticsItemView* m_opticsItemView;
+	OpticsView* m_opticsView;
+	OpticsScene* m_opticsScene;
+
 
 	QString m_currentFile;
 };

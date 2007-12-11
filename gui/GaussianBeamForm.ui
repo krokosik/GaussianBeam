@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>891</width>
+    <width>268</width>
     <height>606</height>
    </rect>
   </property>
@@ -46,24 +46,6 @@
       </layout>
      </item>
      <item>
-      <layout class="QHBoxLayout" >
-       <item>
-        <widget class="QPushButton" name="pushButton_Add" >
-         <property name="text" >
-          <string>Add</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="pushButton_Remove" >
-         <property name="text" >
-          <string>Remove</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
       <widget class="QToolBox" name="toolBox" >
        <property name="minimumSize" >
         <size>
@@ -78,15 +60,15 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_IO" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>607</width>
-          <height>422</height>
+          <width>248</width>
+          <height>457</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -198,8 +180,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>183</width>
-          <height>456</height>
+          <width>248</width>
+          <height>457</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -414,8 +396,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>189</width>
-          <height>318</height>
+          <width>248</width>
+          <height>457</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -513,50 +495,7 @@
      </item>
     </layout>
    </item>
-   <item>
-    <layout class="QVBoxLayout" >
-     <item>
-      <widget class="QSplitter" name="splitter" >
-       <property name="orientation" >
-        <enum>Qt::Vertical</enum>
-       </property>
-       <widget class="QTableView" name="table" />
-       <widget class="QWidget" native="1" name="widget" />
-      </widget>
-     </item>
-    </layout>
-   </item>
   </layout>
-  <action name="action_AddLens" >
-   <property name="text" >
-    <string>&amp;Lens</string>
-   </property>
-  </action>
-  <action name="action_AddFlatInterface" >
-   <property name="text" >
-    <string>&amp;Flat Interface</string>
-   </property>
-  </action>
-  <action name="action_AddCurvedInterface" >
-   <property name="text" >
-    <string>&amp;Cuved Interface</string>
-   </property>
-  </action>
-  <action name="action_AddFlatMirror" >
-   <property name="text" >
-    <string>Flat &amp;Mirror</string>
-   </property>
-  </action>
-  <action name="action_AddCurvedMirror" >
-   <property name="text" >
-    <string>Cu&amp;rved Mirror</string>
-   </property>
-  </action>
-  <action name="action_AddGenericABCD" >
-   <property name="text" >
-    <string>Generic &amp;ABCD</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

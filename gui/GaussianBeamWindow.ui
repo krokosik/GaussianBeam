@@ -46,6 +46,52 @@
     <string>Open</string>
    </property>
   </action>
+  <action name="action_AddLens" >
+   <property name="text" >
+    <string>&amp;Lens</string>
+   </property>
+  </action>
+  <action name="action_AddFlatInterface" >
+   <property name="text" >
+    <string>&amp;Flat Interface</string>
+   </property>
+  </action>
+  <action name="action_AddCurvedInterface" >
+   <property name="text" >
+    <string>&amp;Cuved Interface</string>
+   </property>
+  </action>
+  <action name="action_AddFlatMirror" >
+   <property name="text" >
+    <string>Flat &amp;Mirror</string>
+   </property>
+  </action>
+  <action name="action_AddCurvedMirror" >
+   <property name="text" >
+    <string>Cu&amp;rved Mirror</string>
+   </property>
+  </action>
+  <action name="action_AddGenericABCD" >
+   <property name="text" >
+    <string>Generic &amp;ABCD</string>
+   </property>
+  </action>
+  <action name="action_AddOptics" >
+   <property name="icon" >
+    <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-add.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Add optics</string>
+   </property>
+  </action>
+  <action name="action_RemoveOptics" >
+   <property name="icon" >
+    <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-delete.png</iconset>
+   </property>
+   <property name="text" >
+    <string>Remove</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="GaussianBeamRessource.qrc" />

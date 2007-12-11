@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "GaussianBeamPlot.h"
-#include "GaussianBeamModel.h"
-#include "GaussianBeam.h"
+#include "gui/GaussianBeamPlot.h"
+#include "gui/GaussianBeamModel.h"
+#include "src/GaussianBeam.h"
 
 /////////////////////////////////////////////////
 // GaussianBeamPlotData

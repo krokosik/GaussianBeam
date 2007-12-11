@@ -9,7 +9,6 @@
 TEMPLATE = app
 TARGET =
 DEPENDPATH += .
-INCLUDEPATH += . ./src
 CONFIG += qt
 QT += xml
 QMAKE_CXXFLAGS += -pedantic -Wno-sign-compare -Wno-long-long
@@ -26,8 +25,8 @@ CODECFORSRC    = UTF-8
 
 # Input
 # src
-HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h
-SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp
+HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h src/GaussianFit.h
+SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp src/GaussianFit.cpp
 # gui
 HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/GaussianBeamDelegate.h \
            gui/GaussianBeamModel.h gui/GaussianBeamWindow.h gui/Unit.h

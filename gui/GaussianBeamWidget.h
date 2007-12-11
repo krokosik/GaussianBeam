@@ -20,9 +20,9 @@
 #define GAUSSIANBEAMWIDGET_H
 
 #include "ui_GaussianBeamForm.h"
-#include "GaussianBeam.h"
-#include "OpticsBench.h"
-#include "Optics.h"
+#include "src/GaussianBeam.h"
+#include "src/OpticsBench.h"
+#include "src/Optics.h"
 
 #include <QWidget>
 
@@ -42,15 +42,15 @@ class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamForm
 	Q_OBJECT
 
 public:
-	GaussianBeamWidget(QWidget* parent = 0);
+	GaussianBeamWidget(OpticsBench& bench, OpticsItemView* opticsItemView,
+	                   OpticsView* opticsView, OpticsScene* opticsScene, QWidget* parent = 0);
 
 public:
 	bool openFile(const QString& fileName = QString());
 	bool saveFile(const QString& fileName = QString());
+	void displayOverlap();
 
 protected slots:
-	void on_pushButton_Add_clicked();
-	void on_pushButton_Remove_clicked();
 	void on_pushButton_MagicWaist_clicked();
 	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
@@ -66,41 +66,24 @@ protected slots:
 	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
 	void on_radioButton_Tolerance_toggled(bool checked);
-	void on_action_AddLens_triggered();
-	void on_action_AddFlatMirror_triggered();
-	void on_action_AddCurvedMirror_triggered();
-	void on_action_AddFlatInterface_triggered();
-	void on_action_AddCurvedInterface_triggered();
-	void on_action_AddGenericABCD_triggered();
-
-protected slots:
-	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
-	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
 private:
 	void parseXml(const QDomElement& element);
 	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
 	void updateUnits();
-	void insertOptics(Optics* optics);
+	void insertOptics(OpticsType opticsType);
 	Beam targetWaist();
-	void displayOverlap();
-
-public:
-	OpticsItemView* opticsItemView;
-	OpticsView* opticsView;
-	OpticsScene* opticsScene;
 
 private:
-	GaussianBeamModel* model;
-	GaussianBeamDelegate* delegate;
-	QItemSelectionModel* selectionModel;
+	OpticsItemView* m_opticsItemView;
+	OpticsView* m_opticsView;
+	OpticsScene* m_opticsScene;
+
 	QStandardItemModel* fitModel;
 	QItemSelectionModel* fitSelectionModel;
 	GaussianBeamPlot* plot;
 
-	OpticsBench m_bench;
-	int m_lastLensName, m_lastFlatMirrorName, m_lastCurvedMirrorName, /// REMOVE
-	    m_lastFlatInterfaceName, m_lastCurvedInterfaceName, m_lastGenericABCDName; /// REMOVE
+	OpticsBench& m_bench;
 };
 
 #endif

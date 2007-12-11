@@ -19,7 +19,7 @@
 #ifndef GAUSSIANBEAMDELEGATE_H
 #define GAUSSIANBEAMDELEGATE_H
 
-#include "OpticsBench.h"
+#include "src/OpticsBench.h"
 
 #include <QItemDelegate>
 #include <QModelIndex>

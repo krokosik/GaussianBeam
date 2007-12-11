@@ -17,13 +17,13 @@
 */
 
 #include "OpticsBench.h"
-#include "Statistics.h"
 
 #include <iostream>
 #include <iomanip>
 #include <cmath>
 #include <algorithm>
 #include <functional>
+#include <sstream>
 
 using namespace std;
 
@@ -36,84 +36,18 @@ OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
 }
 
 /////////////////////////////////////////////////
-// Fit
-
-Fit::Fit()
-{
-	m_name = "Fit";
-	m_dirty = true;
-	m_lastWavelength = 0.;
-}
-
-void Fit::setData(unsigned int index, double position, double value)
-{
-	if (m_positions.size() <= index)
-	{
-		m_positions.resize(index + 1);
-		m_values.resize(index + 1);
-	}
-
-	m_positions[index] = position;
-	m_values[index] = value;
-	m_dirty = true;
-}
-
-void Fit::addData(double position, double value)
-{
-	m_positions.push_back(position);
-	m_values.push_back(value);
-	m_dirty = true;
-}
-
-void Fit::clear()
-{
-	m_positions.clear();
-	m_values.clear();
-	m_dirty = true;
-}
-
-const Beam& Fit::beam(double wavelength) const
-{
-	fitBeam(wavelength);
-	return m_beam;
-}
-
-double Fit::rho2(double wavelength) const
-{
-	fitBeam(wavelength);
-	return m_rho2;
-}
-
-void Fit::fitBeam(double wavelength) const
-{
-	if (!m_dirty && (wavelength == m_lastWavelength) || m_positions.empty())
-		return;
-
-	cerr << "Fit::fitBeam recomputing fit" << endl;
-
-	Statistics stats(m_positions, m_values);
-
-	// Some point whithin the fit
-	const double z = stats.meanX;
-	// beam radius at z
-	const double fz = stats.m*z + stats.p;
-	// derivative of the beam radius at z
-	const double fpz = stats.m;
-	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
-	const double alpha = M_PI*fz*fpz/wavelength;
-	m_beam = Beam(fz/sqrt(1. + sqr(alpha)), 0., wavelength);
-	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
-	m_rho2 = stats.rho2;
-	m_dirty = false;
-	m_lastWavelength = wavelength;
-}
-
-/////////////////////////////////////////////////
 // OpticsBench
 
 OpticsBench::OpticsBench()
 	: m_cavity(1., 0., 1., 0., 0., 0.)
 {
+	m_opticsPrefix[LensType]            = "L";
+	m_opticsPrefix[FlatMirrorType]      = "M";
+	m_opticsPrefix[CurvedMirrorType]    = "R";
+	m_opticsPrefix[FlatInterfaceType]   = "I";
+	m_opticsPrefix[CurvedInterfaceType] = "C";
+	m_opticsPrefix[GenericABCDType]     = "G";
+
 	m_firstCavityIndex = 0;
 	m_lastCavityIndex = 0;
 	m_ringCavity = true;
@@ -177,12 +111,36 @@ void OpticsBench::addOptics(Optics* optics, int index)
 {
 	m_optics.insert(m_optics.begin() + index,  optics);
 	m_beams.insert(m_beams.begin() + index, Beam());
-	cerr << "WAIST addOptics 1 " << m_beams[index].waist() << "\n";
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsAdded(index);
-	cerr << "WAIST addOptics 2 " << m_beams[index].waist() << "\n";
 	computeBeams(index);
-	cerr << "WAIST addOptics 3 " << m_beams[index].waist() << "\n";
+}
+
+void OpticsBench::addOptics(OpticsType opticsType, int index)
+{
+	Optics* optics;
+	stringstream stream;
+	stream << m_opticsPrefix[opticsType] << ++m_lastOpticsName[opticsType] << ends;
+	string name;
+	stream >> name;
+
+	if (opticsType == LensType)
+		optics = new Lens(0.1, 0.0, name);
+	else if (opticsType == FlatMirrorType)
+		optics = new FlatMirror(0.0, name);
+	else if (opticsType == CurvedMirrorType)
+		optics = new CurvedMirror(0.05, 0.0, name);
+	else if (opticsType == FlatInterfaceType)
+		optics = new FlatInterface(1.5, 0.0, name);
+	else if (opticsType == CurvedInterfaceType)
+		optics = new CurvedInterface(0.1, 1.5, 0.0, name);
+	else if (opticsType == GenericABCDType)
+		optics = new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, 0.0, name);
+
+	if (index > 0)
+		optics->setPosition(OpticsBench::optics(index-1)->position() + 0.05);
+
+	addOptics(optics, index);
 }
 
 void OpticsBench::removeOptics(int index, int count)

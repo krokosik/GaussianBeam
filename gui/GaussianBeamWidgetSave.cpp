@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "GaussianBeamModel.h"
-#include "GaussianBeamWidget.h"
-#include "Unit.h"
+#include "gui/GaussianBeamModel.h"
+#include "gui/GaussianBeamWidget.h"
+#include "gui/Unit.h"
 
 #include <QDebug>
 #include <QFile>
@@ -62,7 +62,7 @@ bool GaussianBeamWidget::openFile(const QString& fileName)
 	}
 
 	// Parse elements
-	m_bench.removeOptics(0, model->rowCount());
+	m_bench.removeOptics(0, m_bench.nOptics());
 	parseXml(root);
 	file.close();
 
@@ -242,7 +242,7 @@ bool GaussianBeamWidget::saveFile(const QString& fileName)
 		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
 		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
 	xmlWriter.writeEndElement();
-	for (int row = 0; row < model->rowCount(); row++)
+	for (int row = 0; row < m_bench.nOptics(); row++)
 	{
 		const Optics* optics = m_bench.optics(row);
 

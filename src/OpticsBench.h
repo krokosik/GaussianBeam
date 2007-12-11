@@ -21,9 +21,11 @@
 
 #include "Optics.h"
 #include "GaussianBeam.h"
+#include "GaussianFit.h"
 
 #include <vector>
 #include <list>
+#include <map>
 
 class OpticsBench;
 
@@ -48,41 +50,6 @@ struct Tolerance
 	double positionTolerance;
 };
 
-/**
-* Find the waist radius and position for a given set of radii measurement of a Gaussian beam
-* It fits the given data with a linear fit, and finds the only hyperbola
-* that is tangent to the resulting line
-*/
-class Fit
-{
-public:
-	Fit();
-
-public:
-	std::string name() const { return m_name; }
-	int size() const { return m_positions.size(); }
-	double position(unsigned int index) const { return m_positions[index]; }
-	double radius(unsigned int index) const { return m_values[index]; }
-	void setName(std::string name) { m_name = name; }
-	void setData(unsigned int index, double position, double value);
-	void addData(double position, double value);
-	void clear();
-	const Beam& beam(double wavelength) const;
-	double rho2(double wavelength) const;
-
-private:
-	void fitBeam(double wavelength) const;
-
-private:
-	std::string m_name;
-	std::vector<double> m_positions;
-	std::vector<double> m_values;
-	mutable bool m_dirty;
-	mutable Beam m_beam;
-	mutable double m_rho2;
-	mutable double m_lastWavelength;
-};
-
 class OpticsBench
 {
 public:
@@ -103,6 +70,7 @@ public:
 	int opticsIndex(const Optics* optics) const;
 	const Optics* optics(int index) const { return m_optics[index]; }
 	void addOptics(Optics* optics, int index);
+	void addOptics(OpticsType opticsType, int index);
 	void removeOptics(int index, int count = 1);
 	/**
 	* Set the optics at @p index to position @p position. Takes care of locks,
@@ -174,6 +142,10 @@ private:
 	int m_firstCavityIndex;
 	int m_lastCavityIndex;
 	bool m_ringCavity;
+
+	/// Optics naming
+	std::map<OpticsType, int> m_lastOpticsName;
+	std::map<OpticsType, std::string> m_opticsPrefix;
 
 	/// Callback
 	std::list<OpticsBenchNotify*> m_notifyList;
