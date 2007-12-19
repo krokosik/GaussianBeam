@@ -144,6 +144,12 @@ CreateBeam::CreateBeam(double waist, double waistPosition, string name)
 	, m_waist(waist)
 {}
 
+void CreateBeam::setWaist(double waist)
+{
+	if (waist != 0.)
+		m_waist = waist;
+}
+
 Beam CreateBeam::image(const Beam& inputBeam) const
 {
 	return Beam(m_waist, position(), inputBeam.wavelength());
@@ -158,6 +164,43 @@ void CreateBeam::setBeam(const Beam& beam)
 {
 	setPosition(beam.waistPosition());
 	setWaist(beam.waist());
+}
+
+
+/////////////////////////////////////////////////
+// Lens class
+
+void Lens::setFocal(double focal)
+{
+	if (focal != 0.)
+		m_focal = focal;
+}
+
+/////////////////////////////////////////////////
+// CurvedMirror class
+
+void CurvedMirror::setCurvatureRadius(double curvatureRadius)
+{
+	if (curvatureRadius != 0.)
+		m_curvatureRadius = curvatureRadius;
+}
+
+/////////////////////////////////////////////////
+// Interface class
+
+void Interface::setIndexRatio(double indexRatio)
+{
+	if (indexRatio > 0.)
+		m_indexRatio = indexRatio;
+}
+
+/////////////////////////////////////////////////
+// CurvedInterface class
+
+void CurvedInterface::setSurfaceRadius(double surfaceRadius)
+{
+	if (surfaceRadius != 0.)
+		m_surfaceRadius = surfaceRadius;
 }
 
 /////////////////////////////////////////////////
@@ -183,7 +226,7 @@ Beam ABCD::antecedent(const Beam& outputBeam) const
 
 bool ABCD::stabilityCriterion1() const
 {
-	return fabs((A()+B())/2.) < 1.;
+	return fabs((A() + B())/2.) < 1.;
 }
 
 bool ABCD::stabilityCriterion2() const
@@ -195,6 +238,9 @@ Beam ABCD::eigenMode(double wavelength) const
 {
 	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength);
 }
+
+/////////////////////////////////////////////////
+// GenericABCD class
 
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 {

@@ -142,7 +142,7 @@ public:
 
 public:
 	double waist() const { return m_waist; }
-	void setWaist(double waist) { m_waist = waist; }
+	void setWaist(double waist);
 	void setBeam(const Beam& beam);
 
 private:
@@ -195,7 +195,7 @@ public:
 
 public:
 	double focal() const { return m_focal; }
-	void setFocal(double focal) { m_focal = focal; }
+	void setFocal(double focal);
 
 private:
 	double m_focal;
@@ -221,7 +221,7 @@ public:
 
 public:
 	double curvatureRadius() const { return m_curvatureRadius; }
-	void setCurvatureRadius(double curvatureRadius) { m_curvatureRadius = curvatureRadius; }
+	void setCurvatureRadius(double curvatureRadius);
 
 protected:
 	double m_curvatureRadius;
@@ -248,7 +248,7 @@ public:
 
 public:
 	double indexRatio() const { return m_indexRatio; }
-	void setIndexRatio(double indexRatio) { m_indexRatio = indexRatio; }
+	void setIndexRatio(double indexRatio);
 
 protected:
 	double m_indexRatio;
@@ -287,7 +287,7 @@ public:
 
 public:
 	double surfaceRadius() const { return m_surfaceRadius; }
-	void setSurfaceRadius(double surfaceRadius) { m_surfaceRadius = surfaceRadius; }
+	void setSurfaceRadius(double surfaceRadius);
 
 protected:
 	double m_surfaceRadius;
@@ -311,6 +311,7 @@ public:
 	double C() const { return m_C; }
 	double D() const { return m_D; }
 
+/// @todo check if the given ABCD matrix is valid
 public:
 	void setA(double A) { m_A = A; }
 	void setB(double B) { m_B = B; }
@@ -326,6 +327,7 @@ GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2);
 
 namespace std
 {
+	/// Sort function for stl::sort : compare optics positions
 	template<> struct less<Optics*>
 	{
 		bool operator()(Optics const* optics1, Optics const* optics2)
