@@ -335,17 +335,22 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == FlatMirrorType)
 	{
+		painter->drawRect(rect);
+		QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
+		painter->setBrush(ABCDBrush);
+		painter->drawRect(rect);
 
 	}
 	else if (m_optics->type() == CurvedMirrorType)
-	{
-	}
-	else if (m_optics->type() == GenericABCDType)
 	{
 		painter->drawRect(rect);
 		QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
 		painter->setBrush(ABCDBrush);
 		painter->drawRect(rect);
+	}
+	else if (m_optics->type() == GenericABCDType)
+	{
+		painter->drawroundRect(rect);
 	}
 }
 
