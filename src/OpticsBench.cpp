@@ -267,43 +267,49 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	m_sensitivity = gradient(m_optics, m_beams.back(), false/*CheckLock*/, true/*Curvature*/);
 //	for (unsigned int i = 0; i < m_sensitivity.size(); i++)
 //		cerr << m_sensitivity[i] << endl;
-/*
+
 	// Compute the cavity
-	if (m_firstCavityIndex > 0)
+	if ((m_firstCavityIndex > 0) && (nOptics() > m_lastCavityIndex))
 	{
-		const Optics& first_cavity_optics = optics(m_firstCavityIndex);
-		const Optics& last_cavity_optics  = optics(m_lastCavityIndex);
+		const Optics* first_cavity_optics = optics(m_firstCavityIndex);
+		const Optics* last_cavity_optics  = optics(m_lastCavityIndex);
 
 		// Test coherence
-		if (!first_cavity_optics.isABCD() || ! last_cavity_optics.isABCD())
-			qDebug() << "Warning : cavity boundaries are not of ABCD type";
+		if (!first_cavity_optics->isABCD() || ! last_cavity_optics->isABCD())
+			cerr << "Warning : cavity boundaries are not of ABCD type" << endl;
 		if (!(m_lastCavityIndex > 0) || !(m_lastCavityIndex >= m_firstCavityIndex))
-			qDebug() << "Warning m_lastCavityIndex seems to be wrong !";
+			cerr << "Warning m_lastCavityIndex seems to be wrong !" << endl;
 
 		// Compute cavity
-		m_cavity = dynamic_cast<const ABCD&>(first_cavity_optics);
-		for (int i = m_firstCavityIndex + 1; i < m_lastCavityIndex; i++)
+		m_cavity = *dynamic_cast<const ABCD*>(first_cavity_optics);
+		cerr << "Initial Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+		for (int i = m_firstCavityIndex + 1; i <= m_lastCavityIndex; i++)
 		{
-			if (optics(i).isABCD())
-				m_cavity *= dynamic_cast<const ABCD&>(optics(i));
-			FreeSpace freeSpace(optics(i+1).position() - optics(i).endPosition(), optics(i).endPosition());
-			m_cavity*= freeSpace;
+			if (optics(i)->isABCD())
+				m_cavity *= *dynamic_cast<const ABCD*>(optics(i));
+			cerr << "added Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+			FreeSpace freeSpace(optics(i+1)->position() - optics(i)->endPosition(), optics(i)->endPosition());
+			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+			m_cavity *= freeSpace;
 		}
+
 		if (m_ringCavity)
 			for (int i = m_lastCavityIndex; i > m_firstCavityIndex; i--)
 			{
-				if (optics(i).isABCD())
-					m_cavity *= dynamic_cast<const ABCD&>(optics(i));
-				FreeSpace freeSpace(optics(i).endPosition() - optics(i-1).endPosition(), optics(i-1).endPosition());
-				m_cavity*= freeSpace;
+				if (optics(i)->isABCD())
+					m_cavity *= *dynamic_cast<const ABCD*>(optics(i));
+				FreeSpace freeSpace(optics(i)->endPosition() - optics(i-1)->endPosition(), optics(i-1)->endPosition());
+				m_cavity *= freeSpace;
 			}
 		else
 		{
-			m_cavity *= dynamic_cast<const ABCD&>(last_cavity_optics);
+			m_cavity *= *dynamic_cast<const ABCD*>(last_cavity_optics);
 			/// @todo add a user defined free space between the last and the first optics for linear cavities.
 		}
 
-	}*/
+		cerr << "Final Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+
+	}
 
 	emitChange(changedIndex, nOptics()-1);
 }

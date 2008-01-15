@@ -91,7 +91,7 @@ public:
 
 	/// Beams handling
 	const Beam& beam(int index) const { return m_beams[index]; }
-	const Beam* beamPtr(int index) const { return &(m_beams[index]); }
+//	const Beam* beamPtr(int index) const { return &(m_beams[index]); }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
 	double sensitivity(int index) const { return m_sensitivity[index]; }
