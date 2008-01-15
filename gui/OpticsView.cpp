@@ -292,6 +292,7 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	QColor opticsColor = QColor(153, 209, 247, 150);
 	QBrush opticsBrush(opticsColor);
 	painter->setBrush(opticsBrush);
+	QPen textPen(Qt::black);
 
 	QPainterPath path;
 	QRectF rect = boundingRect();
@@ -350,7 +351,18 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == GenericABCDType)
 	{
-		painter->drawroundRect(rect);
+		painter->drawRoundRect(rect);
+	}
+
+	if (m_optics->type() != CreateBeamType)
+	{
+		painter->setPen(textPen);
+		QString text = QString::fromUtf8(m_optics->name().c_str());
+		QRectF textRect(0., 0., 0., 0.);
+		textRect.moveCenter(rect.center() /*- QPointF(0., rect.height()*0.7)*/);
+		textRect = painter->boundingRect(textRect, Qt::AlignCenter, text);
+		qDebug() << "text RECT" << textRect;
+		painter->drawText(textRect, Qt::AlignCenter, text);
 	}
 }
 
@@ -458,10 +470,10 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		painter->setPen(textPen);
 		QPointF waistTop(waistPosition, - m_beam.waist()*magnification);
 		painter->drawLine(QPointF(waistPosition, 0.), waistTop);
-		/*QString text; text.setNum(round(m_beam.waist()*Units::getUnit(UnitWaist).divider()));
+		QString text; text.setNum(round(m_beam.waist()*Units::getUnit(UnitWaist).divider()));
 		QRectF textRect(0., 0., 100., 15.);
 		textRect.moveCenter(waistTop - QPointF(0., 15.));
-		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);*/
+		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
 	}
 }
 
