@@ -249,11 +249,13 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 	double C = abcd1.C()*abcd2.A() + abcd1.D()*abcd2.C();
 	double D = abcd1.C()*abcd2.B() + abcd1.D()*abcd2.D();
 
-	/// @todo check if the two abjects are adjacent ?
+	cerr << "Comp " << A << " " << B << " " << C << " " << D << endl;
+
+	/// @todo check if the two objects are adjacent ?
 	return GenericABCD(A, B, C, D, abcd1.width() + abcd2.width(), abcd1.position());
 }
 
-GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2)
+GenericABCD operator*=(ABCD& abcd1, const ABCD& abcd2)
 {
-	return abcd1*abcd2;
+	return abcd1 = abcd1*abcd2;
 }

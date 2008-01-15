@@ -323,7 +323,7 @@ protected:
 };
 
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2);
-GenericABCD operator*=(const ABCD& abcd1, const ABCD& abcd2);
+GenericABCD operator*=(ABCD& abcd1, const ABCD& abcd2);
 
 namespace std
 {
