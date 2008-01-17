@@ -304,6 +304,7 @@ public:
 		: ABCD(GenericABCDType, position, name)
 		, m_A(A), m_B(B), m_C(C), m_D(D) { setWidth(width); }
 	GenericABCD* clone() const { return new GenericABCD(*this); }
+	GenericABCD& operator*=(const ABCD& abcd1);
 
 public:
 	double A() const { return m_A; }
@@ -323,7 +324,6 @@ protected:
 };
 
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2);
-GenericABCD operator*=(ABCD& abcd1, const ABCD& abcd2);
 
 namespace std
 {

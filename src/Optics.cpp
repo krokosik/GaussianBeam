@@ -242,20 +242,26 @@ Beam ABCD::eigenMode(double wavelength) const
 /////////////////////////////////////////////////
 // GenericABCD class
 
+GenericABCD& GenericABCD::operator*=(const ABCD& abcd)
+{
+	setA(A()*abcd.A() + B()*abcd.C());
+	setB(A()*abcd.B() + B()*abcd.D());
+	setC(C()*abcd.A() + D()*abcd.C());
+	setD(C()*abcd.B() + D()*abcd.D());
+	/// @todo check if the two objects are adjacent ?
+	setWidth(width() + abcd.width());
+
+	return *this;
+}
+
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 {
-	double A = abcd1.A()*abcd2.A() + abcd1.B()*abcd2.C();
-	double B = abcd1.A()*abcd2.B() + abcd1.B()*abcd2.D();
-	double C = abcd1.C()*abcd2.A() + abcd1.D()*abcd2.C();
-	double D = abcd1.C()*abcd2.B() + abcd1.D()*abcd2.D();
+	GenericABCD r(abcd1);
+	r *= abcd2;
+	return r;
 
-	cerr << "Comp " << A << " " << B << " " << C << " " << D << endl;
+//	cerr << "Comp " << A << " " << B << " " << C << " " << D << endl;
 
-	/// @todo check if the two objects are adjacent ?
-	return GenericABCD(A, B, C, D, abcd1.width() + abcd2.width(), abcd1.position());
+//	return GenericABCD(A, B, C, D, abcd1.width() + abcd2.width(), abcd1.position());
 }
 
-GenericABCD operator*=(ABCD& abcd1, const ABCD& abcd2)
-{
-	return abcd1 = abcd1*abcd2;
-}
