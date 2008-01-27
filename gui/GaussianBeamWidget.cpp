@@ -80,7 +80,6 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	        dynamic_cast<GaussianBeamWindow*>(parent), SLOT(updateView(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
-	on_doubleSpinBox_Wavelength_valueChanged(doubleSpinBox_Wavelength->value());
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
 	on_doubleSpinBox_HRange_valueChanged(doubleSpinBox_HRange->value());
@@ -90,14 +89,9 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	updateUnits();
 }
 
-void GaussianBeamWidget::on_doubleSpinBox_Wavelength_valueChanged(double value)
-{
-	m_bench.setWavelength(value*Units::getUnit(UnitWavelength).multiplier());
-}
-
 void GaussianBeamWidget::updateUnits()
 {
-	doubleSpinBox_Wavelength->setSuffix(Units::getUnit(UnitWavelength).string("m"));
+//	doubleSpinBox_Wavelength->setSuffix(Units::getUnit(UnitWavelength).string("m"));
 	doubleSpinBox_HRange->setSuffix(Units::getUnit(UnitHRange).string("m"));
 	doubleSpinBox_VRange->setSuffix(Units::getUnit(UnitVRange).string("m"));
 	doubleSpinBox_HOffset->setSuffix(Units::getUnit(UnitHRange).string("m"));

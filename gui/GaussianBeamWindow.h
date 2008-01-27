@@ -40,6 +40,9 @@ public slots:
 	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
+	/// @todo put this protected once the load stuff is moved
+	void on_WavelengthSpinBox_valueChanged(double wavelength);
+
 protected slots:
 	void on_action_Open_triggered()               { openFile();                        }
 	void on_action_Save_triggered()               { saveFile(m_currentFile);           }
@@ -52,6 +55,7 @@ protected slots:
 	void on_action_AddFlatInterface_triggered()   { insertOptics(FlatInterfaceType);   }
 	void on_action_AddCurvedInterface_triggered() { insertOptics(CurvedInterfaceType); }
 	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
+
 
 private:
 	void openFile(const QString& path = QString());

@@ -18,6 +18,7 @@
 
 #include "gui/GaussianBeamWindow.h"
 #include "gui/OpticsView.h"
+#include "gui/Unit.h"
 
 #include <QDebug>
 #include <QSplitter>
@@ -59,6 +60,21 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	// Widget
 	m_widget = new GaussianBeamWidget(m_bench, m_opticsItemView, m_opticsView, m_opticsScene, this);
 
+	// Wavelength widget
+	QWidget* wavelengthWidget = new QWidget(this);
+	QVBoxLayout* wavelengthLayout = new QVBoxLayout(wavelengthWidget);
+	QLabel* wavelengthLabel = new QLabel(tr("Wavelength"), wavelengthWidget);
+	QDoubleSpinBox* wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
+	wavelengthSpinBox->setDecimals(0);
+	wavelengthSpinBox->setSuffix(" nm");
+	wavelengthSpinBox->setRange(1., 9999.);
+	wavelengthSpinBox->setValue(532.);
+	wavelengthSpinBox->setSingleStep(10.);
+	wavelengthLayout->addWidget(wavelengthSpinBox);
+	wavelengthLayout->addWidget(wavelengthLabel);
+	wavelengthWidget->setLayout(wavelengthLayout);
+	connect(wavelengthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(on_WavelengthSpinBox_valueChanged(double)));
+
 	// Bars
 	m_fileToolBar = addToolBar(tr("File"));
 	m_fileToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -68,6 +84,8 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_fileToolBar->addSeparator();
 	m_fileToolBar->addAction(action_AddOptics);
 	m_fileToolBar->addAction(action_RemoveOptics);
+	m_fileToolBar->addSeparator();
+	m_fileToolBar->addWidget(wavelengthWidget);
 
 	statusBar()->showMessage(tr("Ready"));
 	m_opticsItemView->setStatusBar(statusBar());
@@ -89,6 +107,8 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
+	// Load values
+	on_WavelengthSpinBox_valueChanged(wavelengthSpinBox->value());
 
 	if (!fileName.isEmpty())
 		openFile(fileName);
@@ -115,6 +135,11 @@ void GaussianBeamWindow::on_action_RemoveOptics_triggered()
 		if ((m_bench.optics(row)->type() != CreateBeamType) &&
 		    m_selectionModel->isRowSelected(row, QModelIndex()))
 			m_bench.removeOptics(row);
+}
+
+void GaussianBeamWindow::on_WavelengthSpinBox_valueChanged(double wavelength)
+{
+	m_bench.setWavelength(wavelength*Units::getUnit(UnitWavelength).multiplier());
 }
 
 void GaussianBeamWindow::insertOptics(OpticsType opticsType)

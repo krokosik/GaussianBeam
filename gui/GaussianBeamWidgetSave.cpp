@@ -18,6 +18,7 @@
 
 #include "gui/GaussianBeamModel.h"
 #include "gui/GaussianBeamWidget.h"
+#include "gui/GaussianBeamWindow.h"
 #include "gui/Unit.h"
 
 #include <QDebug>
@@ -78,7 +79,10 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 	while (!child.isNull())
 	{
 		if (child.tagName() == "wavelength") ////////////////
-			doubleSpinBox_Wavelength->setValue(child.text().toDouble()*Units::getUnit(UnitWavelength).divider());
+		{
+			/// @bug this does not change the spin box display
+			m_bench.setWavelength(child.text().toDouble());
+		}
 		else if (child.tagName() == "magicWaist") ////////////////
 			parseXml(child);
 		else if (child.tagName() == "targetWaist")
