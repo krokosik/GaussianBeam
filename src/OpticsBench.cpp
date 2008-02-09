@@ -56,6 +56,9 @@ OpticsBench::OpticsBench()
 	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), 0);
 	m_optics[0]->setAbsoluteLock(true);
 
+	m_leftBoundary = -0.1;
+	m_rightBoundary = 0.7;
+
 	/// @todo remove this later
 	m_firstCavityIndex = 1;
 	m_lastCavityIndex = 2;

@@ -54,8 +54,8 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	//checkBox_ShowGraph->setChecked(true);
 	plot->setVisible(checkBox_ShowGraph->isChecked());*/
 #else
-	checkBox_ShowGraph->setVisible(false);
-	checkBox_ShowGraph->setEnabled(false);
+/*	checkBox_ShowGraph->setVisible(false);
+	checkBox_ShowGraph->setEnabled(false);*/
 #endif
 
 	// Waist fit
@@ -82,9 +82,9 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	// Set up default values
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
-	on_doubleSpinBox_HRange_valueChanged(doubleSpinBox_HRange->value());
-	on_doubleSpinBox_VRange_valueChanged(doubleSpinBox_VRange->value());
-	on_doubleSpinBox_HOffset_valueChanged(doubleSpinBox_HOffset->value());
+//	on_doubleSpinBox_HRange_valueChanged(doubleSpinBox_HRange->value());
+//	on_doubleSpinBox_VRange_valueChanged(doubleSpinBox_VRange->value());
+//	on_doubleSpinBox_HOffset_valueChanged(doubleSpinBox_HOffset->value());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
 }
@@ -92,16 +92,16 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 void GaussianBeamWidget::updateUnits()
 {
 //	doubleSpinBox_Wavelength->setSuffix(Units::getUnit(UnitWavelength).string("m"));
-	doubleSpinBox_HRange->setSuffix(Units::getUnit(UnitHRange).string("m"));
-	doubleSpinBox_VRange->setSuffix(Units::getUnit(UnitVRange).string("m"));
-	doubleSpinBox_HOffset->setSuffix(Units::getUnit(UnitHRange).string("m"));
+//	doubleSpinBox_HRange->setSuffix(Units::getUnit(UnitHRange).string("m"));
+//	doubleSpinBox_VRange->setSuffix(Units::getUnit(UnitVRange).string("m"));
+//	doubleSpinBox_HOffset->setSuffix(Units::getUnit(UnitHRange).string("m"));
 	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string("m"));
 	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string("m"));
 	/// @todo update table headers and status bar
 }
 
 ///////////////////////////////////////////////////////////
-// TOOLS PAGE
+// CAVITY PAGE
 
 ///////////////////////////////////////////////////////////
 // MAGIC WAIST PAGE
@@ -245,7 +245,7 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 
 ///////////////////////////////////////////////////////////
 // DISPLAY PAGE
-
+/*
 void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
 {
 	double horizontalRange = value*Units::getUnit(UnitHRange).multiplier();
@@ -280,3 +280,4 @@ void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
 	Q_UNUSED(checked);
 #endif
 }
+*/

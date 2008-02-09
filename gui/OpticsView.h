@@ -40,11 +40,6 @@ public:
 	OpticsScene(OpticsBench& bench, QObject* parent = 0);
 
 public:
-	void setVerticalRange(double verticalRange);
-	double verticalRange() { return m_verticalRange; }
-	void setFormat(double format);
-	void setHorizontalRange(double horizontalRange);
-	void setHorizontalOffset(double horizontalOffset);
 	void showTargetBeam(bool show = true);
 
 private:
@@ -55,8 +50,6 @@ private:
 private:
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
-	double m_verticalRange;
-	double m_format;
 };
 
 class OpticsView : public QGraphicsView
@@ -68,6 +61,10 @@ public:
 
 public:
 	void setStatusBar(QStatusBar* statusBar) { m_statusBar = statusBar; }
+	double verticalRange() { return m_verticalRange; }
+	void setVerticalRange(double verticalRange);
+	double horizontalRange() { return m_horizontalRange; }
+	void setHorizontalRange(double horizontalRange);
 
 /// Inherited protected functions
 protected:
@@ -76,7 +73,12 @@ protected:
 	void mouseMoveEvent(QMouseEvent* e);
 
 private:
+	void adjustRange();
+
+private:
 	QStatusBar* m_statusBar;
+	double m_horizontalRange;
+	double m_verticalRange;
 };
 
 /// @todo don't forget prepareGeometryChange()
@@ -122,7 +124,6 @@ public:
 	void setLeftBound(double leftBound);
 	void setRightBound(double rightBound);
 	const Beam& beam() const { return m_beam; }
-//	void setBeam(const Beam* beam) { m_beam = beam; }
 
 private:
 	const Beam& m_beam;

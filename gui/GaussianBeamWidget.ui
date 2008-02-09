@@ -30,106 +30,21 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>0</number>
+        <number>2</number>
        </property>
-       <widget class="QWidget" name="page_IO" >
+       <widget class="QWidget" name="page_Cavity" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>250</width>
-          <height>471</height>
+          <width>248</width>
+          <height>487</height>
          </rect>
         </property>
         <attribute name="label" >
-         <string>Display</string>
+         <string>Cavity</string>
         </attribute>
         <layout class="QVBoxLayout" >
-         <item>
-          <widget class="QGroupBox" name="groupBox" >
-           <property name="title" >
-            <string>Optics bench</string>
-           </property>
-           <layout class="QGridLayout" >
-            <item row="0" column="0" >
-             <widget class="QLabel" name="label_5" >
-              <property name="text" >
-               <string>Horizontal range</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1" >
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_HRange" >
-              <property name="minimum" >
-               <double>1.000000000000000</double>
-              </property>
-              <property name="maximum" >
-               <double>100000.000000000000000</double>
-              </property>
-              <property name="singleStep" >
-               <double>100.000000000000000</double>
-              </property>
-              <property name="value" >
-               <double>700.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0" >
-             <widget class="QLabel" name="label_8" >
-              <property name="text" >
-               <string>Vertical range</string>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1" >
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_VRange" >
-              <property name="minimum" >
-               <double>1.000000000000000</double>
-              </property>
-              <property name="maximum" >
-               <double>100000.000000000000000</double>
-              </property>
-              <property name="singleStep" >
-               <double>50.000000000000000</double>
-              </property>
-              <property name="value" >
-               <double>5000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0" >
-             <widget class="QLabel" name="label_4" >
-              <property name="text" >
-               <string>Horizontal offset</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1" >
-             <widget class="QDoubleSpinBox" name="doubleSpinBox_HOffset" >
-              <property name="minimum" >
-               <double>-100000.000000000000000</double>
-              </property>
-              <property name="maximum" >
-               <double>100000.000000000000000</double>
-              </property>
-              <property name="singleStep" >
-               <double>100.000000000000000</double>
-              </property>
-              <property name="value" >
-               <double>-100.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="checkBox_ShowGraph" >
-           <property name="text" >
-            <string>Show Graph</string>
-           </property>
-          </widget>
-         </item>
          <item>
           <spacer>
            <property name="orientation" >
@@ -150,8 +65,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>185</width>
-          <height>485</height>
+          <width>248</width>
+          <height>487</height>
          </rect>
         </property>
         <attribute name="label" >

@@ -115,11 +115,11 @@ void GaussianBeamWidget::parseXml(const QDomElement& element)
 		else if (child.tagName() == "display") ////////////////
 			parseXml(child);
 		else if (child.tagName() == "HRange")
-			doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			;//doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "VRange")
-			doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			;//doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if (child.tagName() == "HOffset")
-			doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			;//doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
 		else if ((child.tagName() == "inputBeam") ||
 		         (child.tagName() == "lens") ||
 		         (child.tagName() == "flatMirror") ||
@@ -242,9 +242,9 @@ bool GaussianBeamWidget::saveFile(const QString& fileName)
 		}
 	xmlWriter.writeEndElement();
 	xmlWriter.writeStartElement("display");
-		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
+//		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
+//		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
+//		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
 	xmlWriter.writeEndElement();
 	for (int row = 0; row < m_bench.nOptics(); row++)
 	{
