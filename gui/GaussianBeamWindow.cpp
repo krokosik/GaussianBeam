@@ -56,7 +56,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_opticsItemView->setSelectionModel(m_selectionModel);
 	m_opticsScene = new OpticsScene(m_bench, this);
 	m_opticsView = new OpticsView(m_opticsScene);
-	m_opticsView->setHorizontalRange(0.81);
+	m_opticsView->setHorizontalRange(0.60);
 	m_opticsView->setVerticalRange(0.002);
 
 	// Widget

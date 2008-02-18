@@ -68,14 +68,16 @@ public:
 
 /// Inherited protected functions
 protected:
-	void resizeEvent(QResizeEvent* event);
-	void drawBackground(QPainter* painter, const QRectF& rect);
-	void mouseMoveEvent(QMouseEvent* e);
+	virtual void drawBackground(QPainter* painter, const QRectF& rect);
+	virtual void resizeEvent(QResizeEvent* event);
+	virtual void mouseMoveEvent(QMouseEvent* e);
+	virtual void showEvent(QShowEvent* event);
 
 private:
 	void adjustRange();
 
 private:
+	QScrollBar* m_horizontalRuller;
 	QStatusBar* m_statusBar;
 	double m_horizontalRange;
 	double m_verticalRange;
@@ -100,6 +102,7 @@ public:
 	void setUpdate(bool update) { m_update = update; }
 	const Optics* optics() const { return m_optics; }
 	void setOptics(const Optics* optics) { m_optics = optics; }
+	void adjustScale(double horizontalScale, double verticalScale);
 
 private:
 	const Optics* m_optics;

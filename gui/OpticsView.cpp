@@ -66,6 +66,7 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 
 void OpticsScene::showTargetBeam(bool show)
 {
+	qDebug() << "Display target waist " << show;
 	m_targetBeamItem->setVisible(show);
 }
 
@@ -73,7 +74,7 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
 	qDebug() << "OpticsBenchDataChanged" << startOptics << endOptics;
 	qDebug() << " bench limits" << m_bench.leftBoundary() << m_bench.rightBoundary();
-	setSceneRect(m_bench.leftBoundary(), -0.0005, m_bench.rightBoundary() - m_bench.leftBoundary(), 0.001);
+	setSceneRect(m_bench.leftBoundary(), -0.005, m_bench.rightBoundary() - m_bench.leftBoundary(), 0.01);
 
 	foreach (QGraphicsItem* graphicsItem, items())
 	{
@@ -104,6 +105,11 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
 		qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
 	}
+
+	/// @todo this should go to a "bound changed" bench event
+	m_targetBeamItem->setPos(0., 0.);
+	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
+	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
 }
 
 void OpticsScene::OpticsBenchOpticsAdded(int index)
@@ -153,11 +159,43 @@ public:
 
 protected:
 	virtual void sliderChange(SliderChange change);
+	virtual void paintEvent(QPaintEvent* event);
 };
 
 void RullerSlider::sliderChange(SliderChange change)
 {
-//	qDebug() << "RULLER SETTINGS" << maximum() << minimum() << pageStep();
+	qDebug() << "RULLER SETTINGS" << minimum() << value() << maximum() << pageStep();
+	QScrollBar::sliderChange(change);
+}
+
+void RullerSlider::paintEvent(QPaintEvent* event)
+{
+	QPainter painter(this);
+	QColor backgroundColor(245, 245, 200);
+	QBrush backgroundBrush(backgroundColor);
+	QPen backgroundPen(backgroundColor);
+	QPen mainTickPen(Qt::black);
+	QPen secondTickPen(Qt::lightGray);
+
+	painter.setBrush(backgroundBrush);
+	painter.setPen(backgroundPen);
+	painter.drawRect(rect());
+	painter.setPen(secondTickPen);
+	for (int i = value()/10*10; i < value() + pageStep(); i+= 10)
+		painter.drawLine(i - value(), 0, i - value(), height()*0.4);
+	for (int i = value()/50*50; i < value() + pageStep(); i+= 50)
+		painter.drawLine(i - value(), 0, i - value(), height()*0.65);
+	painter.setPen(mainTickPen);
+	for (int i = value()/100*100; i < value() + pageStep(); i+= 100)
+	{
+		painter.drawLine(i - value(), 0, i - value(), width()*0.8);
+		QString text;  text.setNum(i);
+		QRectF textRect(0., 0., 0., 0.);
+		textRect.moveCenter(QPointF(i - value() + 2, height()/2));
+		textRect = painter.boundingRect(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
+		painter.drawText(textRect, Qt::AlignCenter, text);
+	}
+
 }
 
 /////////////////////////////////////////////////
@@ -172,10 +210,16 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	m_verticalRange = 0.;
 
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
-	RullerSlider* horizontalRuller = new RullerSlider();
-	setHorizontalScrollBar(horizontalRuller);
+	m_horizontalRuller = new RullerSlider(this);
+}
+
+void OpticsView::showEvent(QShowEvent* event)
+{
+	QGraphicsView::showEvent(event);
+	/// @bug putting this instruction in the constructor (i.e. befor show) triggers a qt bug to be fixed in 4.4.0
+	setHorizontalScrollBar(m_horizontalRuller);
 }
 
 void OpticsView::adjustRange()
@@ -186,6 +230,11 @@ void OpticsView::adjustRange()
 	QMatrix scaling = matrix();
 	scaling.setMatrix(width()/m_horizontalRange, scaling.m12(), scaling.m21(), height()/m_verticalRange, scaling.dx(), scaling.dy());
 	setMatrix(scaling);
+
+	foreach (QGraphicsItem* graphicsItem, items())
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
+			opticsItem->adjustScale(m_horizontalRange*height()/width(), m_verticalRange);
+
 }
 
 void OpticsView::setHorizontalRange(double horizontalRange)
@@ -266,16 +315,28 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench& bench)
 	else
 		setZValue(-1);
 
-	scale(100., 1.);
-
 	m_update = true;
 
 }
 
+void OpticsItem::adjustScale(double horizontalScale, double verticalScale)
+{
+	double fac = 300.;
+	double m11 = horizontalScale/fac;
+	double m22 = verticalScale/fac;
+
+	if (m_optics->width() > 0.)
+		m11 = 1.0;
+
+	QTransform scaling = transform();
+	scaling.setMatrix(m11, scaling.m12(),  scaling.m13(), scaling.m21(), m22,
+	                  scaling.m23(), scaling.m31(), scaling.m32(), scaling.m33());
+	setTransform(scaling);
+}
+
 QRectF OpticsItem::boundingRect() const
 {
-	double h = scene()->height();
-	QRectF bounding = QRectF(QPointF(-h*0.03, -h*0.2), QSizeF(2.*h*0.03, 2.*h*0.2));
+	QRectF bounding = QRectF(QPointF(-10., -66.), QSizeF(2.*10., 2.*66.));
 
 	if (m_optics->width() > 0.)
 	{
@@ -374,13 +435,12 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 
 	if (m_optics->type() != CreateBeamType)
 	{
-/*		painter->setPen(textPen);
+		painter->setPen(textPen);
 		QString text = QString::fromUtf8(m_optics->name().c_str());
 		QRectF textRect(0., 0., 0., 0.);
-		textRect.moveCenter(rect.center() /*- QPointF(0., rect.height()*0.7)*//*);
+		textRect.moveCenter(rect.center() - QPointF(0., rect.height()*0.7));
 		textRect = painter->boundingRect(textRect, Qt::AlignCenter, text);
-		qDebug() << "text RECT" << textRect;
-		painter->drawText(textRect, Qt::AlignCenter, text);*/
+		painter->drawText(textRect, Qt::AlignCenter, text);
 	}
 }
 
