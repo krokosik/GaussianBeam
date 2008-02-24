@@ -73,7 +73,7 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 }
 
-int OpticsBench::nFit()
+int OpticsBench::nFit() const
 {
 	return m_fits.size();
 }
@@ -102,11 +102,15 @@ void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 	m_notifyList.push_back(notify);
 	for (int i = 0; i < nOptics(); i++)
 		notify->OpticsBenchOpticsAdded(i);
+
+	///@todo call all the other notifications ?
 }
 
 void OpticsBench::setWavelength(double wavelength)
 {
 	m_wavelength = wavelength;
+	m_targetBeam.setWavelength(m_wavelength);
+	setTargetBeam(m_targetBeam);
 	computeBeams();
 }
 
@@ -232,7 +236,8 @@ void OpticsBench::setBeam(const Beam& beam, int index)
 void OpticsBench::setTargetBeam(const Beam& beam)
 {
 	m_targetBeam = beam;
-	emitChange(0, nOptics()-1);
+	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchTargetBeamChanged();
 }
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
@@ -285,19 +290,19 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 
 		// Compute cavity
 		m_cavity = *dynamic_cast<const ABCD*>(first_cavity_optics);
-		cerr << "Initial Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+//		cerr << "Initial Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
 		for (int i = m_firstCavityIndex + 1; i <= m_lastCavityIndex; i++)
 		{
 			FreeSpace freeSpace(optics(i)->position() - optics(i-1)->endPosition(), optics(i)->endPosition());
-			cerr << "freespace B = " << freeSpace.B() << endl;
+//			cerr << "freespace B = " << freeSpace.B() << endl;
 			m_cavity = m_cavity * freeSpace;
-			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+//			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
 			if (optics(i)->isABCD())
 				m_cavity *= *dynamic_cast<const ABCD*>(optics(i));
-			cerr << "added Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+//			cerr << "added Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
 		}
 
-		cerr << "Backwards" << endl;
+//		cerr << "Backwards" << endl;
 
 /*		if (m_ringCavity)
 		{
@@ -322,7 +327,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 		FreeSpace freeSpace(optics(m_lastCavityIndex)->position() - optics(m_firstCavityIndex)->endPosition(), optics(m_firstCavityIndex)->endPosition());
 		m_cavity *= freeSpace;
 
-		cerr << "Final Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
+//		cerr << "Final Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
 
 	}
 

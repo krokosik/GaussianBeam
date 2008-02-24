@@ -33,9 +33,11 @@ class OpticsBenchNotify
 {
 public:
 	OpticsBenchNotify(OpticsBench& opticsBench);
-	virtual void OpticsBenchDataChanged(int startOptics, int endOptics) = 0;
-	virtual void OpticsBenchOpticsAdded(int index) = 0;
-	virtual void OpticsBenchOpticsRemoved(int index, int count) = 0;
+	virtual void OpticsBenchOpticsAdded(int /*index*/) {};
+	virtual void OpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {};
+	virtual void OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {};
+	virtual void OpticsBenchTargetBeamChanged() {};
+	virtual void OpticsBenchFitDataChanged() {};
 
 protected:
 	OpticsBench& m_bench;
@@ -97,7 +99,7 @@ public:
 	double sensitivity(int index) const { return m_sensitivity[index]; }
 
 	/// Waist fit
-	int nFit();
+	int nFit() const;
 	Fit& fit(unsigned int index);
 
 	/// Magic waist

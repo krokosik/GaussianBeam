@@ -37,7 +37,7 @@ class GaussianBeamPlot;
 class GaussianBeamDelegate;
 class GaussianBeamModel;
 
-class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamWidget
+class GaussianBeamWidget : public QWidget, private OpticsBenchNotify, private Ui::GaussianBeamWidget
 {
 	Q_OBJECT
 
@@ -63,11 +63,14 @@ protected slots:
 	void on_radioButton_Tolerance_toggled(bool checked);
 
 private:
+	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
+	virtual void OpticsBenchTargetBeamChanged();
+
+private:
 	void parseXml(const QDomElement& element);
 	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
-	Beam targetWaist();
 
 private:
 	OpticsItemView* m_opticsItemView;
@@ -77,8 +80,6 @@ private:
 	QStandardItemModel* fitModel;
 	QItemSelectionModel* fitSelectionModel;
 	GaussianBeamPlot* plot;
-
-	OpticsBench& m_bench;
 };
 
 #endif

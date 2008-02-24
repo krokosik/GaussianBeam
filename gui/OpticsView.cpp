@@ -61,19 +61,23 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 {
 	setItemIndexMethod(QGraphicsScene::NoIndex);
 	m_bench.registerNotify(this);
+
 	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
+	m_targetBeamItem->setPlainStyle(false);
+	addItem(m_targetBeamItem);
+
+	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(0., 0., 0.01, 0.01);
+	m_fitItems.push_back(fitItem);
+	addItem(fitItem);
 }
 
 void OpticsScene::showTargetBeam(bool show)
 {
-	qDebug() << "Display target waist " << show;
 	m_targetBeamItem->setVisible(show);
 }
 
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
-	qDebug() << "OpticsBenchDataChanged" << startOptics << endOptics;
-	qDebug() << " bench limits" << m_bench.leftBoundary() << m_bench.rightBoundary();
 	setSceneRect(m_bench.leftBoundary(), -0.005, m_bench.rightBoundary() - m_bench.leftBoundary(), 0.01);
 
 	foreach (QGraphicsItem* graphicsItem, items())
@@ -94,7 +98,6 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 	{
 		const Optics* optics = m_bench.optics(i);
 		m_beamItems[i]->setPos(0., 0.);
-		qDebug() << "WAIST OpticsBenchDataChanged" <<  m_beamItems[i]->beam().waist();
 		if (i == 0)
 			m_beamItems[i]->setLeftBound(m_bench.leftBoundary());
 		else
@@ -103,19 +106,26 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.rightBoundary());
 		else
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
-		qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
+		//qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
 	}
 
 	/// @todo this should go to a "bound changed" bench event
 	m_targetBeamItem->setPos(0., 0.);
 	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
 	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
+
+	/// @todo this should go to a "fit changed" bench event
+}
+
+void OpticsScene::OpticsBenchTargetBeamChanged()
+{
+	m_targetBeamItem->update();
 }
 
 void OpticsScene::OpticsBenchOpticsAdded(int index)
 {
 	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
-	qDebug() << "WAIST OpticsBenchOpticsAdded" <<  m_bench.beam(index).waist();
+	//qDebug() << "WAIST OpticsBenchOpticsAdded" <<  m_bench.beam(index).waist();
 	addItem(opticsItem);
 
 	// recreate BeamItem list (reference to list element don't survive a list resize !)
@@ -135,7 +145,6 @@ void OpticsScene::OpticsBenchOpticsAdded(int index)
 
 void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 {
-	qDebug() << "OpticsScene::OpticsBenchOpticsRemoved";
 	foreach (QGraphicsItem* graphicsItem, items())
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
 			if (m_bench.opticsIndex(opticsItem->optics()) == -1)
@@ -143,11 +152,9 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 
 	for (int i = index; i < index + count; i++)
 	{
-		qDebug() << "removing optics" << i << m_beamItems.size();
 		removeItem(m_beamItems[i]);
 		m_beamItems.removeAt(i);
 	}
-	qDebug() << "OpticsScene::OpticsBenchOpticsRemoved END";
 }
 
 /////////////////////////////////////////////////
@@ -183,7 +190,7 @@ void RullerSlider::sliderChange(SliderChange change)
 
 void RullerSlider::paintEvent(QPaintEvent* event)
 {
-	qDebug() << "SCALE : " << m_scale << minimum() << value() << maximum() << pageStep();
+	//qDebug() << "SCALE : " << m_scale << minimum() << value() << maximum() << pageStep();
 
 	QPainter painter(this);
 	QColor backgroundColor(245, 245, 200);
@@ -198,7 +205,6 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	double spacing = 0.01;
 	int lastStep = int(double(value() + pageStep())/(scale*spacing)) + 1;
 	int firstStep = int(double(value())/(scale*spacing)) - 1;
-	qDebug() << lastStep;
 
 	painter.setBrush(backgroundBrush);
 	painter.setPen(backgroundPen);
@@ -222,19 +228,6 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 			painter.setPen(secondTickPen);
 		}
 	}
-/*	for (int i = value()/50*50; i < value() + pageStep(); i+= 50)
-		painter.drawLine(i - value(), 0, i - value(), height()*0.65);
-	painter.setPen(mainTickPen);
-	for (int i = value()/100*100; i < value() + pageStep(); i+= 100)
-	{
-		painter.drawLine(i - value(), 0, i - value(), width()*0.8);
-		QString text;  text.setNum(i);
-		QRectF textRect(0., 0., 0., 0.);
-		textRect.moveCenter(QPointF(i - value() + 2, height()/2));
-		textRect = painter.boundingRect(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
-		painter.drawText(textRect, Qt::AlignCenter, text);
-	}
-*/
 }
 
 /////////////////////////////////////////////////
@@ -252,6 +245,9 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
 	m_horizontalRuller = new RullerSlider(scene, this);
+
+	setResizeAnchor(QGraphicsView::AnchorViewCenter);
+	centerOn(0., 0.);
 }
 
 void OpticsView::showEvent(QShowEvent* event)
@@ -293,6 +289,11 @@ void OpticsView::resizeEvent(QResizeEvent* event)
 {
 	QGraphicsView::resizeEvent(event);
 	adjustRange();
+}
+
+void OpticsView::wheelEvent(QWheelEvent* event)
+{
+	QApplication::sendEvent(m_horizontalRuller, event);
 }
 
 void OpticsView::mouseMoveEvent(QMouseEvent* event)
@@ -492,6 +493,7 @@ BeamItem::BeamItem(const Beam& beam)
 	, m_beam(beam)
 {
 	m_drawText = true;
+	m_style = true;
 }
 
 void BeamItem::setLeftBound(double leftBound)
@@ -522,7 +524,7 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	QPen beamPen(beamColor);
 	painter->setPen(beamPen);
 
-	QBrush beamBrush(beamColor, Qt::SolidPattern);
+	QBrush beamBrush(beamColor, m_style ? Qt::SolidPattern : Qt::NoBrush);
 	painter->setBrush(beamBrush);
 
 	QPen textPen(Qt::black);

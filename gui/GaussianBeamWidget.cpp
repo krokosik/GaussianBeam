@@ -36,11 +36,12 @@
 GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* opticsItemView,
 	                   OpticsView* opticsView, OpticsScene* opticsScene, QWidget *parent)
 	: QWidget(parent)
+	, OpticsBenchNotify(bench)
 	, m_opticsItemView(opticsItemView)
 	, m_opticsView(opticsView)
 	, m_opticsScene(opticsScene)
-	, m_bench(bench)
 {
+	m_bench.registerNotify(this);
 	setupUi(this);
 	//toolBox->setSizeHint(100);
 	//toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));
@@ -76,28 +77,34 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	m_opticsItemView->setMeasureCombo(comboBox_FitData);
 
 	// Connect slots
+	/// @this should disappear with the old version of OpticsView
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        dynamic_cast<GaussianBeamWindow*>(parent), SLOT(updateView(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
+	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength()));
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
-	on_doubleSpinBox_TargetPosition_valueChanged(0./* unused. Note: this changes also the waist value */);
-//	on_doubleSpinBox_HRange_valueChanged(doubleSpinBox_HRange->value());
-//	on_doubleSpinBox_VRange_valueChanged(doubleSpinBox_VRange->value());
-//	on_doubleSpinBox_HOffset_valueChanged(doubleSpinBox_HOffset->value());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
 }
 
 void GaussianBeamWidget::updateUnits()
 {
-//	doubleSpinBox_Wavelength->setSuffix(Units::getUnit(UnitWavelength).string("m"));
-//	doubleSpinBox_HRange->setSuffix(Units::getUnit(UnitHRange).string("m"));
-//	doubleSpinBox_VRange->setSuffix(Units::getUnit(UnitVRange).string("m"));
-//	doubleSpinBox_HOffset->setSuffix(Units::getUnit(UnitHRange).string("m"));
 	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string("m"));
 	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string("m"));
-	/// @todo update table headers and status bar
+	/// @todo update table headers and status bar and wavelength
+}
+
+void GaussianBeamWidget::OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/)
+{
+	displayOverlap();
+}
+
+void GaussianBeamWidget::OpticsBenchTargetBeamChanged()
+{
+	doubleSpinBox_TargetWaist->setValue(m_bench.targetBeam().waist()/Units::getUnit(UnitWaist).multiplier());
+	doubleSpinBox_TargetPosition->setValue(m_bench.targetBeam().waistPosition()/Units::getUnit(UnitPosition).multiplier());
+	displayOverlap();
 }
 
 ///////////////////////////////////////////////////////////
@@ -106,18 +113,11 @@ void GaussianBeamWidget::updateUnits()
 ///////////////////////////////////////////////////////////
 // MAGIC WAIST PAGE
 
-Beam GaussianBeamWidget::targetWaist()
-{
-	return Beam(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier(),
-	            doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier(),
-	            m_bench.wavelength());
-}
-
 void GaussianBeamWidget::displayOverlap()
 {
 	if (m_bench.nOptics() > 0)
 	{
-		double overlap = GaussianBeam::overlap(m_bench.beam(m_bench.nOptics()-1), targetWaist());
+		double overlap = GaussianBeam::overlap(m_bench.beam(m_bench.nOptics()-1), m_bench.targetBeam());
 		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " %");
 	}
 	else
@@ -127,15 +127,17 @@ void GaussianBeamWidget::displayOverlap()
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	m_bench.setTargetBeam(targetWaist());
-	displayOverlap();
+	Beam beam = m_bench.targetBeam();
+	beam.setWaist(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier());
+	m_bench.setTargetBeam(beam);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	m_bench.setTargetBeam(targetWaist());
-	displayOverlap();
+	Beam beam = m_bench.targetBeam();
+	beam.setWaistPosition(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier());
+	m_bench.setTargetBeam(beam);
 }
 
 void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
@@ -222,9 +224,7 @@ void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
 	Beam fitBeam = m_bench.fit(0).beam(m_bench.wavelength());
-
-	doubleSpinBox_TargetWaist->setValue(fitBeam.waist()*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_TargetPosition->setValue(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider());
+	m_bench.setTargetBeam(fitBeam);
 }
 
 void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
@@ -241,43 +241,6 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 	for (int row = fitModel->rowCount() - 1; row >= 0; row--)
 		if (fitSelectionModel->isRowSelected(row, QModelIndex()))
 			fitModel->removeRow(row);
-}
 
-///////////////////////////////////////////////////////////
-// DISPLAY PAGE
-/*
-void GaussianBeamWidget::on_doubleSpinBox_HRange_valueChanged(double value)
-{
-	double horizontalRange = value*Units::getUnit(UnitHRange).multiplier();
-	m_opticsItemView->setHRange(horizontalRange);
-	m_opticsScene->setHorizontalRange(horizontalRange);
-	m_bench.setRightBoundary(m_bench.leftBoundary() + horizontalRange);
+	/// @todo notify the bench that the fit values have changed
 }
-
-void GaussianBeamWidget::on_doubleSpinBox_VRange_valueChanged(double value)
-{
-	double verticalRange = value*Units::getUnit(UnitVRange).multiplier();
-	m_opticsItemView->setVRange(verticalRange);
-	m_opticsScene->setVerticalRange(verticalRange);
-}
-
-void GaussianBeamWidget::on_doubleSpinBox_HOffset_valueChanged(double value)
-{
-	double horizontalOffset = value*Units::getUnit(UnitHRange).multiplier();
-	double horizontalRange = doubleSpinBox_HRange->value()*Units::getUnit(UnitHRange).multiplier();
-	m_opticsItemView->setHOffset(horizontalOffset);
-	m_opticsScene->setHorizontalOffset(horizontalOffset);
-	m_bench.setLeftBoundary(horizontalOffset);
-	m_bench.setRightBoundary(horizontalOffset + horizontalRange);
-}
-
-void GaussianBeamWidget::on_checkBox_ShowGraph_toggled(bool checked)
-{
-	qDebug() << "Show graph";
-#ifdef GBPLOT
-	plot->setVisible(checked);
-#else
-	Q_UNUSED(checked);
-#endif
-}
-*/

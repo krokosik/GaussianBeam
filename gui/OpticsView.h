@@ -46,12 +46,14 @@ public:
 
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
+	void OpticsBenchTargetBeamChanged();
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
 
 private:
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
+	QList<QGraphicsEllipseItem*> m_fitItems;
 };
 
 class OpticsView : public QGraphicsView
@@ -72,6 +74,7 @@ public:
 protected:
 	virtual void drawBackground(QPainter* painter, const QRectF& rect);
 	virtual void resizeEvent(QResizeEvent* event);
+	virtual void wheelEvent(QWheelEvent* event);
 	virtual void mouseMoveEvent(QMouseEvent* e);
 	virtual void showEvent(QShowEvent* event);
 
@@ -129,12 +132,14 @@ public:
 	void setLeftBound(double leftBound);
 	void setRightBound(double rightBound);
 	const Beam& beam() const { return m_beam; }
+	void setPlainStyle(bool style = true) { m_style = style; }
 
 private:
 	const Beam& m_beam;
 	double m_leftBound;
 	double m_rightBound;
 	bool m_drawText;
+	bool m_style;
 };
 
 #include <QAbstractItemView>
