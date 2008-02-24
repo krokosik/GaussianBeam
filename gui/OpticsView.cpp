@@ -66,7 +66,11 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 	m_targetBeamItem->setPlainStyle(false);
 	addItem(m_targetBeamItem);
 
-	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(0., 0., 0.01, 0.01);
+	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(-3., -3., 3., 3.);
+	fitItem->setFlags(fitItem->flags() | QGraphicsItem::ItemIgnoresTransformations);
+	fitItem->setPen(QPen(Qt::black));
+	fitItem->setBrush(QBrush(Qt::black));
+	fitItem->setZValue(2.);
 	m_fitItems.push_back(fitItem);
 	addItem(fitItem);
 }
@@ -494,6 +498,7 @@ BeamItem::BeamItem(const Beam& beam)
 {
 	m_drawText = true;
 	m_style = true;
+	setZValue(0.);
 }
 
 void BeamItem::setLeftBound(double leftBound)
