@@ -31,8 +31,10 @@
 
 class QAbstractItemModel;
 class QComboBox;
+
 class OpticsItem;
 class BeamItem;
+class RullerSlider;
 
 class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 {
@@ -77,7 +79,7 @@ private:
 	void adjustRange();
 
 private:
-	QScrollBar* m_horizontalRuller;
+	RullerSlider* m_horizontalRuller;
 	QStatusBar* m_statusBar;
 	double m_horizontalRange;
 	double m_verticalRange;

@@ -155,21 +155,36 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 class RullerSlider : public QScrollBar
 {
 public:
-	RullerSlider(QWidget* parent = 0) : QScrollBar(parent) {};
+	RullerSlider(QGraphicsScene* scene, QWidget* parent = 0);
 
 protected:
 	virtual void sliderChange(SliderChange change);
 	virtual void paintEvent(QPaintEvent* event);
+
+public:
+	void setScale(double scale) { m_scale = scale; }
+
+private:
+	QGraphicsScene* m_scene;
+	double m_scale;
 };
+
+RullerSlider::RullerSlider(QGraphicsScene* scene, QWidget* parent)
+	: QScrollBar(parent)
+{
+	m_scene = scene;
+	m_scale = 1.;
+}
 
 void RullerSlider::sliderChange(SliderChange change)
 {
-	qDebug() << "RULLER SETTINGS" << minimum() << value() << maximum() << pageStep();
 	QScrollBar::sliderChange(change);
 }
 
 void RullerSlider::paintEvent(QPaintEvent* event)
 {
+	qDebug() << "SCALE : " << m_scale << minimum() << value() << maximum() << pageStep();
+
 	QPainter painter(this);
 	QColor backgroundColor(245, 245, 200);
 	QBrush backgroundBrush(backgroundColor);
@@ -177,13 +192,37 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	QPen mainTickPen(Qt::black);
 	QPen secondTickPen(Qt::lightGray);
 
+	int length = maximum() + pageStep() - minimum();
+	double scale = double(length)/m_scene->width();
+	double range = double(pageStep())/scale;
+	double spacing = 0.01;
+	int lastStep = int(double(value() + pageStep())/(scale*spacing)) + 1;
+	int firstStep = int(double(value())/(scale*spacing)) - 1;
+	qDebug() << lastStep;
+
 	painter.setBrush(backgroundBrush);
 	painter.setPen(backgroundPen);
 	painter.drawRect(rect());
 	painter.setPen(secondTickPen);
-	for (int i = value()/10*10; i < value() + pageStep(); i+= 10)
-		painter.drawLine(i - value(), 0, i - value(), height()*0.4);
-	for (int i = value()/50*50; i < value() + pageStep(); i+= 50)
+	for (double x = double(lastStep)*spacing; x >= double(firstStep)*spacing; x -= spacing)
+	{
+		double pos = x*scale - double(value());
+		painter.drawLine(pos, 0., pos, height()*0.4);
+		if ((int(round(x/spacing)) % 10) == 5)
+			painter.drawLine(pos, 0., pos, height()*0.65);
+		else if ((int(round(x/spacing)) % 10) == 0)
+		{
+			painter.setPen(mainTickPen);
+			painter.drawLine(pos, 0., pos, height()*0.8);
+			QString text;  text.setNum(round(x*1000.));
+			QRectF textRect(0., 0., 0., 0.);
+			textRect.moveCenter(QPointF(pos + 2., height()/2.));
+			textRect = painter.boundingRect(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
+			painter.drawText(textRect, Qt::AlignCenter, text);
+			painter.setPen(secondTickPen);
+		}
+	}
+/*	for (int i = value()/50*50; i < value() + pageStep(); i+= 50)
 		painter.drawLine(i - value(), 0, i - value(), height()*0.65);
 	painter.setPen(mainTickPen);
 	for (int i = value()/100*100; i < value() + pageStep(); i+= 100)
@@ -195,7 +234,7 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 		textRect = painter.boundingRect(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
 		painter.drawText(textRect, Qt::AlignCenter, text);
 	}
-
+*/
 }
 
 /////////////////////////////////////////////////
@@ -212,7 +251,7 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
-	m_horizontalRuller = new RullerSlider(this);
+	m_horizontalRuller = new RullerSlider(scene, this);
 }
 
 void OpticsView::showEvent(QShowEvent* event)
@@ -235,6 +274,7 @@ void OpticsView::adjustRange()
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
 			opticsItem->adjustScale(m_horizontalRange*height()/width(), m_verticalRange);
 
+	m_horizontalRuller->setScale(m_horizontalRange/width());
 }
 
 void OpticsView::setHorizontalRange(double horizontalRange)
