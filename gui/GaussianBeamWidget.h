@@ -50,9 +50,9 @@ public:
 	bool saveFile(const QString& fileName = QString());
 	void displayOverlap();
 
+// UI slots
 protected slots:
 	void on_pushButton_MagicWaist_clicked();
-	void on_pushButton_Fit_clicked();
 	void on_pushButton_SetInputBeam_clicked();
 	void on_pushButton_SetTargetBeam_clicked();
 	void on_pushButton_FitAddRow_clicked();
@@ -62,9 +62,14 @@ protected slots:
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
 	void on_radioButton_Tolerance_toggled(bool checked);
 
+
+// optics becnh inherited virtual functions
 private:
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
 	virtual void OpticsBenchTargetBeamChanged();
+
+private slots:
+	void refreshFit(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
 
 private:
 	void parseXml(const QDomElement& element);

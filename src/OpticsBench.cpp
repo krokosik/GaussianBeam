@@ -211,6 +211,12 @@ void OpticsBench::setOpticsName(int index, std::string name)
 	emitChange(0, nOptics()-1);
 }
 
+void OpticsBench::notifyFitChange(unsigned int index)
+{
+	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchFitDataChanged(index);
+}
+
 void OpticsBench::opticsPropertyChanged(int /*index*/)
 {
 	computeBeams();

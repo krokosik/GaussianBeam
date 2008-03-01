@@ -37,7 +37,6 @@ public:
 	GaussianBeamWindow(const QString& fileName);
 
 public slots:
-	void updateView(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
 	/// @todo put this protected once the load stuff is moved

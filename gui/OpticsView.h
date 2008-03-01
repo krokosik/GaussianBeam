@@ -162,7 +162,6 @@ public:
 	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
 	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
 	void setShowTargetBeam(bool showTargetBeam);
-	void updateViewport() { viewport()->update(); }
 
 protected slots:
 	void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);

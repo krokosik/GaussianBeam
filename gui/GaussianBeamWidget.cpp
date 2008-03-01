@@ -77,9 +77,8 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	m_opticsItemView->setMeasureCombo(comboBox_FitData);
 
 	// Connect slots
-	/// @this should disappear with the old version of OpticsView
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
-	        dynamic_cast<GaussianBeamWindow*>(parent), SLOT(updateView(const QModelIndex&, const QModelIndex&)));
+	        this, SLOT(refreshFit(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
 	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength()));
@@ -187,8 +186,10 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 ///////////////////////////////////////////////////////////
 // FIT PAGE
 
-void GaussianBeamWidget::on_pushButton_Fit_clicked()
+void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex& stop)
 {
+	Q_UNUSED(start);
+
 	double factor = 1.;
 	if (comboBox_FitData->currentIndex() == 1)
 		factor = 0.5;
@@ -205,7 +206,12 @@ void GaussianBeamWidget::on_pushButton_Fit_clicked()
 		}
 
 	if (fit.size() <= 1)
+	{
+		pushButton_SetInputBeam->setEnabled(false);
+		pushButton_SetTargetBeam->setEnabled(false);
+		label_FitResult->setText(QString());
 		return;
+	}
 
 	Beam fitBeam = fit.beam(m_bench.wavelength()); //GaussianBeam::fitBeam(positions, radii, m_bench.wavelength(), &rho2);
 	QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +

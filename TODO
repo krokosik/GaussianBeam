@@ -5,13 +5,12 @@ WISHLIST:
 	Configuration file
 	Lens selection
 	Sensitivity graph
-	Lens movement magnification
+	Lens movement magnification -> multiple views
 	Telescope lens lock
 	Print
 	Better Wavelength to RGB function
 	Forbidden area
 	Diaphragme
-	Ruller
 	Relative distances on graph
 	Better hyperbola interpolation
 	Customize status bar display & add Gouy phase & q
@@ -24,9 +23,11 @@ WISHLIST:
 	when moving an optics, display the optics position
 	make unit tests for saving/loading
 	undo framework
+	reimplement apint items in view for optics painting in scene coordinates
 
 BUGS:
 	Check initial values (e.g. magic waist)
+	implement ruller scale
 
 CONSTANT VIGILENCE:
 	Check that the save command saves all parameters & optics

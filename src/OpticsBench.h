@@ -37,7 +37,7 @@ public:
 	virtual void OpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {};
 	virtual void OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {};
 	virtual void OpticsBenchTargetBeamChanged() {};
-	virtual void OpticsBenchFitDataChanged() {};
+	virtual void OpticsBenchFitDataChanged(int /*index*/) {};
 
 protected:
 	OpticsBench& m_bench;
@@ -101,6 +101,12 @@ public:
 	/// Waist fit
 	int nFit() const;
 	Fit& fit(unsigned int index);
+	/**
+	* If you modified a Fit class obtained by the fit function, call this
+	* function to notify this modification
+	*/
+	void notifyFitChange(unsigned int index);
+
 
 	/// Magic waist
 	const Beam& targetBeam() const { return m_targetBeam; }

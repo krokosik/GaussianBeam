@@ -203,8 +203,3 @@ void GaussianBeamWindow::updateWidget(const QModelIndex& /*topLeft*/, const QMod
 	m_widget->displayOverlap();
 	m_table->resizeRowsToContents();
 }
-
-void GaussianBeamWindow::updateView(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
-{
-	m_opticsItemView->updateViewport();
-}
