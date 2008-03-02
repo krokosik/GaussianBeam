@@ -213,6 +213,7 @@ void OpticsBench::setOpticsName(int index, std::string name)
 
 void OpticsBench::notifyFitChange(unsigned int index)
 {
+	cerr << "OpticsBench::notifyFitChange" << endl;
 	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchFitDataChanged(index);
 }

@@ -51,16 +51,16 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 		m_bench.addOptics(LensType, m_bench.nOptics());
 
 	// View
-	m_opticsItemView = new OpticsItemView(m_bench, this);
+/*	m_opticsItemView = new OpticsItemView(m_bench, this);
 	m_opticsItemView->setModel(m_model);
-	m_opticsItemView->setSelectionModel(m_selectionModel);
+	m_opticsItemView->setSelectionModel(m_selectionModel);*/
 	m_opticsScene = new OpticsScene(m_bench, this);
 	m_opticsView = new OpticsView(m_opticsScene);
 	m_opticsView->setHorizontalRange(0.60);
 	m_opticsView->setVerticalRange(0.002);
 
 	// Widget
-	m_widget = new GaussianBeamWidget(m_bench, m_opticsItemView, m_opticsView, m_opticsScene, this);
+	m_widget = new GaussianBeamWidget(m_bench, m_opticsScene, this);
 
 	// Wavelength widget
 	QWidget* wavelengthWidget = new QWidget(this);
@@ -90,14 +90,15 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_fileToolBar->addWidget(wavelengthWidget);
 
 	statusBar()->showMessage(tr("Ready"));
-	m_opticsItemView->setStatusBar(statusBar());
 	m_opticsView->setStatusBar(statusBar());
 
 	// Layouts
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
 	splitter->addWidget(m_table);
-	splitter->addWidget(m_opticsItemView);
 	splitter->addWidget(m_opticsView);
+	QList<int> sizes;
+	sizes << 10. << 10.;
+	splitter->setSizes(sizes);
 	QDockWidget* dock = new QDockWidget(this);
 	dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 	dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);

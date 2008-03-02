@@ -28,6 +28,8 @@ WISHLIST:
 BUGS:
 	Check initial values (e.g. magic waist)
 	implement ruller scale
+	fit problem: some fits are plainly wrong
+	change all parameters (e.g. fit result) when changing the wavelength
 
 CONSTANT VIGILENCE:
 	Check that the save command saves all parameters & optics

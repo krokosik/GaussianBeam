@@ -70,7 +70,6 @@ private:
 	GaussianBeamModel* m_model;
 	QItemSelectionModel* m_selectionModel;
 	QTableView* m_table;
-	OpticsItemView* m_opticsItemView;
 	OpticsView* m_opticsView;
 	OpticsScene* m_opticsScene;
 

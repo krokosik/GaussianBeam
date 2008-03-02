@@ -33,12 +33,9 @@
 
 #include <cmath>
 
-GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* opticsItemView,
-	                   OpticsView* opticsView, OpticsScene* opticsScene, QWidget *parent)
+GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget *parent)
 	: QWidget(parent)
 	, OpticsBenchNotify(bench)
-	, m_opticsItemView(opticsItemView)
-	, m_opticsView(opticsView)
 	, m_opticsScene(opticsScene)
 {
 	m_bench.registerNotify(this);
@@ -73,8 +70,6 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsItemView* optic
 	comboBox_FitData->insertItem(0, tr("Radius @ 1/e²"));
 	comboBox_FitData->insertItem(1, tr("Diameter @ 1/e²"));
 	comboBox_FitData->setCurrentIndex(1);
-	m_opticsItemView->setFitModel(fitModel);
-	m_opticsItemView->setMeasureCombo(comboBox_FitData);
 
 	// Connect slots
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
@@ -141,7 +136,6 @@ void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double val
 
 void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 {
-	m_opticsItemView->setShowTargetBeam(checked);
 	m_opticsScene->showTargetBeam(checked);
 }
 
@@ -189,6 +183,7 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex& stop)
 {
 	Q_UNUSED(start);
+	Q_UNUSED(stop);
 
 	double factor = 1.;
 	if (comboBox_FitData->currentIndex() == 1)
@@ -210,16 +205,19 @@ void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex&
 		pushButton_SetInputBeam->setEnabled(false);
 		pushButton_SetTargetBeam->setEnabled(false);
 		label_FitResult->setText(QString());
+		m_bench.notifyFitChange(0);
 		return;
 	}
 
-	Beam fitBeam = fit.beam(m_bench.wavelength()); //GaussianBeam::fitBeam(positions, radii, m_bench.wavelength(), &rho2);
+	Beam fitBeam = fit.beam(m_bench.wavelength());
 	QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
 	               tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
 	               tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
 	label_FitResult->setText(text);
 	pushButton_SetInputBeam->setEnabled(true);
 	pushButton_SetTargetBeam->setEnabled(true);
+
+	m_bench.notifyFitChange(0);
 }
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()

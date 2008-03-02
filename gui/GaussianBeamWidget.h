@@ -30,8 +30,6 @@ class QStandardItemModel;
 class QDomElement;
 class QAction;
 
-class OpticsItemView;
-class OpticsView;
 class OpticsScene;
 class GaussianBeamPlot;
 class GaussianBeamDelegate;
@@ -42,8 +40,7 @@ class GaussianBeamWidget : public QWidget, private OpticsBenchNotify, private Ui
 	Q_OBJECT
 
 public:
-	GaussianBeamWidget(OpticsBench& bench, OpticsItemView* opticsItemView,
-	                   OpticsView* opticsView, OpticsScene* opticsScene, QWidget* parent = 0);
+	GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget* parent = 0);
 
 public:
 	bool openFile(const QString& fileName = QString());
@@ -78,8 +75,6 @@ private:
 	void insertOptics(OpticsType opticsType);
 
 private:
-	OpticsItemView* m_opticsItemView;
-	OpticsView* m_opticsView;
 	OpticsScene* m_opticsScene;
 
 	QStandardItemModel* fitModel;

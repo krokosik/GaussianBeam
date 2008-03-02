@@ -65,14 +65,6 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
 	m_targetBeamItem->setPlainStyle(false);
 	addItem(m_targetBeamItem);
-
-	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(-3., -3., 3., 3.);
-	fitItem->setFlags(fitItem->flags() | QGraphicsItem::ItemIgnoresTransformations);
-	fitItem->setPen(QPen(Qt::black));
-	fitItem->setBrush(QBrush(Qt::black));
-	fitItem->setZValue(2.);
-	m_fitItems.push_back(fitItem);
-	addItem(fitItem);
 }
 
 void OpticsScene::showTargetBeam(bool show)
@@ -159,6 +151,37 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 		removeItem(m_beamItems[i]);
 		m_beamItems.removeAt(i);
 	}
+}
+
+void OpticsScene::addFitPoint(double position, double radius)
+{
+	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(-2., -2., 4., 4.);
+	fitItem->setFlags(fitItem->flags() | QGraphicsItem::ItemIgnoresTransformations);
+	fitItem->setPen(QPen(Qt::black));
+	fitItem->setBrush(QBrush(Qt::black));
+	fitItem->setPos(position, radius);
+	fitItem->setZValue(2.);
+	m_fitItems.push_back(fitItem);
+	addItem(fitItem);
+}
+
+void OpticsScene::OpticsBenchFitDataChanged(int index)
+{
+	Q_UNUSED(index);
+
+	/// @todo with a little bit of housekeeping, we could avoid recontructing all the items each time...
+	while (!m_fitItems.isEmpty())
+	{
+		removeItem(m_fitItems.last());
+		m_fitItems.removeLast();
+	}
+
+	for (int index = 0; index < m_bench.nFit(); index++)
+		for (int i = 0; i < m_bench.fit(index).size(); i++)
+		{
+			addFitPoint(m_bench.fit(index).position(i), -m_bench.fit(index).radius(i));
+			addFitPoint(m_bench.fit(index).position(i), m_bench.fit(index).radius(i));
+		}
 }
 
 /////////////////////////////////////////////////
@@ -602,9 +625,10 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	}
 }
 
+#if 0
+
 /////////////////////////////////////////////////
 // OpticsItemView class
-
 
 OpticsItemView::OpticsItemView(OpticsBench& bench, QWidget *parent)
 	: QAbstractItemView(parent)
@@ -1210,3 +1234,5 @@ void OpticsItemView::paintEvent(QPaintEvent* event)
 	}
 */
 }
+
+#endif

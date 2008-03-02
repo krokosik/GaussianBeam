@@ -49,6 +49,10 @@ private:
 	void OpticsBenchTargetBeamChanged();
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
+	void OpticsBenchFitDataChanged(int index);
+
+private:
+	void addFitPoint(double position, double radius);
 
 private:
 	QList<BeamItem*> m_beamItems;
@@ -142,6 +146,7 @@ private:
 	bool m_style;
 };
 
+/*
 #include <QAbstractItemView>
 
 class OpticsItemView : public QAbstractItemView
@@ -216,5 +221,5 @@ private:
 	int m_active_object;
 	double m_active_object_offset;
 };
-
+*/
 #endif

@@ -76,7 +76,9 @@ void Fit::fitBeam(double wavelength) const
 		return;
 
 	cerr << "Fit::fitBeam recomputing fit" << endl;
-
+/*	for (int i = 0; i < size(); i++)
+		cerr << position(i) << " " << radius(i) << endl;
+*/
 	Statistics stats(m_positions, m_values);
 
 	// Some point whithin the fit
