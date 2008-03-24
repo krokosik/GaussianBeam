@@ -14,7 +14,7 @@ WISHLIST:
 	Relative distances on graph
 	Better hyperbola interpolation
 	Customize status bar display & add Gouy phase & q
-	Export graph to text data
+	Export graph & tables to text data
 	Optical cavities, eigen mode and stability.
 	Waist relative to selection
 	Wavefront on graph
@@ -24,6 +24,8 @@ WISHLIST:
 	make unit tests for saving/loading
 	undo framework
 	reimplement apint items in view for optics painting in scene coordinates
+	Thick lens, refractive medium, thermal lens
+	Conjugate gradient for magic waist
 
 BUGS:
 	Check initial values (e.g. magic waist)

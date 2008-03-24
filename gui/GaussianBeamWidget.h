@@ -54,23 +54,24 @@ protected slots:
 	void on_pushButton_SetTargetBeam_clicked();
 	void on_pushButton_FitAddRow_clicked();
 	void on_pushButton_FitRemoveRow_clicked();
+	void on_pushButton_fitColor_clicked();
 	void on_checkBox_ShowTargetBeam_toggled(bool checked);
 	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
 	void on_radioButton_Tolerance_toggled(bool checked);
+	void on_comboBox_FitData_currentIndexChanged(int index);
 
 
-// optics becnh inherited virtual functions
+// optics bench inherited virtual functions
 private:
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
 	virtual void OpticsBenchTargetBeamChanged();
+	virtual void OpticsBenchFitAdded(int index);
 
 private slots:
 	void refreshFit(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
 
 private:
-	void parseXml(const QDomElement& element);
-	void parseXmlOptics(const QDomElement& element, QList<QString>& lockTree);
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
 

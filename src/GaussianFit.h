@@ -23,6 +23,8 @@
 
 #include <vector>
 
+enum FitDataType {Radius_e2 = 0, Diameter_e2, FWHM, standardDeviation};
+
 /**
 * Find the waist radius and position for a given set of radii measurement of a Gaussian beam
 * It fits the given data with a linear fit, and finds the only hyperbola
@@ -31,16 +33,21 @@
 class Fit
 {
 public:
-	Fit();
+	Fit(std::string name = "Fit");
 
 public:
-	std::string name() const { return m_name; }
 	int size() const { return m_positions.size(); }
-	double position(unsigned int index) const { return m_positions[index]; }
-	double radius(unsigned int index) const { return m_values[index]; }
+	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
-	void setData(unsigned int index, double position, double value);
+	FitDataType dataType() const { return m_dataType; }
+	void setDataType(FitDataType dataType) { m_dataType = dataType; }
+	unsigned int color() const { return m_color; }
+	void setColor(unsigned int color) { m_color = color; }
+	double position(unsigned int index) const { return m_positions[index]; }
+	double value(unsigned int index) const { return m_values[index]; }
+	double radius(unsigned int index) const;
 	void addData(double position, double value);
+	void setData(unsigned int index, double position, double value);
 	void clear();
 	const Beam& beam(double wavelength) const;
 	double rho2(double wavelength) const;
@@ -50,8 +57,11 @@ private:
 
 private:
 	std::string m_name;
+	FitDataType m_dataType;
 	std::vector<double> m_positions;
 	std::vector<double> m_values;
+	unsigned int m_color;
+
 	mutable bool m_dirty;
 	mutable Beam m_beam;
 	mutable double m_rho2;

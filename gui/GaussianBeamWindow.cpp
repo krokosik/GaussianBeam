@@ -30,6 +30,7 @@
 
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	: QMainWindow()
+	, OpticsBenchNotify(m_globalBench)
 {
 	m_currentFile = QString();
 
@@ -51,9 +52,6 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 		m_bench.addOptics(LensType, m_bench.nOptics());
 
 	// View
-/*	m_opticsItemView = new OpticsItemView(m_bench, this);
-	m_opticsItemView->setModel(m_model);
-	m_opticsItemView->setSelectionModel(m_selectionModel);*/
 	m_opticsScene = new OpticsScene(m_bench, this);
 	m_opticsView = new OpticsView(m_opticsScene);
 	m_opticsView->setHorizontalRange(0.60);
@@ -66,7 +64,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	QWidget* wavelengthWidget = new QWidget(this);
 	QVBoxLayout* wavelengthLayout = new QVBoxLayout(wavelengthWidget);
 	QLabel* wavelengthLabel = new QLabel(tr("Wavelength"), wavelengthWidget);
-	QDoubleSpinBox* wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
+	wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
 	wavelengthSpinBox->setDecimals(0);
 	wavelengthSpinBox->setSuffix(" nm");
 	wavelengthSpinBox->setRange(1., 9999.);
@@ -110,8 +108,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 	        this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
-	// Load values
-	on_WavelengthSpinBox_valueChanged(wavelengthSpinBox->value());
+	m_bench.registerNotify(this);
 
 	if (!fileName.isEmpty())
 		openFile(fileName);
@@ -145,6 +142,11 @@ void GaussianBeamWindow::on_WavelengthSpinBox_valueChanged(double wavelength)
 	m_bench.setWavelength(wavelength*Units::getUnit(UnitWavelength).multiplier());
 }
 
+void GaussianBeamWindow::OpticsBenchWavelengthChanged()
+{
+	wavelengthSpinBox->setValue(m_bench.wavelength()*Units::getUnit(UnitWavelength).divider());
+}
+
 void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 {
 	QModelIndex index = m_selectionModel->currentIndex();
@@ -165,7 +167,7 @@ void GaussianBeamWindow::openFile(const QString& path)
 	if (fileName.isEmpty())
 		return;
 
-	if (m_widget->openFile(fileName))
+	if (parseFile(fileName))
 	{
 		setCurrentFile(fileName);
 		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("loaded"));
@@ -183,7 +185,7 @@ void GaussianBeamWindow::saveFile(const QString& path)
 	if (!fileName.endsWith(".xml"))
 		fileName += ".xml";
 
-	if (m_widget->saveFile(fileName))
+	if (writeFile(fileName))
 	{
 		setCurrentFile(fileName);
 		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("saved"));

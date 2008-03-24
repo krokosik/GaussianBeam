@@ -33,10 +33,13 @@ class OpticsBenchNotify
 {
 public:
 	OpticsBenchNotify(OpticsBench& opticsBench);
+	virtual void OpticsBenchWavelengthChanged() {};
 	virtual void OpticsBenchOpticsAdded(int /*index*/) {};
 	virtual void OpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {};
 	virtual void OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {};
 	virtual void OpticsBenchTargetBeamChanged() {};
+	virtual void OpticsBenchFitAdded(int /*index*/) {};
+	virtual void OpticsBenchFitRemoved(int /*index*/) {};
 	virtual void OpticsBenchFitDataChanged(int /*index*/) {};
 
 protected:
@@ -100,7 +103,9 @@ public:
 
 	/// Waist fit
 	int nFit() const;
+	Fit& addFit(int index);
 	Fit& fit(unsigned int index);
+	void removeFit(int index);
 	/**
 	* If you modified a Fit class obtained by the fit function, call this
 	* function to notify this modification

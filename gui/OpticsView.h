@@ -35,6 +35,7 @@ class QComboBox;
 class OpticsItem;
 class BeamItem;
 class RullerSlider;
+class ZoomSlider;
 
 class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 {
@@ -43,6 +44,9 @@ public:
 
 public:
 	void showTargetBeam(bool show = true);
+
+protected:
+	virtual void drawItems(QPainter* painter, int numItems, QGraphicsItem* items[], const QStyleOptionGraphicsItem options[], QWidget * widget = 0);
 
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
@@ -76,17 +80,18 @@ public:
 
 /// Inherited protected functions
 protected:
-	virtual void drawBackground(QPainter* painter, const QRectF& rect);
 	virtual void resizeEvent(QResizeEvent* event);
 	virtual void wheelEvent(QWheelEvent* event);
 	virtual void mouseMoveEvent(QMouseEvent* e);
 	virtual void showEvent(QShowEvent* event);
+	virtual void drawBackground(QPainter* painter, const QRectF& rect);
 
 private:
 	void adjustRange();
 
 private:
 	RullerSlider* m_horizontalRuller;
+	ZoomSlider* m_verticalRuller;
 	QStatusBar* m_statusBar;
 	double m_horizontalRange;
 	double m_verticalRange;

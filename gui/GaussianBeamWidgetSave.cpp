@@ -16,10 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "gui/GaussianBeamModel.h"
-#include "gui/GaussianBeamWidget.h"
 #include "gui/GaussianBeamWindow.h"
 #include "gui/Unit.h"
+#include "src/GaussianFit.h"
 
 #include <QDebug>
 #include <QFile>
@@ -28,7 +27,7 @@
 #include <QtXml/QDomDocument>
 #include <QtXml/QXmlStreamWriter>
 
-bool GaussianBeamWidget::openFile(const QString& fileName)
+bool GaussianBeamWindow::parseFile(const QString& fileName)
 {
 	QFile file(fileName);
 	if (!(file.open(QFile::ReadOnly | QFile::Text)))
@@ -56,90 +55,139 @@ bool GaussianBeamWidget::openFile(const QString& fileName)
 		QMessageBox::information(window(), tr("XML error"), tr("The file is not an Gaussian Beam file."));
 		return false;
 	}
-	if (root.hasAttribute("version") && root.attribute("version").toDouble() > 1.)
+
+	if (!root.hasAttribute("version"))
+	{
+		QMessageBox::information(window(), tr("XML error"), tr("This file does not contain any version information."));
+		return false;
+	}
+	QString version = root.attribute("version");
+	QStringList versionList = version.split(".");
+	if (versionList.size() != 2)
+	{
+		QMessageBox::information(window(), tr("XML error"), tr("Wrong version format. Your file seems corrupted"));
+		return false;
+	}
+	int majorVersion = versionList[0].toInt();
+	int minorVersion = versionList[1].toInt();
+	qDebug() << "version" << majorVersion << minorVersion;
+	if ((majorVersion == 1) && (minorVersion == 0))
+	{
+		m_bench.removeOptics(0, m_bench.nOptics());
+		//parseXml10(root);
+	}
+	if ((majorVersion == 1) && (minorVersion == 1))
+	{
+		m_bench.removeOptics(0, m_bench.nOptics());
+		parseXml(root);
+	}
+	else
 	{
 		QMessageBox::information(window(), tr("XML error"), tr("Your version of Gaussian Beam is too old."));
 		return false;
 	}
 
-	// Parse elements
-	m_bench.removeOptics(0, m_bench.nOptics());
-	parseXml(root);
 	file.close();
 
 	return true;
 }
 
-void GaussianBeamWidget::parseXml(const QDomElement& element)
+/////////////////////////////////////////////////
+// Read functions
+
+void GaussianBeamWindow::parseXml(const QDomElement& element)
 {
 	QDomElement child = element.firstChildElement();
-	int fitRow = fitModel->rowCount() - 1;
+
+	while (!child.isNull())
+	{
+		if (child.tagName() == "bench")
+			parseBench(child);
+		else if (child.tagName() == "view")
+			parseView(child);
+		child = child.nextSiblingElement();
+	}
+
+}
+
+void GaussianBeamWindow::parseBench(const QDomElement& element)
+{
+	QDomElement child = element.firstChildElement();
 	QList<QString> lockTree;
 
 	while (!child.isNull())
 	{
-		if (child.tagName() == "wavelength") ////////////////
-		{
-			/// @bug this does not change the spin box display
+		if (child.tagName() == "wavelength")
 			m_bench.setWavelength(child.text().toDouble());
-		}
-		else if (child.tagName() == "magicWaist") ////////////////
-			parseXml(child);
-		else if (child.tagName() == "targetWaist")
-			doubleSpinBox_TargetWaist->setValue(child.text().toDouble()*Units::getUnit(UnitWaist).divider());
-		else if (child.tagName() == "waistTolerance")
-			doubleSpinBox_WaistTolerance->setValue(child.text().toDouble()*100.);
-		else if (child.tagName() == "targetPosition")
-			doubleSpinBox_TargetPosition->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "positionTolerance")
-			doubleSpinBox_PositionTolerance->setValue(child.text().toDouble()*100.);
-		else if (child.tagName() == "showTargetWaist")
-			checkBox_ShowTargetBeam->setCheckState(Qt::CheckState(child.text().toInt()));
-		else if (child.tagName() == "waistFit") ////////////////
+		else if (child.tagName() == "leftBoundary")
+			m_bench.setLeftBoundary(child.text().toDouble());
+		else if (child.tagName() == "targetBeam")
 		{
-			fitModel->removeRows(0, fitModel->rowCount());
-			parseXml(child);
+			QDomElement targetBeamElement = child.firstChildElement();
+			/// @todo check targetbeam wavelength
+			Beam targetBeam = m_bench.targetBeam();
+			while (!targetBeamElement.isNull())
+			{
+				if (targetBeamElement.tagName() == "position")
+					targetBeam.setWaistPosition(child.text().toDouble());
+				if (targetBeamElement.tagName() == "waist")
+					targetBeam.setWaist(child.text().toDouble());
+				targetBeamElement = targetBeamElement.nextSiblingElement();
+			}
+			m_bench.setTargetBeam(targetBeam);
 		}
-		else if (child.tagName() == "fitDataType")
-			comboBox_FitData->setCurrentIndex(child.text().toInt());
-		else if (child.tagName() == "fitData")
+		else if (child.tagName() == "beamFit")
 		{
-			fitModel->insertRow(++fitRow);
-			parseXml(child);
+			QDomElement fitElement = child.firstChildElement();
+			while (!fitElement.isNull())
+			{
+				Fit& fit = m_bench.addFit(m_bench.nFit());
+				if (fitElement.tagName() == "name")
+					fit.setName(child.text().toUtf8().data());
+				if (fitElement.tagName() == "dataType")
+					fit.setDataType(FitDataType(child.text().toInt()));
+				if (fitElement.tagName() == "color")
+					fit.setColor(child.text().toInt());
+				if (fitElement.tagName() == "data")
+				{
+					QDomElement fitDataElement = fitElement.firstChildElement();
+					double position = 0.;
+					double value = 0.;
+					while (!fitDataElement.isNull())
+					{
+						if (fitDataElement.tagName() == "position")
+							position = child.text().toDouble();
+						if (fitDataElement.tagName() == "value")
+							value = child.text().toDouble();
+					}
+					fit.addData(position, value);
+				}
+				fitElement = fitElement.nextSiblingElement();
+			}
 		}
-		/// @todo mode this logic to OpticsBench
-		else if (child.tagName() == "dataPosition")
-			fitModel->setData(fitModel->index(fitRow, 0), child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "dataValue")
-			fitModel->setData(fitModel->index(fitRow, 1), child.text().toDouble()*Units::getUnit(UnitWaist).divider());
-		else if (child.tagName() == "display") ////////////////
-			parseXml(child);
-		else if (child.tagName() == "HRange")
-			;//doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "VRange")
-			;//doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if (child.tagName() == "HOffset")
-			;//doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
-		else if ((child.tagName() == "inputBeam") ||
-		         (child.tagName() == "lens") ||
-		         (child.tagName() == "flatMirror") ||
-		         (child.tagName() == "curvedMirror") ||
-		         (child.tagName() == "flatInterface") ||
-		         (child.tagName() == "curvedInterface") ||
-		         (child.tagName() == "genericABCD"))
-			parseXmlOptics(child, lockTree);
+		else if (child.tagName() == "opticsList")
+		{
+			QDomElement opticsElement = child.firstChildElement();
+			while (!opticsElement.isNull())
+			{
+				parseOptics(opticsElement, lockTree);
+				opticsElement = opticsElement.nextSiblingElement();
+			}
+		}
 		else
 			qDebug() << " -> Unknown tag: " << child.tagName();
 
 		child = child.nextSiblingElement();
 	}
 
+
 	for (int i = 0; i < lockTree.size(); i++)
 		if (!lockTree[i].isEmpty())
 			m_bench.lockTo(i, lockTree[i].toUtf8().data());
+
 }
 
-void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QString>& lockTree)
+void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>& lockTree)
 {
 	Optics* optics;
 
@@ -208,7 +256,14 @@ void GaussianBeamWidget::parseXmlOptics(const QDomElement& element, QList<QStrin
 	m_bench.addOptics(optics, m_bench.nOptics());
 }
 
-bool GaussianBeamWidget::saveFile(const QString& fileName)
+void GaussianBeamWindow::parseView(const QDomElement& element)
+{
+}
+
+/////////////////////////////////////////////////
+// Write functions
+
+bool GaussianBeamWindow::writeFile(const QString& fileName)
 {
 	QFile file(fileName);
 	if (!file.open(QFile::WriteOnly | QFile::Text))
@@ -222,83 +277,114 @@ bool GaussianBeamWidget::saveFile(const QString& fileName)
 	xmlWriter.writeStartDocument("1.0");
 	xmlWriter.writeDTD("<!DOCTYPE gaussianBeam>");
 	xmlWriter.writeStartElement("gaussianBeam");
-	xmlWriter.writeAttribute("version", "1.0");
-	xmlWriter.writeTextElement("wavelength", QString::number(m_bench.wavelength()));
-	xmlWriter.writeStartElement("magicWaist");
-		xmlWriter.writeTextElement("targetWaist", QString::number(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier()));
-		xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
-		xmlWriter.writeTextElement("targetPosition", QString::number(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier()));
-		xmlWriter.writeTextElement("positionTolerance", QString::number(doubleSpinBox_PositionTolerance->value()/100.));
-		xmlWriter.writeTextElement("showTargetWaist", QString::number(checkBox_ShowTargetBeam->checkState()));
-	xmlWriter.writeEndElement();
-	xmlWriter.writeStartElement("waistFit");
-		xmlWriter.writeTextElement("fitDataType", QString::number(comboBox_FitData->currentIndex()));
-		for (int row = 0; row < fitModel->rowCount(); row++)
-		{
-			xmlWriter.writeStartElement("fitData");
-				xmlWriter.writeTextElement("dataPosition", QString::number(fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier()));
-				xmlWriter.writeTextElement("dataValue",  QString::number(fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier()));
-			xmlWriter.writeEndElement();
-		}
-	xmlWriter.writeEndElement();
-	xmlWriter.writeStartElement("display");
-//		xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
-//		xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
-//		xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));
-	xmlWriter.writeEndElement();
-	for (int row = 0; row < m_bench.nOptics(); row++)
-	{
-		const Optics* optics = m_bench.optics(row);
-
-		if (optics->type() == CreateBeamType)
-		{
-			xmlWriter.writeStartElement("inputBeam");
-			xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam*>(optics)->waist()));
-		}
-		else if (optics->type() == LensType)
-		{
-			xmlWriter.writeStartElement("lens");
-			xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens*>(optics)->focal()));
-		}
-		else if (optics->type() == FlatMirrorType)
-		{
-			xmlWriter.writeStartElement("flatMirror");
-		}
-		else if (optics->type() == CurvedMirrorType)
-		{
-			xmlWriter.writeStartElement("curvedMirror");
-			xmlWriter.writeTextElement("curvatureRadius", QString::number(dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()));
-		}
-		else if (optics->type() == FlatInterfaceType)
-		{
-			xmlWriter.writeStartElement("flatInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const FlatInterface*>(optics)->indexRatio()));
-		}
-		else if (optics->type() == CurvedInterfaceType)
-		{
-			xmlWriter.writeStartElement("curvedInterface");
-			xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface*>(optics)->indexRatio()));
-			xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()));
-		}
-		else if (optics->type() == GenericABCDType)
-		{
-			xmlWriter.writeStartElement("genericABCD");
-			xmlWriter.writeTextElement("width", QString::number(optics->width()));
-			xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD*>(optics)->A()));
-			xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD*>(optics)->B()));
-			xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD*>(optics)->C()));
-			xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D()));
-		}
-		xmlWriter.writeTextElement("position", QString::number(optics->position()));
-		xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
-		xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
-		if (optics->relativeLockParent())
-			xmlWriter.writeTextElement("relativeLockParent", QString(optics->relativeLockParent()->name().c_str()));
+	xmlWriter.writeAttribute("version", "1.1");
+		xmlWriter.writeStartElement("bench");
+		xmlWriter.writeAttribute("id", "0");
+			writeBench(xmlWriter);
 		xmlWriter.writeEndElement();
-	}
+		xmlWriter.writeStartElement("view");
+		xmlWriter.writeAttribute("id", "0");
+		xmlWriter.writeAttribute("bench", "0");
+			writeView(xmlWriter);
+		xmlWriter.writeEndElement();
 	xmlWriter.writeEndElement();
 	xmlWriter.writeEndDocument();
 
 	file.close();
 	return true;
+}
+
+void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
+{
+	xmlWriter.writeTextElement("wavelength", QString::number(m_bench.wavelength()));
+	xmlWriter.writeTextElement("leftBoundary", QString::number(m_bench.leftBoundary()));
+	xmlWriter.writeTextElement("rightBoundary", QString::number(m_bench.rightBoundary()));
+
+	xmlWriter.writeStartElement("targetBeam");
+	xmlWriter.writeAttribute("id", "0");
+		xmlWriter.writeTextElement("position", QString::number(m_bench.targetBeam().waistPosition()));
+		xmlWriter.writeTextElement("waist", QString::number(m_bench.targetBeam().waist()));
+	xmlWriter.writeEndElement();
+
+	for (int i = 0; i < m_bench.nFit(); i++)
+	{
+		Fit& fit = m_bench.fit(i);
+		xmlWriter.writeStartElement("beamFit");
+		xmlWriter.writeAttribute("id", QString::number(i));
+			xmlWriter.writeTextElement("name", fit.name().c_str());
+			xmlWriter.writeTextElement("dataType", QString::number(int(fit.dataType())));
+			xmlWriter.writeTextElement("color", QString::number(fit.color()));
+			for (int j = 0; j < fit.size(); j++)
+			{
+				xmlWriter.writeStartElement("data");
+					xmlWriter.writeTextElement("position", QString::number(fit.position(j)));
+					xmlWriter.writeTextElement("value",  QString::number(fit.value(j)));
+				xmlWriter.writeEndElement();
+			}
+		xmlWriter.writeEndElement();
+	}
+
+	xmlWriter.writeStartElement("opticsList");
+	for (int i = 0; i < m_bench.nOptics(); i++)
+		writeOptics(xmlWriter, m_bench.optics(i));
+	xmlWriter.writeEndElement();
+}
+
+void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics)
+{
+	if (optics->type() == CreateBeamType)
+	{
+		xmlWriter.writeStartElement("inputBeam");
+		xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam*>(optics)->waist()));
+	}
+	else if (optics->type() == LensType)
+	{
+		xmlWriter.writeStartElement("lens");
+		xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens*>(optics)->focal()));
+	}
+	else if (optics->type() == FlatMirrorType)
+	{
+		xmlWriter.writeStartElement("flatMirror");
+	}
+	else if (optics->type() == CurvedMirrorType)
+	{
+		xmlWriter.writeStartElement("curvedMirror");
+		xmlWriter.writeTextElement("curvatureRadius", QString::number(dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()));
+	}
+	else if (optics->type() == FlatInterfaceType)
+	{
+		xmlWriter.writeStartElement("flatInterface");
+		xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const FlatInterface*>(optics)->indexRatio()));
+	}
+	else if (optics->type() == CurvedInterfaceType)
+	{
+		xmlWriter.writeStartElement("curvedInterface");
+		xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface*>(optics)->indexRatio()));
+		xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()));
+	}
+	else if (optics->type() == GenericABCDType)
+	{
+		xmlWriter.writeStartElement("genericABCD");
+		xmlWriter.writeTextElement("width", QString::number(optics->width()));
+		xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD*>(optics)->A()));
+		xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD*>(optics)->B()));
+		xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD*>(optics)->C()));
+		xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D()));
+	}
+	xmlWriter.writeTextElement("position", QString::number(optics->position()));
+	xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
+	xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
+	if (optics->relativeLockParent())
+		xmlWriter.writeTextElement("relativeLockParent", QString(optics->relativeLockParent()->name().c_str()));
+	xmlWriter.writeEndElement();
+}
+
+void GaussianBeamWindow::writeView(QXmlStreamWriter& xmlWriter)
+{
+/*	xmlWriter.writeTextElement("showTargetWaist", QString::number(checkBox_ShowTargetBeam->checkState()));
+	xmlWriter.writeTextElement("waistTolerance", QString::number(doubleSpinBox_WaistTolerance->value()/100.));
+	xmlWriter.writeTextElement("positionTolerance", QString::number(doubleSpinBox_PositionTolerance->value()/100.));
+	xmlWriter.writeTextElement("HRange", QString::number(doubleSpinBox_HRange->value()*Units::getUnit(UnitPosition).multiplier()));
+	xmlWriter.writeTextElement("VRange", QString::number(doubleSpinBox_VRange->value()*Units::getUnit(UnitPosition).multiplier()));
+	xmlWriter.writeTextElement("HOffset", QString::number(doubleSpinBox_HOffset->value()*Units::getUnit(UnitPosition).multiplier()));*/
 }

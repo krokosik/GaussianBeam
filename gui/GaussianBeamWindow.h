@@ -29,7 +29,9 @@
 
 #include <QMainWindow>
 
-class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow
+class QXmlStreamWriter;
+
+class GaussianBeamWindow : public QMainWindow, private OpticsBenchNotify, private Ui::GaussianBeamWindow
 {
 	Q_OBJECT
 
@@ -38,9 +40,6 @@ public:
 
 public slots:
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
-
-	/// @todo put this protected once the load stuff is moved
-	void on_WavelengthSpinBox_valueChanged(double wavelength);
 
 protected slots:
 	void on_action_Open_triggered()               { openFile();                        }
@@ -54,7 +53,11 @@ protected slots:
 	void on_action_AddFlatInterface_triggered()   { insertOptics(FlatInterfaceType);   }
 	void on_action_AddCurvedInterface_triggered() { insertOptics(CurvedInterfaceType); }
 	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
+	void on_WavelengthSpinBox_valueChanged(double wavelength);
 
+// optics bench inherited virtual functions
+private:
+	virtual void OpticsBenchWavelengthChanged();
 
 private:
 	void openFile(const QString& path = QString());
@@ -62,10 +65,26 @@ private:
 	void setCurrentFile(const QString& path);
 	void insertOptics(OpticsType opticsType);
 
+// Loading stuff that should logically be moved to OpticsBench, but depend on Qt.
+// In addition, a GaussianBeam file contains view properties that do not belong to OpticsBench.
+private:
+	bool parseFile(const QString& path = QString());
+	void parseXml(const QDomElement& element);
+	void parseBench(const QDomElement& element);
+	void parseOptics(const QDomElement& element, QList<QString>& lockTree);
+	void parseView(const QDomElement& element);
+	bool writeFile(const QString& path = QString());
+	void writeBench(QXmlStreamWriter& xmlWriter);
+	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics);
+	void writeView(QXmlStreamWriter& xmlWriter);
+	// Compatibility functions
+	void parseXml10(const QDomElement& element);
+
 private:
 	QToolBar* m_fileToolBar;
 
-	OpticsBench m_bench;
+	OpticsBench m_globalBench;
+	QDoubleSpinBox* wavelengthSpinBox;
 	GaussianBeamWidget* m_widget;
 	GaussianBeamModel* m_model;
 	QItemSelectionModel* m_selectionModel;

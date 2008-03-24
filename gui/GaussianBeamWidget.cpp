@@ -30,6 +30,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QMenu>
+#include <QColorDialog>
 
 #include <cmath>
 
@@ -38,7 +39,6 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	, OpticsBenchNotify(bench)
 	, m_opticsScene(opticsScene)
 {
-	m_bench.registerNotify(this);
 	setupUi(this);
 	//toolBox->setSizeHint(100);
 	//toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));
@@ -80,6 +80,8 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
+
+	m_bench.registerNotify(this);
 }
 
 void GaussianBeamWidget::updateUnits()
@@ -180,6 +182,12 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 ///////////////////////////////////////////////////////////
 // FIT PAGE
 
+void GaussianBeamWidget::OpticsBenchFitAdded(int index)
+{
+	qDebug() << "Insert it item" << index;
+	comboBox_Fit->insertItem(index, m_bench.fit(index).name().c_str());
+}
+
 void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex& stop)
 {
 	Q_UNUSED(start);
@@ -218,6 +226,16 @@ void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex&
 	pushButton_SetTargetBeam->setEnabled(true);
 
 	m_bench.notifyFitChange(0);
+}
+
+void GaussianBeamWidget::on_pushButton_fitColor_clicked()
+{
+	QColor color = QColorDialog::getColor(Qt::black, this);
+}
+
+void GaussianBeamWidget::on_comboBox_FitData_currentIndexChanged(int index)
+{
+	refreshFit();
 }
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()

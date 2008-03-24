@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>268</width>
+    <width>238</width>
     <height>606</height>
    </rect>
   </property>
@@ -281,7 +281,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>248</width>
+          <width>218</width>
           <height>487</height>
          </rect>
         </property>
@@ -290,6 +290,80 @@
         </attribute>
         <layout class="QVBoxLayout" >
          <item>
+          <widget class="QComboBox" name="comboBox_Fit" />
+         </item>
+         <item>
+          <layout class="QHBoxLayout" >
+           <item>
+            <widget class="QPushButton" name="pushButton_AddFit" >
+             <property name="toolTip" >
+              <string>Add a new fit</string>
+             </property>
+             <property name="text" >
+              <string/>
+             </property>
+             <property name="icon" >
+              <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-add.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_RemoveFit" >
+             <property name="toolTip" >
+              <string>Delete this fit</string>
+             </property>
+             <property name="text" >
+              <string/>
+             </property>
+             <property name="icon" >
+              <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-delete.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_RenameFit" >
+             <property name="toolTip" >
+              <string>Rename the current fit</string>
+             </property>
+             <property name="text" >
+              <string>Rename</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" >
+           <item>
+            <widget class="QLabel" name="label_3" >
+             <property name="sizePolicy" >
+              <sizepolicy vsizetype="Preferred" hsizetype="Minimum" >
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text" >
+              <string>color</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_fitColor" >
+             <property name="text" >
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_4" >
+           <property name="text" >
+            <string>Measured quantity:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QComboBox" name="comboBox_FitData" >
            <property name="currentIndex" >
             <number>-1</number>
@@ -297,20 +371,14 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="fitTable" >
-           <property name="sizePolicy" >
-            <sizepolicy vsizetype="Maximum" hsizetype="Maximum" >
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="maximumSize" >
-            <size>
-             <width>200</width>
-             <height>16777215</height>
-            </size>
+          <widget class="QLabel" name="label_5" >
+           <property name="text" >
+            <string>Measurements:</string>
            </property>
           </widget>
+         </item>
+         <item>
+          <widget class="QTableView" name="fitTable" />
          </item>
          <item>
           <layout class="QHBoxLayout" >
@@ -319,12 +387,18 @@
              <property name="text" >
               <string>Add row</string>
              </property>
+             <property name="icon" >
+              <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-add.png</iconset>
+             </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_FitRemoveRow" >
              <property name="text" >
               <string>Remove row</string>
+             </property>
+             <property name="icon" >
+              <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-delete.png</iconset>
              </property>
             </widget>
            </item>
@@ -357,19 +431,6 @@
            </property>
           </widget>
          </item>
-         <item>
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
         </layout>
        </widget>
       </widget>
@@ -378,6 +439,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="GaussianBeamRessource.qrc" />
+ </resources>
  <connections/>
 </ui>

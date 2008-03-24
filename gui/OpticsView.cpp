@@ -184,40 +184,45 @@ void OpticsScene::OpticsBenchFitDataChanged(int index)
 		}
 }
 
+void OpticsScene::drawItems(QPainter* painter, int numItems, QGraphicsItem* items[], const QStyleOptionGraphicsItem options[], QWidget* widget)
+{
+	for (int i = 0; i < numItems; ++i)
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(items[i]))
+		{
+			painter->save();
+			//painter->setTransform(items[i]->sceneTransform(), true);
+			painter->setTransform(items[i]->deviceTransform(painter->worldTransform()), false);
+			items[i]->paint(painter, &options[i], widget);
+			painter->restore();
+		}
+	else
+		QGraphicsScene::drawItems(painter, 1, &items[i], options, widget);
+}
+
 /////////////////////////////////////////////////
-// Ruller slider
+// sliders
+
 class RullerSlider : public QScrollBar
 {
 public:
 	RullerSlider(QGraphicsScene* scene, QWidget* parent = 0);
 
 protected:
-	virtual void sliderChange(SliderChange change);
 	virtual void paintEvent(QPaintEvent* event);
-
-public:
-	void setScale(double scale) { m_scale = scale; }
 
 private:
 	QGraphicsScene* m_scene;
-	double m_scale;
 };
 
 RullerSlider::RullerSlider(QGraphicsScene* scene, QWidget* parent)
 	: QScrollBar(parent)
 {
 	m_scene = scene;
-	m_scale = 1.;
-}
-
-void RullerSlider::sliderChange(SliderChange change)
-{
-	QScrollBar::sliderChange(change);
 }
 
 void RullerSlider::paintEvent(QPaintEvent* event)
 {
-	//qDebug() << "SCALE : " << m_scale << minimum() << value() << maximum() << pageStep();
+	//qDebug() << "SCALE : " << minimum() << value() << maximum() << pageStep();
 
 	QPainter painter(this);
 	QColor backgroundColor(245, 245, 200);
@@ -228,7 +233,6 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 
 	int length = maximum() + pageStep() - minimum();
 	double scale = double(length)/m_scene->width();
-	double range = double(pageStep())/scale;
 	double spacing = 0.01;
 	int lastStep = int(double(value() + pageStep())/(scale*spacing)) + 1;
 	int firstStep = int(double(value())/(scale*spacing)) - 1;
@@ -257,6 +261,35 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	}
 }
 
+class ZoomSlider : public QScrollBar
+{
+public:
+	ZoomSlider(QGraphicsScene* scene, QWidget* parent = 0);
+
+protected:
+	virtual void paintEvent(QPaintEvent* event);
+
+private:
+	QGraphicsScene* m_scene;
+};
+
+ZoomSlider::ZoomSlider(QGraphicsScene* scene, QWidget* parent)
+	: QScrollBar(parent)
+{
+	m_scene = scene;
+}
+
+void ZoomSlider::paintEvent(QPaintEvent* event)
+{
+	QPainter painter(this);
+	QColor backgroundColor(245, 245, 200);
+	QBrush backgroundBrush(backgroundColor);
+	QPen backgroundPen(backgroundColor);
+	painter.setBrush(backgroundBrush);
+	painter.setPen(backgroundPen);
+	painter.drawRect(rect());
+}
+
 /////////////////////////////////////////////////
 // OpticsView class
 
@@ -272,6 +305,7 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
 	m_horizontalRuller = new RullerSlider(scene, this);
+	m_verticalRuller = new ZoomSlider(scene, this);
 
 	setResizeAnchor(QGraphicsView::AnchorViewCenter);
 	centerOn(0., 0.);
@@ -282,6 +316,7 @@ void OpticsView::showEvent(QShowEvent* event)
 	QGraphicsView::showEvent(event);
 	/// @bug putting this instruction in the constructor (i.e. befor show) triggers a qt bug to be fixed in 4.4.0
 	setHorizontalScrollBar(m_horizontalRuller);
+	setVerticalScrollBar(m_verticalRuller);
 }
 
 void OpticsView::adjustRange()
@@ -296,8 +331,6 @@ void OpticsView::adjustRange()
 	foreach (QGraphicsItem* graphicsItem, items())
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
 			opticsItem->adjustScale(m_horizontalRange*height()/width(), m_verticalRange);
-
-	m_horizontalRuller->setScale(m_horizontalRange/width());
 }
 
 void OpticsView::setHorizontalRange(double horizontalRange)
@@ -320,6 +353,7 @@ void OpticsView::resizeEvent(QResizeEvent* event)
 
 void OpticsView::wheelEvent(QWheelEvent* event)
 {
+	/// @todo this does not work
 	QApplication::sendEvent(m_horizontalRuller, event);
 }
 
@@ -397,9 +431,9 @@ void OpticsItem::adjustScale(double horizontalScale, double verticalScale)
 		m11 = 1.0;
 
 	QTransform scaling = transform();
-	scaling.setMatrix(m11, scaling.m12(),  scaling.m13(), scaling.m21(), m22,
+	scaling.setMatrix(m11, scaling.m12(), scaling.m13(), scaling.m21(), m22,
 	                  scaling.m23(), scaling.m31(), scaling.m32(), scaling.m33());
-	setTransform(scaling);
+//	setTransform(scaling);
 }
 
 QRectF OpticsItem::boundingRect() const
@@ -442,7 +476,8 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	QPen textPen(Qt::black);
 
 	QPainterPath path;
-	QRectF rect = boundingRect();
+	QRectF rect = QRectF(QPointF(-10., -66.), QSizeF(2.*10., 2.*66.));
+	//QRectF rect = boundingRect();
 	QRectF rightRect = rect;
 	rightRect.moveLeft(rect.width()/4.);
 	QRectF leftRect = rect;
@@ -484,7 +519,7 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	else if (m_optics->type() == FlatMirrorType)
 	{
 		painter->drawRect(rect);
-		QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
+		QBrush ABCDBrush(Qt::black, Qt::/*BDiagPattern*/SolidPattern);
 		painter->setBrush(ABCDBrush);
 		painter->drawRect(rect);
 
@@ -498,7 +533,9 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == GenericABCDType)
 	{
-		painter->drawRoundRect(rect);
+		QColor color = QColor(193, 193, 193, 150);
+		painter->setBrush(QBrush(color));
+		painter->drawRect(rect);
 	}
 
 	if (m_optics->type() != CreateBeamType)
@@ -558,7 +595,6 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	QPen textPen(Qt::black);
 
 	double waistPosition = m_beam.waistPosition();
-	double magnification = 1.;//scene()->height()/dynamic_cast<OpticsScene*>(scene())->verticalRange();
 
 	/// @todo check degree of details
 //	if (m_beam.waist() > 0.0000001/* *vScale() > 1.*/)
@@ -580,13 +616,13 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam.approxNextPosition(z, approximation))
 			{
 				//qDebug() << z;
-				beamPolygonUp.append(QPointF(z, m_beam.radius(z)*magnification));
-				beamPolygonDown.prepend(QPointF(z, -m_beam.radius(z)*magnification));
+				beamPolygonUp.append(QPointF(z, m_beam.radius(z)));
+				beamPolygonDown.prepend(QPointF(z, -m_beam.radius(z)));
 				if (z == approximation.maxZ)
 					break;
 			}
-			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam.radius(approximation.maxZ)*magnification));
-			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam.radius(approximation.maxZ)*magnification));
+			beamPolygonUp.append(QPointF(approximation.maxZ, m_beam.radius(approximation.maxZ)));
+			beamPolygonDown.prepend(QPointF(approximation.maxZ, -m_beam.radius(approximation.maxZ)));
 			QPainterPath path;
 			path.moveTo(beamPolygonUp[0]);
 			path.addPolygon(beamPolygonUp);
@@ -616,7 +652,7 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	if (m_drawText)
 	{
 		painter->setPen(textPen);
-		QPointF waistTop(waistPosition, - m_beam.waist()*magnification);
+		QPointF waistTop(waistPosition, - m_beam.waist());
 		painter->drawLine(QPointF(waistPosition, 0.), waistTop);
 		QString text; text.setNum(round(m_beam.waist()*Units::getUnit(UnitWaist).divider()));
 		QRectF textRect(0., 0., 100., 15.);

@@ -22,13 +22,16 @@
 #include <iostream>
 #include <cmath>
 
+#define epsilon 1e-50
+
 using namespace std;
 
-Fit::Fit()
+Fit::Fit(string name)
 {
-	m_name = "Fit";
+	m_name = name;
 	m_dirty = true;
 	m_lastWavelength = 0.;
+	m_dataType = Radius_e2;
 }
 
 void Fit::setData(unsigned int index, double position, double value)
@@ -49,6 +52,20 @@ void Fit::addData(double position, double value)
 	m_positions.push_back(position);
 	m_values.push_back(value);
 	m_dirty = true;
+}
+
+double Fit::radius(unsigned int index) const
+{
+	if (m_dataType == Radius_e2)
+		return m_values[index];
+	else if (m_dataType == Diameter_e2)
+		return m_values[index]/2.;
+	else  if (m_dataType == FWHM)
+		return m_values[index]/(2.*sqrt(log(2.)));
+	else  if (m_dataType == standardDeviation)
+		return m_values[index]*sqrt(2.);
+
+	return 0.;
 }
 
 void Fit::clear()
@@ -76,10 +93,17 @@ void Fit::fitBeam(double wavelength) const
 		return;
 
 	cerr << "Fit::fitBeam recomputing fit" << endl;
-/*	for (int i = 0; i < size(); i++)
-		cerr << position(i) << " " << radius(i) << endl;
-*/
-	Statistics stats(m_positions, m_values);
+
+	vector<double> positions, radii;
+	for (int i = 0; i < size(); i++)
+		if (radius(i) > epsilon)
+		{
+			positions.push_back(position(i));
+			radii.push_back(radius(i));
+//			cerr << position(i) << " " << radius(i) << endl;
+		}
+
+	Statistics stats(positions, radii);
 
 	// Some point whithin the fit
 	const double z = stats.meanX;
