@@ -26,29 +26,81 @@
 
 enum OpticsType {CreateBeamType, FreeSpaceType,
                  LensType, FlatMirrorType, CurvedMirrorType,
-                 FlatInterfaceType, CurvedInterfaceType, GenericABCDType};
+                 FlatInterfaceType, CurvedInterfaceType,
+                 DielectricSlabType, ThickLensType, ThermalLensType, GenericABCDType, UserType};
 
 class Optics
 {
 public:
+	/**
+	* Constructor
+	* @p type enum type of the optics
+	* @p ABCD tell ifthe optics is of ABCD type
+	* @p position stating position of the optics
+	* @p name name of the optics
+	*/
 	Optics(OpticsType type, bool ABCD, double position, std::string name);
+	/**
+	* Destructor
+	*/
 	virtual ~Optics();
+	/**
+	* Duplicate the optics into a new independant class
+	*/
 	virtual Optics* clone() const = 0;
 
 public:
+	/**
+	* Compute the image of a given input beam
+	* @p inputBeam input beam
+	*/
 	virtual Beam image(const Beam& inputBeam) const = 0;
+	/**
+	* Compute the input beam corresponding to a given output beam
+	* @p outputBeam output beam
+	*/
 	virtual Beam antecedent(const Beam& outputBeam) const = 0;
 
 public:
+	/**
+	* @return the enum type of the optics
+	*/
 	OpticsType type() const { return m_type; }
+	/**
+	* @return the position of the left boundary of the optics
+	*/
 	double position() const { return m_position; }
+	/**
+	* Set the left position of the optics to @p position
+	*/
 	void setPosition(double position) { m_position = position; }
+	/**
+	* @return the right position of the optics
+	*/
 	double endPosition() const { return position() + width(); }
+	/**
+	* @return the width of the optics
+	*/
 	double width() const { return m_width; }
+	/**
+	* Set the width of the optics
+	*/
 	void setWidth(double width) { m_width = width; }
+	/**
+	* @return the name of the optics
+	*/
 	std::string name() const { return m_name; }
+	/**
+	* Set the name of the optics
+	*/
 	void setName(std::string name) { m_name = name; }
+	/**
+	* @return true if the optics is of type ABCD
+	*/
 	bool isABCD() const { return m_ABCD; }
+	/**
+	* @return the unique ID of the optics
+	*/
 	int id() const { return m_id; }
 	/**
 	* Query absolute lock
@@ -105,13 +157,9 @@ private:
 	/// @todo this is not clean. Think...
 	Optics* relativeLockRoot();
 	const Optics* relativeLockRootConst() const;
-	/**
-	* Check if @p optics is this optics or recursively one of this optic's descendants
-	*/
+	/// Check if @p optics is this optics or recursively one of this optic's descendants
 	bool isRelativeLockDescendant(const Optics* const optics) const;
-	/**
-	* translate this optics and recursvely its descendant by @p distance
-	*/
+	/// translate this optics and recursively its descendant by @p distance
 	void moveDescendant(double distance);
 
 protected:
@@ -130,24 +178,8 @@ private:
 	static int m_lastId;
 };
 
-class CreateBeam : public Optics
-{
-public:
-	CreateBeam(double waist, double waistPosition, std::string name = "");
-	CreateBeam* clone() const { return new CreateBeam(*this); }
-
-public:
-	Beam image(const Beam& inputBeam) const;
-	Beam antecedent(const Beam& outputBeam) const;
-
-public:
-	double waist() const { return m_waist; }
-	void setWaist(double waist);
-	void setBeam(const Beam& beam);
-
-private:
-	double m_waist;
-};
+/////////////////////////////////////////////////
+// Pure virtual Optics classes
 
 class ABCD : public Optics
 {
@@ -172,6 +204,73 @@ public:
 	Beam eigenMode(double wavelength) const;
 };
 
+class GenericLens : public ABCD
+{
+public:
+	GenericLens(OpticsType type, double focal, double position, std::string name = "")
+		: ABCD(type, position, name) , m_focal(focal) {}
+	virtual ~GenericLens() {}
+
+public:
+	virtual double C() const { return -1./focal(); }
+
+public:
+	double focal() const { return m_focal; }
+	void setFocal(double focal);
+
+private:
+	double m_focal;
+};
+
+class Dielectric
+{
+public:
+	Dielectric(double indexRatio) : m_indexRatio(indexRatio) {}
+
+public:
+	double indexRatio() const { return m_indexRatio; }
+	void setIndexRatio(double indexRatio);
+
+private:
+	double m_indexRatio;
+};
+
+class Interface : public ABCD, public Dielectric
+{
+public:
+	Interface(OpticsType type, double indexRatio, double position, std::string name = "")
+		: ABCD(type, position, name), Dielectric(indexRatio) {}
+	virtual ~Interface() {}
+
+public:
+	virtual double D() const { return 1./indexRatio(); }
+};
+
+/////////////////////////////////////////////////
+// Non ABCD optics
+
+class CreateBeam : public Optics
+{
+public:
+	CreateBeam(double waist, double waistPosition, std::string name = "");
+	CreateBeam* clone() const { return new CreateBeam(*this); }
+
+public:
+	Beam image(const Beam& inputBeam) const;
+	Beam antecedent(const Beam& outputBeam) const;
+
+public:
+	double waist() const { return m_waist; }
+	void setWaist(double waist);
+	void setBeam(const Beam& beam);
+
+private:
+	double m_waist;
+};
+
+/////////////////////////////////////////////////
+// ABCD optics
+
 class FreeSpace : public ABCD
 {
 public:
@@ -180,25 +279,29 @@ public:
 	FreeSpace* clone() const { return new FreeSpace(*this); }
 
 public:
-	double B() const { return width(); }
+	virtual double B() const { return width(); }
 };
 
-class Lens : public ABCD
+class Lens : public GenericLens
 {
 public:
 	Lens(double focal, double position, std::string name = "")
-		: ABCD(LensType, position, name) , m_focal(focal) {}
+		: GenericLens(LensType, focal, position, name) {}
 	Lens* clone() const { return new Lens(*this); }
+};
+
+/// @todo finish this
+class ThickLens : public GenericLens, public Dielectric
+{
+public:
+	ThickLens(double focal, double indexRatio, double position, std::string name = "")
+		: GenericLens(ThickLensType, focal, position, name), Dielectric(indexRatio) {}
+	ThickLens* clone() const { return new ThickLens(*this); }
 
 public:
-	double C() const { return -1./focal(); }
-
-public:
-	double focal() const { return m_focal; }
-	void setFocal(double focal);
-
-private:
-	double m_focal;
+	virtual double A() const { return -1./focal(); }
+	virtual double B() const { return -1./focal(); }
+	virtual double D() const { return -1./focal(); }
 };
 
 class FlatMirror : public ABCD
@@ -217,7 +320,7 @@ public:
 	CurvedMirror* clone() const { return new CurvedMirror(*this); }
 
 public:
- 	double C() const { return -2./curvatureRadius(); }
+ 	virtual double C() const { return -2./curvatureRadius(); }
 
 public:
 	double curvatureRadius() const { return m_curvatureRadius; }
@@ -227,42 +330,9 @@ protected:
 	double m_curvatureRadius;
 };
 
-/**
-* Virtual class
-*/
-class Interface : public ABCD
-{
-public:
-	/**
-	* Constructor
-	* @param indexRation ratio between the final index and the initial index
-	* @param position position of the interface
-	* @param name user name for the optics
-	*/
-	Interface(OpticsType type, double indexRatio, double position, std::string name = "")
-		: ABCD(type, position, name), m_indexRatio(indexRatio) {}
-	virtual ~Interface() {}
-
-public:
-	virtual double D() const { return 1./indexRatio(); }
-
-public:
-	double indexRatio() const { return m_indexRatio; }
-	void setIndexRatio(double indexRatio);
-
-protected:
-	double m_indexRatio;
-};
-
 class FlatInterface : public Interface
 {
 public:
-	/**
-	* Constructor
-	* @param indexRation ratio between the final index and the initial index
-	* @param position position of the interface
-	* @param name user name for the optics
-	*/
 	FlatInterface(double indexRatio, double position, std::string name = "")
 		: Interface(FlatInterfaceType, indexRatio, position, name) {}
 	FlatInterface* clone() const { return new FlatInterface(*this); }
@@ -271,19 +341,12 @@ public:
 class CurvedInterface : public Interface
 {
 public:
-	/**
-	* Constructor
-	* @param surfaceRadius curvature radius of the surface
-	* @param indexRation ratio between the final index and the initial index
-	* @param position position of the interface
-	* @param name user name for the optics
-	*/
 	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "")
 		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) {}
 	CurvedInterface* clone() const { return new CurvedInterface(*this); }
 
 public:
-	double C() const { return (1./indexRatio()-1.)/surfaceRadius(); }
+	virtual double C() const { return (1./indexRatio()-1.)/surfaceRadius(); }
 
 public:
 	double surfaceRadius() const { return m_surfaceRadius; }
@@ -291,6 +354,17 @@ public:
 
 protected:
 	double m_surfaceRadius;
+};
+
+class DielectricSlab : public ABCD, public Dielectric
+{
+public:
+	DielectricSlab(double indexRatio, double width, double position, std::string name = "")
+		: ABCD(DielectricSlabType, position, name), Dielectric(indexRatio) { setWidth(width); }
+	DielectricSlab* clone() const { return new DielectricSlab(*this); }
+
+public:
+	virtual double B() const { return width()/indexRatio(); }
 };
 
 class GenericABCD : public ABCD
@@ -307,10 +381,10 @@ public:
 	GenericABCD& operator*=(const ABCD& abcd1);
 
 public:
-	double A() const { return m_A; }
-	double B() const { return m_B; }
-	double C() const { return m_C; }
-	double D() const { return m_D; }
+	virtual double A() const { return m_A; }
+	virtual double B() const { return m_B; }
+	virtual double C() const { return m_C; }
+	virtual double D() const { return m_D; }
 
 /// @todo check if the given ABCD matrix is valid
 public:

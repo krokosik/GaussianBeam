@@ -92,6 +92,11 @@
     <string>Remove</string>
    </property>
   </action>
+  <action name="action_AddDielectricSlab" >
+   <property name="text" >
+    <string>&amp;Dielectric slab</string>
+   </property>
+  </action>
  </widget>
  <resources>
   <include location="GaussianBeamRessource.qrc" />

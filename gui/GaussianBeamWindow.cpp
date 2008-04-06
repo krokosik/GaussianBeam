@@ -124,6 +124,7 @@ void GaussianBeamWindow::on_action_AddOptics_triggered()
 	menu.addAction(action_AddCurvedMirror);
 	menu.addAction(action_AddFlatInterface);
 	menu.addAction(action_AddCurvedInterface);
+	menu.addAction(action_AddDielectricSlab);
 	menu.addAction(action_AddGenericABCD);
 	menu.exec(button->mapToGlobal(QPoint(0, button->height())));
 }

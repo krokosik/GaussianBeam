@@ -70,13 +70,13 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	}
 	int majorVersion = versionList[0].toInt();
 	int minorVersion = versionList[1].toInt();
-	qDebug() << "version" << majorVersion << minorVersion;
+	qDebug() << "File version" << majorVersion << minorVersion;
 	if ((majorVersion == 1) && (minorVersion == 0))
 	{
 		m_bench.removeOptics(0, m_bench.nOptics());
 		//parseXml10(root);
 	}
-	if ((majorVersion == 1) && (minorVersion == 1))
+	else if ((majorVersion == 1) && (minorVersion == 1))
 	{
 		m_bench.removeOptics(0, m_bench.nOptics());
 		parseXml(root);
@@ -98,6 +98,8 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 void GaussianBeamWindow::parseXml(const QDomElement& element)
 {
 	QDomElement child = element.firstChildElement();
+
+	qDebug() << "parseXml";
 
 	while (!child.isNull())
 	{
@@ -121,6 +123,8 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 			m_bench.setWavelength(child.text().toDouble());
 		else if (child.tagName() == "leftBoundary")
 			m_bench.setLeftBoundary(child.text().toDouble());
+		else if (child.tagName() == "rightBoundary")
+			m_bench.setRightBoundary(child.text().toDouble());
 		else if (child.tagName() == "targetBeam")
 		{
 			QDomElement targetBeamElement = child.firstChildElement();
@@ -205,6 +209,8 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 		optics = new FlatInterface(1., 1., "");
 	else if (element.tagName() == "curvedInterface")
 		optics = new CurvedInterface(1., 1., 1., "");
+	else if (element.tagName() == "dielectricSlab")
+		optics = new DielectricSlab(1., 1., 1., "");
 	else if (element.tagName() == "genericABCD")
 		optics = new GenericABCD(1., 1., 1., 1., 1., 1., "");
 	else
@@ -236,7 +242,7 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 		else if (child.tagName() == "curvatureRadius")
 			dynamic_cast<CurvedMirror*>(optics)->setCurvatureRadius(child.text().toDouble());
 		else if (child.tagName() == "indexRatio")
-			dynamic_cast<Interface*>(optics)->setIndexRatio(child.text().toDouble());
+			dynamic_cast<Dielectric*>(optics)->setIndexRatio(child.text().toDouble());
 		else if (child.tagName() == "surfaceRadius")
 			dynamic_cast<CurvedInterface*>(optics)->setSurfaceRadius(child.text().toDouble());
 		else if (child.tagName() == "A")
@@ -253,6 +259,7 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 		child = child.nextSiblingElement();
 	}
 
+	qDebug() << "GaussianBeamWindow::parseOptics add optics";
 	m_bench.addOptics(optics, m_bench.nOptics());
 }
 
@@ -361,6 +368,12 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 		xmlWriter.writeStartElement("curvedInterface");
 		xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const CurvedInterface*>(optics)->indexRatio()));
 		xmlWriter.writeTextElement("surfaceRadius", QString::number(dynamic_cast<const CurvedInterface*>(optics)->surfaceRadius()));
+	}
+	else if (optics->type() == DielectricSlabType)
+	{
+		xmlWriter.writeStartElement("dielectricSlab");
+		xmlWriter.writeTextElement("indexRatio", QString::number(dynamic_cast<const DielectricSlab*>(optics)->indexRatio()));
+		xmlWriter.writeTextElement("width", QString::number(optics->width()));
 	}
 	else if (optics->type() == GenericABCDType)
 	{

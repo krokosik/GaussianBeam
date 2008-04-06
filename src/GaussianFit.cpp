@@ -38,6 +38,17 @@ Fit::Fit(string name)
 		addData(0., 0.);
 }
 
+int Fit::nonZeroSize() const
+{
+	int result = 0;
+
+	for (int i = 0; i < size(); i++)
+		if (radius(i) > epsilon)
+			result++;
+
+	return result;
+}
+
 void Fit::setData(unsigned int index, double position, double value)
 {
 	if (m_positions.size() <= index)

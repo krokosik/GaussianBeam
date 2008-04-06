@@ -53,6 +53,7 @@ protected slots:
 	void on_action_AddFlatInterface_triggered()   { insertOptics(FlatInterfaceType);   }
 	void on_action_AddCurvedInterface_triggered() { insertOptics(CurvedInterfaceType); }
 	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
+	void on_action_AddDielectricSlab_triggered()  { insertOptics(DielectricSlabType);  }
 	void on_WavelengthSpinBox_valueChanged(double wavelength);
 
 // optics bench inherited virtual functions

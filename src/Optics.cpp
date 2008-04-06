@@ -168,9 +168,9 @@ void CreateBeam::setBeam(const Beam& beam)
 
 
 /////////////////////////////////////////////////
-// Lens class
+// GenericLens class
 
-void Lens::setFocal(double focal)
+void GenericLens::setFocal(double focal)
 {
 	if (focal != 0.)
 		m_focal = focal;
@@ -186,9 +186,9 @@ void CurvedMirror::setCurvatureRadius(double curvatureRadius)
 }
 
 /////////////////////////////////////////////////
-// Interface class
+// Dielectric class
 
-void Interface::setIndexRatio(double indexRatio)
+void Dielectric::setIndexRatio(double indexRatio)
 {
 	if (indexRatio > 0.)
 		m_indexRatio = indexRatio;
@@ -259,9 +259,5 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 	GenericABCD r(abcd1);
 	r *= abcd2;
 	return r;
-
-//	cerr << "Comp " << A << " " << B << " " << C << " " << D << endl;
-
-//	return GenericABCD(A, B, C, D, abcd1.width() + abcd2.width(), abcd1.position());
 }
 

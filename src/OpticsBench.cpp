@@ -47,6 +47,7 @@ OpticsBench::OpticsBench()
 	m_opticsPrefix[FlatInterfaceType]   = "I";
 	m_opticsPrefix[CurvedInterfaceType] = "C";
 	m_opticsPrefix[GenericABCDType]     = "G";
+	m_opticsPrefix[DielectricSlabType]  = "D";
 
 	m_firstCavityIndex = 0;
 	m_lastCavityIndex = 0;
@@ -174,8 +175,12 @@ void OpticsBench::addOptics(OpticsType opticsType, int index)
 		optics = new FlatInterface(1.5, 0.0, name);
 	else if (opticsType == CurvedInterfaceType)
 		optics = new CurvedInterface(0.1, 1.5, 0.0, name);
+	else if (opticsType == DielectricSlabType)
+		optics = new DielectricSlab(1.5, 0.1, 0.0, name);
 	else if (opticsType == GenericABCDType)
 		optics = new GenericABCD(1.0, 0.2, 0.0, 1.0, 0.1, 0.0, name);
+	else
+		return;
 
 	if (index > 0)
 		optics->setPosition(OpticsBench::optics(index-1)->position() + 0.05);
@@ -185,6 +190,7 @@ void OpticsBench::addOptics(OpticsType opticsType, int index)
 
 void OpticsBench::removeOptics(int index, int count)
 {
+	cerr << "Remove optics" << index << count << endl;
 	for (int i = index; i < index + count; i++)
 	{
 		delete m_optics[index];
@@ -192,10 +198,15 @@ void OpticsBench::removeOptics(int index, int count)
 		m_beams.erase(m_beams.begin() + index);
 	}
 
+	cerr << " notifying" << endl;
+
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsRemoved(index, count);
 
+	cerr << " computing beams" << endl;
+
 	computeBeams(index);
+	cerr << " done" << endl;
 }
 
 int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)

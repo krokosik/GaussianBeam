@@ -37,6 +37,7 @@ public:
 
 public:
 	int size() const { return m_positions.size(); }
+	int nonZeroSize() const;
 	std::string name() const { return m_name; }
 	void setName(std::string name) { m_name = name; }
 	FitDataType dataType() const { return m_dataType; }

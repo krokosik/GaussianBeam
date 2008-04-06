@@ -144,7 +144,7 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 			if (m_bench.opticsIndex(opticsItem->optics()) == -1)
 				removeItem(graphicsItem);
 
-	for (int i = index; i < index + count; i++)
+	for (int i = index + count - 1; i >= index; i--)
 	{
 		removeItem(m_beamItems[i]);
 		m_beamItems.removeAt(i);

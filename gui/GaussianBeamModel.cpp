@@ -85,6 +85,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			       QString("\nR = ") + QString::number(optics->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
 			                       + Units::getUnit(UnitCurvature).string("m");
 		}
+		else if (m_bench.optics(row)->type() == DielectricSlabType)
+		{
+			const DielectricSlab* optics = dynamic_cast<const DielectricSlab*>(m_bench.optics(row));
+			return QString("n2/n1 = ") + QString::number(optics->indexRatio()) +
+			       QString("\n") + tr("width") + " = " + QString::number(m_bench.optics(row)->width()*Units::getUnit(UnitWidth).divider())
+			                       + Units::getUnit(UnitWidth).string("m");
+		}
 		else if (m_bench.optics(row)->type() == GenericABCDType)
 		{
 			const ABCD* optics = dynamic_cast<const ABCD*>(m_bench.optics(row));
@@ -339,6 +346,8 @@ QString GaussianBeamModel::opticsName(OpticsType opticsType) const
 		return tr("Input beam");
 	else if (opticsType == LensType)
 		return tr("Lens");
+	else if (opticsType == ThickLensType)
+		return tr("Thick lens");
 	else if (opticsType == FlatMirrorType)
 		return tr("Flat Mirror");
 	else if (opticsType == CurvedMirrorType)
@@ -347,6 +356,10 @@ QString GaussianBeamModel::opticsName(OpticsType opticsType) const
 		return tr("Flat interface");
 	else if (opticsType == CurvedInterfaceType)
 		return tr("Curved interface");
+	else if (opticsType == DielectricSlabType)
+		return tr("Dielectric slab");
+	else if (opticsType == ThermalLensType)
+		return tr("Thermal lens");
 	else if (opticsType == GenericABCDType)
 		return tr("Generic ABCD");
 

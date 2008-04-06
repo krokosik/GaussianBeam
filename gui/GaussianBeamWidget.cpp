@@ -211,7 +211,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 			fitModel->setData(fitModel->index(i, 1), QString(""));
 	}
 
-	if (fit.size() <= 1)
+	if (fit.nonZeroSize() <= 1)
 	{
 		pushButton_SetInputBeam->setEnabled(false);
 		pushButton_SetTargetBeam->setEnabled(false);
@@ -285,7 +285,7 @@ void GaussianBeamWidget::on_pushButton_FitColor_clicked()
 void GaussianBeamWidget::on_comboBox_FitData_currentIndexChanged(int dataIndex)
 {
 	int index = comboBox_Fit->currentIndex();
-	if (index < 0)
+	if ((index < 0) || m_updatingFit)
 		return;
 
 	Fit& fit = m_bench.fit(index);
