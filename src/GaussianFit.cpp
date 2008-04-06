@@ -31,7 +31,11 @@ Fit::Fit(string name)
 	m_name = name;
 	m_dirty = true;
 	m_lastWavelength = 0.;
-	m_dataType = Radius_e2;
+	m_dataType = Diameter_e2;
+	m_color = 0;
+
+	for (int i = 0; i < 3; i++)
+		addData(0., 0.);
 }
 
 void Fit::setData(unsigned int index, double position, double value)
@@ -54,16 +58,24 @@ void Fit::addData(double position, double value)
 	m_dirty = true;
 }
 
+void Fit::removeData(unsigned int index)
+{
+	m_positions.erase(m_positions.begin() + index);
+	m_values.erase(m_values.begin() + index);
+}
+
 double Fit::radius(unsigned int index) const
 {
 	if (m_dataType == Radius_e2)
 		return m_values[index];
 	else if (m_dataType == Diameter_e2)
 		return m_values[index]/2.;
-	else  if (m_dataType == FWHM)
-		return m_values[index]/(2.*sqrt(log(2.)));
 	else  if (m_dataType == standardDeviation)
-		return m_values[index]*sqrt(2.);
+		return m_values[index]*2.;
+	else  if (m_dataType == FWHM)
+		return m_values[index]/sqrt(2.*log(2.));
+	else  if (m_dataType == HWHM)
+		return m_values[index]*sqrt(2./log(2.));
 
 	return 0.;
 }

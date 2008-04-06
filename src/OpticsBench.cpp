@@ -79,7 +79,7 @@ int OpticsBench::nFit() const
 	return m_fits.size();
 }
 
-Fit& OpticsBench::addFit(int index)
+Fit& OpticsBench::addFit(unsigned int index)
 {
 	m_fits.insert(m_fits.begin() + index, Fit());
 
@@ -95,7 +95,7 @@ Fit& OpticsBench::fit(unsigned int index)
 		return m_fits[index];
 }
 
-void OpticsBench::removeFit(int index)
+void OpticsBench::removeFit(unsigned int index)
 {
 	m_fits.erase(m_fits.begin() + index);
 

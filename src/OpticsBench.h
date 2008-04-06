@@ -103,9 +103,9 @@ public:
 
 	/// Waist fit
 	int nFit() const;
-	Fit& addFit(int index);
+	Fit& addFit(unsigned int index);
 	Fit& fit(unsigned int index);
-	void removeFit(int index);
+	void removeFit(unsigned int index);
 	/**
 	* If you modified a Fit class obtained by the fit function, call this
 	* function to notify this modification

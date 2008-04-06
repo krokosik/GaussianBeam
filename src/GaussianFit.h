@@ -23,7 +23,7 @@
 
 #include <vector>
 
-enum FitDataType {Radius_e2 = 0, Diameter_e2, FWHM, standardDeviation};
+enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 
 /**
 * Find the waist radius and position for a given set of radii measurement of a Gaussian beam
@@ -48,6 +48,7 @@ public:
 	double radius(unsigned int index) const;
 	void addData(double position, double value);
 	void setData(unsigned int index, double position, double value);
+	void removeData(unsigned int index);
 	void clear();
 	const Beam& beam(double wavelength) const;
 	double rho2(double wavelength) const;

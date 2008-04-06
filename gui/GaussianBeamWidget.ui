@@ -348,7 +348,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_fitColor" >
+            <widget class="QPushButton" name="pushButton_FitColor" >
              <property name="text" >
               <string/>
              </property>
@@ -366,8 +366,33 @@
          <item>
           <widget class="QComboBox" name="comboBox_FitData" >
            <property name="currentIndex" >
-            <number>-1</number>
+            <number>0</number>
            </property>
+           <item>
+            <property name="text" >
+             <string>Radius @ 1/e²</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>Diameter @ 1/e²</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>Standard deviation</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>FWHM</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>HWHM</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>

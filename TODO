@@ -40,3 +40,4 @@ CONSTANT VIGILENCE:
 	Valgrind
 	rowCount() -> nOptics() ?
 	API documentation
+	check that .c_str() stl strings are enclosed in a QString::fromUtf8

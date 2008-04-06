@@ -109,8 +109,6 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 	m_targetBeamItem->setPos(0., 0.);
 	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
 	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
-
-	/// @todo this should go to a "fit changed" bench event
 }
 
 void OpticsScene::OpticsBenchTargetBeamChanged()
@@ -153,12 +151,12 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 	}
 }
 
-void OpticsScene::addFitPoint(double position, double radius)
+void OpticsScene::addFitPoint(double position, double radius, QRgb color)
 {
 	QGraphicsEllipseItem* fitItem = new QGraphicsEllipseItem(-2., -2., 4., 4.);
 	fitItem->setFlags(fitItem->flags() | QGraphicsItem::ItemIgnoresTransformations);
-	fitItem->setPen(QPen(Qt::black));
-	fitItem->setBrush(QBrush(Qt::black));
+	fitItem->setPen(QPen(color));
+	fitItem->setBrush(QBrush(color));
 	fitItem->setPos(position, radius);
 	fitItem->setZValue(2.);
 	m_fitItems.push_back(fitItem);
@@ -177,11 +175,15 @@ void OpticsScene::OpticsBenchFitDataChanged(int index)
 	}
 
 	for (int index = 0; index < m_bench.nFit(); index++)
-		for (int i = 0; i < m_bench.fit(index).size(); i++)
-		{
-			addFitPoint(m_bench.fit(index).position(i), -m_bench.fit(index).radius(i));
-			addFitPoint(m_bench.fit(index).position(i), m_bench.fit(index).radius(i));
-		}
+	{
+		Fit& fit = m_bench.fit(index);
+		for (int i = 0; i < fit.size(); i++)
+			if (fit.value(i) != 0.)
+			{
+				addFitPoint(fit.position(i), -fit.radius(i), fit.color());
+				addFitPoint(fit.position(i),  fit.radius(i), fit.color());
+			}
+	}
 }
 
 void OpticsScene::drawItems(QPainter* painter, int numItems, QGraphicsItem* items[], const QStyleOptionGraphicsItem options[], QWidget* widget)

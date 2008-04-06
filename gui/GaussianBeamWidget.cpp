@@ -31,6 +31,7 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QColorDialog>
+#include <QInputDialog>
 
 #include <cmath>
 
@@ -39,6 +40,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	, OpticsBenchNotify(bench)
 	, m_opticsScene(opticsScene)
 {
+	m_updatingFit = false;
 	setupUi(this);
 	//toolBox->setSizeHint(100);
 	//toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));
@@ -57,7 +59,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 #endif
 
 	// Waist fit
-	fitModel = new QStandardItemModel(5, 2, this);
+	fitModel = new QStandardItemModel(0, 2, this);
 	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)");
 	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).prefix() + "m)");
 	fitTable->setModel(fitModel);
@@ -67,13 +69,10 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	fitTable->setSelectionModel(fitSelectionModel);
 	fitTable->setColumnWidth(0, 82);
 	fitTable->setColumnWidth(1, 82);
-	comboBox_FitData->insertItem(0, tr("Radius @ 1/e²"));
-	comboBox_FitData->insertItem(1, tr("Diameter @ 1/e²"));
-	comboBox_FitData->setCurrentIndex(1);
 
 	// Connect slots
 	connect(fitModel, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
-	        this, SLOT(refreshFit(const QModelIndex&, const QModelIndex&)));
+	        this, SLOT(fitModelChanged(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
 	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength()));
@@ -182,60 +181,160 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 ///////////////////////////////////////////////////////////
 // FIT PAGE
 
-void GaussianBeamWidget::OpticsBenchFitAdded(int index)
+void GaussianBeamWidget::updateFitInformation(int index)
 {
-	qDebug() << "Insert it item" << index;
-	comboBox_Fit->insertItem(index, m_bench.fit(index).name().c_str());
-}
+	qDebug() << "updateFitInformation" << index;
 
-void GaussianBeamWidget::refreshFit(const QModelIndex& start, const QModelIndex& stop)
-{
-	Q_UNUSED(start);
-	Q_UNUSED(stop);
+	m_updatingFit = true;
+	Fit& fit = m_bench.fit(index);
+	comboBox_Fit->setItemText(index, QString::fromUtf8(fit.name().c_str()));
+	pushButton_FitColor->setPalette(QPalette(QColor(fit.color())));
+	comboBox_FitData->setCurrentIndex(int(fit.dataType()));
 
-	double factor = 1.;
-	if (comboBox_FitData->currentIndex() == 1)
-		factor = 0.5;
+	if (fit.size() > fitModel->rowCount())
+		for (int i = 0; i < fit.size() - fitModel->rowCount(); i++)
+			fitModel->insertRow(0);
+	else if (fit.size() < fitModel->rowCount())
+		for (int i = 0; i < fitModel->rowCount() - fit.size(); i++)
+			qDebug() << fitModel->removeRow(0);
 
-	Fit& fit = m_bench.fit(0);
-	fit.clear();
+	for (int i = 0; i < fit.size(); i++)
+	{
+		if ((fit.position(i) != 0.) || (fit.value(i) != 0.))
+			fitModel->setData(fitModel->index(i, 0), fit.position(i)*Units::getUnit(UnitPosition).divider());
+		else
+			fitModel->setData(fitModel->index(i, 0), QString(""));
 
-	for (int row = 0; row < fitModel->rowCount(); ++row)
-		if (fitModel->data(fitModel->index(row, 1)).toDouble() != 0.)
-		{
-			double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
-			double radius = factor*fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
-			fit.addData(position, radius);
-		}
+		if (fit.value(i) != 0.)
+			fitModel->setData(fitModel->index(i, 1), fit.value(i)*Units::getUnit(UnitWaist).divider());
+		else
+			fitModel->setData(fitModel->index(i, 1), QString(""));
+	}
 
 	if (fit.size() <= 1)
 	{
 		pushButton_SetInputBeam->setEnabled(false);
 		pushButton_SetTargetBeam->setEnabled(false);
 		label_FitResult->setText(QString());
-		m_bench.notifyFitChange(0);
-		return;
+	}
+	else
+	{
+		Beam fitBeam = fit.beam(m_bench.wavelength());
+		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
+					tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
+					tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
+		label_FitResult->setText(text);
+		pushButton_SetInputBeam->setEnabled(true);
+		pushButton_SetTargetBeam->setEnabled(true);
 	}
 
-	Beam fitBeam = fit.beam(m_bench.wavelength());
-	QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
-	               tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
-	               tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
-	label_FitResult->setText(text);
-	pushButton_SetInputBeam->setEnabled(true);
-	pushButton_SetTargetBeam->setEnabled(true);
-
-	m_bench.notifyFitChange(0);
+	m_updatingFit = false;
 }
 
-void GaussianBeamWidget::on_pushButton_fitColor_clicked()
+// Control callback
+
+void GaussianBeamWidget::on_comboBox_Fit_currentIndexChanged(int index)
 {
+	if (index < 0)
+		return;
+	updateFitInformation(index);
+}
+
+void GaussianBeamWidget::on_pushButton_AddFit_clicked()
+{
+	m_bench.addFit(m_bench.nFit());
+}
+
+void GaussianBeamWidget::on_pushButton_RemoveFit_clicked()
+{
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	m_bench.removeFit(index);
+}
+
+void GaussianBeamWidget::on_pushButton_RenameFit_clicked()
+{
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	bool ok;
+	QString text = QInputDialog::getText(this, tr("Rename fit)"),
+		tr("Enter a new name for the current fit:"), QLineEdit::Normal,
+		m_bench.fit(index).name().c_str(), &ok);
+	if (ok && !text.isEmpty())
+	{
+		m_bench.fit(index).setName(text.toUtf8().data());
+		m_bench.notifyFitChange(index);
+	}
+}
+
+void GaussianBeamWidget::on_pushButton_FitColor_clicked()
+{
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
 	QColor color = QColorDialog::getColor(Qt::black, this);
+	m_bench.fit(index).setColor(color.rgb());
+	m_bench.notifyFitChange(index);
 }
 
-void GaussianBeamWidget::on_comboBox_FitData_currentIndexChanged(int index)
+void GaussianBeamWidget::on_comboBox_FitData_currentIndexChanged(int dataIndex)
 {
-	refreshFit();
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	Fit& fit = m_bench.fit(index);
+	fit.setDataType(FitDataType(dataIndex));
+	m_bench.notifyFitChange(index);
+}
+
+void GaussianBeamWidget::fitModelChanged(const QModelIndex& start, const QModelIndex& stop)
+{
+	int index = comboBox_Fit->currentIndex();
+	if ((index < 0) || m_updatingFit)
+		return;
+
+	Fit& fit = m_bench.fit(index);
+
+	qDebug() << start.row() << stop.row();
+
+	for (int row = start.row(); row <= stop.row(); row++)
+	{
+		double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
+		double value = fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
+		qDebug() << "Fit changed" << row << position << value;
+		fit.setData(row, position, value);
+	}
+
+	m_bench.notifyFitChange(index);
+}
+
+void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
+{
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	m_bench.fit(index).addData(0., 0.);
+	m_bench.notifyFitChange(index);
+}
+
+void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
+{
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	for (int row = fitModel->rowCount() - 1; row >= 0; row--)
+		if (fitSelectionModel->isRowSelected(row, QModelIndex()) && (row < m_bench.fit(index).size()))
+			m_bench.fit(index).removeData(row);
+
+	m_bench.notifyFitChange(index);
 }
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
@@ -249,20 +348,26 @@ void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 	m_bench.setTargetBeam(fitBeam);
 }
 
-void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
+// OpticsBench callbacks
+
+void GaussianBeamWidget::OpticsBenchFitAdded(int index)
 {
-	QModelIndex index = fitTable->selectionModel()->currentIndex();
-	int row = fitModel->rowCount();
-	if (index.isValid())
-		row = index.row() + 1;
-	fitModel->insertRow(row);
+	qDebug() << "Insert fit item" << index;
+	comboBox_Fit->insertItem(index, QString::fromUtf8(m_bench.fit(index).name().c_str()));
+	comboBox_Fit->setCurrentIndex(index);
 }
 
-void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
+void GaussianBeamWidget::OpticsBenchFitRemoved(int index)
 {
-	for (int row = fitModel->rowCount() - 1; row >= 0; row--)
-		if (fitSelectionModel->isRowSelected(row, QModelIndex()))
-			fitModel->removeRow(row);
+	qDebug() << "Remove fit item" << index;
+	comboBox_Fit->removeItem(index);
+}
 
-	/// @todo notify the bench that the fit values have changed
+void GaussianBeamWidget::OpticsBenchFitDataChanged(int index)
+{
+	int comboIndex = comboBox_Fit->currentIndex();
+	if ((comboIndex < 0) || (comboIndex != index))
+		return;
+
+	updateFitInformation(index);
 }

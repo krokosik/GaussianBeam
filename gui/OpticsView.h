@@ -56,7 +56,7 @@ private:
 	void OpticsBenchFitDataChanged(int index);
 
 private:
-	void addFitPoint(double position, double radius);
+	void addFitPoint(double position, double radius, QRgb color);
 
 private:
 	QList<BeamItem*> m_beamItems;
