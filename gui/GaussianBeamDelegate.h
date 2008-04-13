@@ -28,45 +28,33 @@
 
 class GaussianBeamModel;
 
-class ABCDWidget : public QWidget
+class EditorProperty
 {
-	Q_OBJECT
+public:
+	EditorProperty(double a_minimum, double a_maximum, QString a_prefix, QString a_suffix)
+		: minimum(a_minimum), maximum(a_maximum), prefix(a_prefix), suffix(a_suffix) {}
 
 public:
-	ABCDWidget(QWidget* parent = 0);
-
-public:
-	double A() { return m_ADoubleSpinBox.value(); }
-	double B() { return m_BDoubleSpinBox.value(); }
-	double C() { return m_CDoubleSpinBox.value(); }
-	double D() { return m_DDoubleSpinBox.value(); }
-	double width() { return m_widthDoubleSpinBox.value(); }
-	void setA(double A) { m_ADoubleSpinBox.setValue(A); }
-	void setB(double B) { m_BDoubleSpinBox.setValue(B); }
-	void setC(double C) { m_CDoubleSpinBox.setValue(C); }
-	void setD(double D) { m_DDoubleSpinBox.setValue(D); }
-	void setWidth(double width) { m_widthDoubleSpinBox.setValue(width); };
-
-private:
-	QDoubleSpinBox m_ADoubleSpinBox, m_BDoubleSpinBox, m_CDoubleSpinBox, m_DDoubleSpinBox;
-	QDoubleSpinBox m_widthDoubleSpinBox;
+	double minimum;
+	double maximum;
+	QString prefix;
+	QString suffix;
 };
 
-class CurvedInterfaceWidget : public QWidget
+class PropertyEditor : public QWidget
 {
 	Q_OBJECT
 
 public:
-	CurvedInterfaceWidget(QWidget* parent = 0);
+	PropertyEditor(QList<EditorProperty>& properties, QWidget* parent = 0);
 
 public:
-	double surfaceRadius() { return m_surfaceRadiusDoubleSpinBox.value(); }
-	double indexRatio() { return m_indexRatioDoubleSpinBox.value(); }
-	void setSurfaceRadius(double surfaceRadius) { m_surfaceRadiusDoubleSpinBox.setValue(surfaceRadius); }
-	void setIndexRatio(double indexRatio) { m_indexRatioDoubleSpinBox.setValue(indexRatio); }
+	double value(int index) const { return m_doubleSpinBoxes[index]->value(); }
+	QList<QVariant> values() const;
+	void setValue(int index, double value) { m_doubleSpinBoxes[index]->setValue(value); }
 
 private:
-	QDoubleSpinBox m_surfaceRadiusDoubleSpinBox, m_indexRatioDoubleSpinBox;
+	QList<QDoubleSpinBox*> m_doubleSpinBoxes;
 };
 
 class GaussianBeamDelegate : public QItemDelegate

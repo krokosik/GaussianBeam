@@ -22,56 +22,36 @@
 
 #include <QtGui>
 
-ABCDWidget::ABCDWidget(QWidget* parent)
+PropertyEditor::PropertyEditor(QList<EditorProperty>& properties, QWidget* parent)
 	: QWidget(parent)
 {
-	m_ADoubleSpinBox.setPrefix("A = ");
-	m_ADoubleSpinBox.setMinimum(-Unit::infinity);
-	m_ADoubleSpinBox.setMaximum(Unit::infinity);
-	m_BDoubleSpinBox.setPrefix("B = ");
-	m_BDoubleSpinBox.setMinimum(-Unit::infinity);
-	m_BDoubleSpinBox.setMaximum(Unit::infinity);
-	m_CDoubleSpinBox.setPrefix("C = ");
-	m_CDoubleSpinBox.setMinimum(-Unit::infinity);
-	m_CDoubleSpinBox.setMaximum(Unit::infinity);
-	m_DDoubleSpinBox.setPrefix("D = ");
-	m_DDoubleSpinBox.setMinimum(-Unit::infinity);
-	m_DDoubleSpinBox.setMaximum(Unit::infinity);
-	m_BDoubleSpinBox.setSuffix(Units::getUnit(UnitABCD).string("m"));
-	m_CDoubleSpinBox.setSuffix(" /" + Units::getUnit(UnitABCD).string("m", false));
-	m_widthDoubleSpinBox.setPrefix("width = ");
-	m_widthDoubleSpinBox.setSuffix(Units::getUnit(UnitWidth).string("m"));
-	m_widthDoubleSpinBox.setMinimum(0.);
-	m_widthDoubleSpinBox.setMaximum(Unit::infinity);
-
 	QVBoxLayout *layout = new QVBoxLayout(this);
 	layout->setMargin(0);
 	layout->setSpacing(0);
-	layout->addWidget(&m_ADoubleSpinBox);
-	layout->addWidget(&m_BDoubleSpinBox);
-	layout->addWidget(&m_CDoubleSpinBox);
-	layout->addWidget(&m_DDoubleSpinBox);
-	layout->addWidget(&m_widthDoubleSpinBox);
+
+	foreach (EditorProperty property, properties)
+	{
+		QDoubleSpinBox* spinBox = new QDoubleSpinBox(this);
+		spinBox->setAccelerated(true);
+		spinBox->setMinimum(property.minimum);
+		spinBox->setMaximum(property.maximum);
+		spinBox->setPrefix(property.prefix);
+		spinBox->setSuffix(property.suffix);
+		layout->addWidget(spinBox);
+		m_doubleSpinBoxes << spinBox;
+	}
+
 	setLayout(layout);
 }
 
-CurvedInterfaceWidget::CurvedInterfaceWidget(QWidget* parent)
-	: QWidget(parent)
+QList<QVariant> PropertyEditor::values() const
 {
-	m_surfaceRadiusDoubleSpinBox.setPrefix("R = ");
-	m_surfaceRadiusDoubleSpinBox.setMinimum(-Unit::infinity);
-	m_surfaceRadiusDoubleSpinBox.setMaximum(Unit::infinity);
-	m_surfaceRadiusDoubleSpinBox.setSuffix(Units::getUnit(UnitCurvature).string("m"));
-	m_indexRatioDoubleSpinBox.setPrefix("n2/n1 = ");
-	m_indexRatioDoubleSpinBox.setMinimum(0.);
-	m_indexRatioDoubleSpinBox.setMaximum(Unit::infinity);
+	QList<QVariant> properties;
 
-	QVBoxLayout *layout = new QVBoxLayout(this);
-	layout->setMargin(0);
-	layout->setSpacing(0);
-	layout->addWidget(&m_indexRatioDoubleSpinBox);
-	layout->addWidget(&m_surfaceRadiusDoubleSpinBox);
-	setLayout(layout);
+	foreach (QDoubleSpinBox* spinBox, m_doubleSpinBoxes)
+		properties << spinBox->value();
+
+	return properties;
 }
 
 GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench& bench)
@@ -114,42 +94,27 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case PropertiesColumn:
 	{
-		if (optics->type() == CurvedInterfaceType)
-		{
-			CurvedInterfaceWidget* editor = new CurvedInterfaceWidget(parent);
-			return editor;
-		}
-		else if (optics->type() == GenericABCDType)
-		{
-			ABCDWidget* editor = new ABCDWidget(parent);
-			return editor;
-		}
-
-		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
-		editor->setAccelerated(true);
-		editor->setMinimum(-Unit::infinity);
-		editor->setMaximum(Unit::infinity);
+		QList<EditorProperty> properties;
 		if (optics->type() == LensType)
-		{
-			editor->setPrefix("f = ");
-			editor->setSuffix(Units::getUnit(UnitFocal).string("m"));
-		}
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string("m"));
 		else if (optics->type() == CurvedMirrorType)
-		{
-			editor->setPrefix("R = ");
-			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
-		}
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string("m"));
 		else if (optics->type() == FlatInterfaceType)
-		{
-			editor->setMinimum(0.);
-			editor->setPrefix("n2/n1 = ");
-		}
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "");
 		else if (optics->type() == CurvedInterfaceType)
-		{
-			editor->setPrefix("R = ");
-			editor->setSuffix(Units::getUnit(UnitCurvature).string("m"));
-		}
-		return editor;
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string("m"));
+		else if (optics->type() == DielectricSlabType)
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
+			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string("m"));
+		else if (optics->type() == GenericABCDType)
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "A = ", "")
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "B = ", Units::getUnit(UnitABCD).string("m"))
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string("m", false))
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "D = ", "")
+			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string("m"));
+
+		return new PropertyEditor(properties, parent);
 	}
 	case NameColumn:
 	{
@@ -200,35 +165,36 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	}
 	case PropertiesColumn:
 	{
-		if (optics->type() == CurvedInterfaceType)
+		PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
+		if (optics->type() == LensType)
+			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider());
+		else if (optics->type() == CurvedMirrorType)
+			propertyEditor->setValue(0, dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Units::getUnit(UnitCurvature).divider());
+		else if (optics->type() == FlatInterfaceType)
+			propertyEditor->setValue(0, dynamic_cast<const FlatInterface*>(optics)->indexRatio());
+		else if (optics->type() == CurvedInterfaceType)
 		{
 			const CurvedInterface* curvedInterface = dynamic_cast<const CurvedInterface*>(optics);
-			CurvedInterfaceWidget* widget = static_cast<CurvedInterfaceWidget*>(editor);
-			widget->setSurfaceRadius(curvedInterface->surfaceRadius()*Units::getUnit(UnitCurvature).divider());
-			widget->setIndexRatio(curvedInterface->indexRatio());
-			break;
+			propertyEditor->setValue(0, curvedInterface->indexRatio());
+			propertyEditor->setValue(1, curvedInterface->surfaceRadius()*Units::getUnit(UnitCurvature).divider());
 		}
 		else if (optics->type() == GenericABCDType)
 		{
 			const GenericABCD* ABCDOptics = dynamic_cast<const GenericABCD*>(optics);
-			ABCDWidget* widget = static_cast<ABCDWidget*>(editor);
-			widget->setA(ABCDOptics->A());
-			widget->setB(ABCDOptics->B()*Units::getUnit(UnitABCD).divider());
-			widget->setC(ABCDOptics->C()/Units::getUnit(UnitABCD).divider());
-			widget->setD(ABCDOptics->D());
-			widget->setWidth(ABCDOptics->width()*Units::getUnit(UnitWidth).divider());
+			propertyEditor->setValue(0, ABCDOptics->A());
+			propertyEditor->setValue(1, ABCDOptics->B()*Units::getUnit(UnitABCD).divider());
+			propertyEditor->setValue(2, ABCDOptics->C()/Units::getUnit(UnitABCD).divider());
+			propertyEditor->setValue(3, ABCDOptics->D());
+			propertyEditor->setValue(4, ABCDOptics->width()*Units::getUnit(UnitWidth).divider());
 			break;
 		}
+		else if (optics->type() == DielectricSlabType)
+		{
+			const DielectricSlab* dielectricSlab = dynamic_cast<const DielectricSlab*>(optics);
+			propertyEditor->setValue(0, dielectricSlab->indexRatio());
+			propertyEditor->setValue(1, dielectricSlab->width()*Units::getUnit(UnitWidth).divider());
+		}
 
-		double value = 0.;
-		if (optics->type() == LensType)
-			value = dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider();
-		else if (optics->type() == CurvedMirrorType)
-			value = dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Units::getUnit(UnitCurvature).divider();
-		else if (optics->type() == FlatInterfaceType)
-			value = dynamic_cast<const FlatInterface*>(optics)->indexRatio();
-		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
-		spinBox->setValue(value);
 		break;
 	}
 	case NameColumn:
@@ -270,27 +236,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	}
 	case PropertiesColumn:
 	{
-		if (optics->type() == CurvedInterfaceType)
-		{
-			CurvedInterfaceWidget* widget = static_cast<CurvedInterfaceWidget*>(editor);
-			QList<QVariant> propertyList;
-			propertyList.push_back(widget->surfaceRadius());
-			propertyList.push_back(widget->indexRatio());
-			model->setData(index, propertyList);
-		}
-		else if (optics->type() == GenericABCDType)
-		{
-			ABCDWidget* widget = static_cast<ABCDWidget*>(editor);
-			QList<QVariant> propertyList;
-			propertyList.push_back(widget->A());
-			propertyList.push_back(widget->B());
-			propertyList.push_back(widget->C());
-			propertyList.push_back(widget->D());
-			propertyList.push_back(widget->width());
-			model->setData(index, propertyList);
-		}
-		else
-			QItemDelegate::setModelData(editor, model, index);
+		model->setData(index, static_cast<PropertyEditor*>(editor)->values());
 		break;
 	}
 	default:

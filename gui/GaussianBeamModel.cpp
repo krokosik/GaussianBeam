@@ -196,17 +196,22 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		Optics* optics = m_bench.opticsForPropertyChange(row);
 
 		if (optics->type() == LensType)
-			dynamic_cast<Lens*>(optics)->setFocal(value.toDouble()*Units::getUnit(UnitFocal).multiplier());
+			dynamic_cast<Lens*>(optics)->setFocal(value.toList()[0].toDouble()*Units::getUnit(UnitFocal).multiplier());
 		else if (optics->type() == CurvedMirrorType)
-			dynamic_cast<CurvedMirror*>(optics)->setCurvatureRadius(value.toDouble()*Units::getUnit(UnitCurvature).multiplier());
+			dynamic_cast<CurvedMirror*>(optics)->setCurvatureRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
 		else if (optics->type() == FlatInterfaceType)
-			dynamic_cast<FlatInterface*>(optics)->setIndexRatio(value.toDouble());
+			dynamic_cast<FlatInterface*>(optics)->setIndexRatio(value.toList()[0].toDouble());
 		else if (optics->type() == CurvedInterfaceType)
 		{
-			qDebug() << "setData for CurvedInterfaceType" << value.toList()[0].toDouble() << value.toList()[1].toDouble();
 			CurvedInterface* curvedInterfaceOptics = dynamic_cast<CurvedInterface*>(optics);
-			curvedInterfaceOptics->setSurfaceRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
-			curvedInterfaceOptics->setIndexRatio(value.toList()[1].toDouble());
+			curvedInterfaceOptics->setIndexRatio(value.toList()[0].toDouble());
+			curvedInterfaceOptics->setSurfaceRadius(value.toList()[1].toDouble()*Units::getUnit(UnitCurvature).multiplier());
+		}
+		else if (optics->type() == DielectricSlabType)
+		{
+			DielectricSlab* dielectricSlabOptics = dynamic_cast<DielectricSlab*>(optics);
+			dielectricSlabOptics->setIndexRatio(value.toList()[0].toDouble());
+			dielectricSlabOptics->setWidth(value.toList()[1].toDouble()*Units::getUnit(UnitWidth).multiplier());
 		}
 		else if (m_bench.optics(row)->type() == GenericABCDType)
 		{
