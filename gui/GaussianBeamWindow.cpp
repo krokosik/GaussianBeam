@@ -152,7 +152,7 @@ void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 {
 	QModelIndex index = m_selectionModel->currentIndex();
 	int row = m_model->rowCount();
-	if (index.isValid())
+	if (index.isValid() && m_selectionModel->hasSelection())
 		row = index.row() + 1;
 
 	m_bench.addOptics(opticsType, row);

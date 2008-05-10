@@ -35,7 +35,7 @@
 
 #include <cmath>
 
-GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget *parent)
+GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget* parent)
 	: QWidget(parent)
 	, OpticsBenchNotify(bench)
 	, m_opticsScene(opticsScene)

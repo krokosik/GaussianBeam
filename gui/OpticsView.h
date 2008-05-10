@@ -35,7 +35,7 @@ class QComboBox;
 class OpticsItem;
 class BeamItem;
 class RullerSlider;
-class ZoomSlider;
+class OpticsViewProperties;
 
 class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 {
@@ -44,9 +44,6 @@ public:
 
 public:
 	void showTargetBeam(bool show = true);
-
-protected:
-	virtual void drawItems(QPainter* painter, int numItems, QGraphicsItem* items[], const QStyleOptionGraphicsItem options[], QWidget * widget = 0);
 
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
@@ -66,8 +63,6 @@ private:
 
 class OpticsView : public QGraphicsView
 {
-	Q_OBJECT
-
 public:
 	OpticsView(QGraphicsScene* scene);
 
@@ -77,21 +72,23 @@ public:
 	void setVerticalRange(double verticalRange);
 	double horizontalRange() { return m_horizontalRange; }
 	void setHorizontalRange(double horizontalRange);
+	void showProperties(bool show = true);
+	bool propertiesVisible();
 
 /// Inherited protected functions
 protected:
 	virtual void resizeEvent(QResizeEvent* event);
 	virtual void wheelEvent(QWheelEvent* event);
 	virtual void mouseMoveEvent(QMouseEvent* e);
-	virtual void showEvent(QShowEvent* event);
 	virtual void drawBackground(QPainter* painter, const QRectF& rect);
 
 private:
 	void adjustRange();
 
 private:
+	OpticsViewProperties* m_opticsViewProperties;
 	RullerSlider* m_horizontalRuller;
-	ZoomSlider* m_verticalRuller;
+	RullerSlider* m_verticalRuller;
 	QStatusBar* m_statusBar;
 	double m_horizontalRange;
 	double m_verticalRange;
@@ -116,7 +113,6 @@ public:
 	void setUpdate(bool update) { m_update = update; }
 	const Optics* optics() const { return m_optics; }
 	void setOptics(const Optics* optics) { m_optics = optics; }
-	void adjustScale(double horizontalScale, double verticalScale);
 
 private:
 	const Optics* m_optics;
