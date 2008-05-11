@@ -129,6 +129,11 @@ void OpticsViewProperties::on_doubleSpinBox_Height_valueChanged(double value)
 	m_view->setVerticalRange(value*Units::getUnit(UnitWaist).multiplier());
 }
 
+void OpticsViewProperties::on_doubleSpinBox_Origin_valueChanged(double value)
+{
+	m_view->setOrigin(value*Units::getUnit(UnitPosition).multiplier());
+}
+
 void OpticsViewProperties::setViewWidth(double width)
 {
 	doubleSpinBox_Width->setValue(width*Units::getUnit(UnitPosition).divider());
@@ -137,6 +142,11 @@ void OpticsViewProperties::setViewWidth(double width)
 void OpticsViewProperties::setViewHeight(double height)
 {
 	doubleSpinBox_Height->setValue(height*Units::getUnit(UnitWaist).divider());
+}
+
+void OpticsViewProperties::setViewOrigin(double origin)
+{
+	doubleSpinBox_Origin->setValue(origin*Units::getUnit(UnitPosition).divider());
 }
 
 /////////////////////////////////////////////////

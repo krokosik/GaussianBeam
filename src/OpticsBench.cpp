@@ -310,10 +310,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 			beam = m_beams[changedIndex - 1];
 
 		for (int i = changedIndex; i < nOptics(); i++)
-		{
 			m_beams[i] = beam = m_optics[i]->image(beam);
-			cerr << "  Beam i waist = " << beam.waist() << " position = " << beam.waistPosition() << endl;
-		}
 	}
 
 	m_sensitivity = gradient(m_optics, m_beams.back(), false/*CheckLock*/, true/*Curvature*/);
@@ -337,7 +334,9 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 //		cerr << "Initial Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
 		for (int i = m_firstCavityIndex + 1; i <= m_lastCavityIndex; i++)
 		{
-			FreeSpace freeSpace(optics(i)->position() - optics(i-1)->endPosition(), optics(i)->endPosition());
+			static FreeSpace freeSpace(0., 0.);
+			freeSpace.setWidth(optics(i)->position() - optics(i-1)->endPosition());
+			freeSpace.setPosition(optics(i)->endPosition());
 //			cerr << "freespace B = " << freeSpace.B() << endl;
 			m_cavity = m_cavity * freeSpace;
 //			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
@@ -368,7 +367,9 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 			/// @todo add a user defined free space between the last and the first optics for linear cavities.
 		}
 */
-		FreeSpace freeSpace(optics(m_lastCavityIndex)->position() - optics(m_firstCavityIndex)->endPosition(), optics(m_firstCavityIndex)->endPosition());
+		static FreeSpace freeSpace(0., 0.);
+		freeSpace.setWidth(optics(m_lastCavityIndex)->position() - optics(m_firstCavityIndex)->endPosition());
+		freeSpace.setPosition(optics(m_firstCavityIndex)->endPosition());
 		m_cavity *= freeSpace;
 
 //		cerr << "Final Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;

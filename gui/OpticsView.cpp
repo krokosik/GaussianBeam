@@ -78,6 +78,7 @@ void OpticsScene::showTargetBeam(bool show)
 
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
+	/// @todo this should go to a "bound changed" bench event
 	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
 
 	foreach (QGraphicsItem* graphicsItem, items())
@@ -94,7 +95,9 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 		}
 	}
 
-	for (int i = qMax(0, startOptics-1); i <= endOptics; i++)
+	// We recreate all beams, because when we add an optics, we delete them all
+	/// @todo Might be interested in making this situation cleaner
+	for (int i = 0/*qMax(0, startOptics-1)*/; i <= m_bench.nOptics()-1/*endOptics*/; i++)
 	{
 		const Optics* optics = m_bench.optics(i);
 		m_beamItems[i]->setPos(0., 0.);
@@ -126,7 +129,7 @@ void OpticsScene::OpticsBenchOpticsAdded(int index)
 	//qDebug() << "WAIST OpticsBenchOpticsAdded" <<  m_bench.beam(index).waist();
 	addItem(opticsItem);
 
-	// recreate BeamItem list (reference to list element don't survive a list resize !)
+	// recreate BeamItem list (reference or pointer to list element don't survive a list resize !)
 	while (!m_beamItems.isEmpty())
 	{
 		removeItem(m_beamItems.last());
@@ -218,6 +221,8 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	centerOn(0., 0.);
 }
 
+/// @todo this m_horizontalRange and m_verticalRange are redundant with view class information
+
 void OpticsView::adjustRange()
 {
 	if (m_horizontalRange > scene()->width())
@@ -231,6 +236,10 @@ void OpticsView::adjustRange()
 	QMatrix scaling = matrix();
 	scaling.setMatrix(width()/m_horizontalRange, scaling.m12(), scaling.m21(), height()/m_verticalRange, scaling.dx(), scaling.dy());
 	setMatrix(scaling);
+
+	m_opticsViewProperties->setViewWidth(m_horizontalRange);
+	m_opticsViewProperties->setViewHeight(m_verticalRange);
+	m_opticsViewProperties->setViewOrigin(origin());
 }
 
 void OpticsView::showProperties(bool show)
@@ -243,18 +252,31 @@ bool OpticsView::propertiesVisible()
 	return m_opticsViewProperties->isVisible();
 }
 
+double OpticsView::origin()
+{
+	qDebug() << horizontalScrollBar()->value();
+	return mapToScene(viewport()->rect().topLeft()).x();
+}
+
+void OpticsView::setOrigin(double origin)
+{
+	if (origin == OpticsView::origin())
+		return;
+
+	qDebug() << "setOrigin" << origin << origin/scene()->width();
+	horizontalScrollBar()->setValue(origin/scene()->width());
+}
+
 void OpticsView::setHorizontalRange(double horizontalRange)
 {
 	m_horizontalRange = horizontalRange;
 	adjustRange();
-	m_opticsViewProperties->setViewWidth(m_horizontalRange);
 }
 
 void OpticsView::setVerticalRange(double verticalRange)
 {
 	m_verticalRange = verticalRange;
 	adjustRange();
-	m_opticsViewProperties->setViewHeight(m_verticalRange);
 }
 
 void OpticsView::resizeEvent(QResizeEvent* event)
@@ -358,7 +380,10 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 		if (!rect.contains(newPos))
 			newPos.setX(qMin(rect.right(), qMax(newPos.x(), rect.left())));
 		newPos.setY(0.);
+		// Propose the new position
 		m_bench.setOpticsPosition(m_bench.opticsIndex(m_optics), newPos.x());
+		// Adjust the new position to what the bench decided in last
+		newPos.setX(m_optics->position());
 		return newPos;
 	}
 
@@ -388,7 +413,6 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == LensType)
 	{
-		qDebug() << "eee" << mapToScene(rect);
 		if (dynamic_cast<const Lens*>(m_optics)->focal() >= 0.)
 		{
 			path.moveTo(0., rect.top());
@@ -438,7 +462,6 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	else if (m_optics->type() == GenericABCDType)
 	{
 		QColor color = QColor(193, 193, 193, 150);
-		painter->setPen(QPen(color));
 		painter->setBrush(QBrush(color));
 		painter->drawRect(rect);
 	}

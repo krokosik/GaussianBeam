@@ -53,11 +53,13 @@ public:
 public:
 	void setViewWidth(double width);
 	void setViewHeight(double height);
+	void setViewOrigin(double origin);
 
 // UI slots
 protected slots:
 	void on_doubleSpinBox_Width_valueChanged(double value);
 	void on_doubleSpinBox_Height_valueChanged(double value);
+	void on_doubleSpinBox_Origin_valueChanged(double value);
 
 private:
 	OpticsView* m_view;

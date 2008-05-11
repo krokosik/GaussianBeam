@@ -72,6 +72,8 @@ public:
 	void setVerticalRange(double verticalRange);
 	double horizontalRange() { return m_horizontalRange; }
 	void setHorizontalRange(double horizontalRange);
+	double origin();
+	void setOrigin(double origin);
 	void showProperties(bool show = true);
 	bool propertiesVisible();
 
