@@ -21,6 +21,7 @@
 #include "gui/Unit.h"
 
 #include <QWheelEvent>
+#include <QDebug>
 
 /////////////////////////////////////////////////
 // RullerSlider
@@ -152,12 +153,14 @@ void CornerWidget::paintEvent(QPaintEvent* event)
 	Q_UNUSED(event);
 
 	QPainter painter(this);
-	QColor backgroundColor(169, 83, 83);
+	QColor backgroundColor(245, 245, 200);
 	QBrush backgroundBrush(backgroundColor);
 	QPen backgroundPen(backgroundColor);
 	painter.setBrush(backgroundBrush);
 	painter.setPen(backgroundPen);
 	painter.drawRect(rect());
+	QPixmap pixmap(":/images/zoom-best-fit.png");
+	painter.drawPixmap(rect(), pixmap, pixmap.rect());
 }
 
 void CornerWidget::mousePressEvent(QMouseEvent* event)

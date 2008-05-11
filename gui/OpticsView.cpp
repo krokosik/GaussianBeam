@@ -209,6 +209,7 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setVerticalScrollBar(m_verticalRuller);
 
 	m_opticsViewProperties = new OpticsViewProperties(this);
+	m_opticsViewProperties->hide();
 
 	CornerWidget* cornerWidget = new CornerWidget(this);
 	setCornerWidget(cornerWidget);

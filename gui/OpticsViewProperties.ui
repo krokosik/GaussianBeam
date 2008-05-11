@@ -5,7 +5,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>262</width>
+    <width>213</width>
     <height>148</height>
    </rect>
   </property>
@@ -23,11 +23,20 @@
        <layout class="QGridLayout" name="gridLayout" >
         <item row="0" column="1" >
          <widget class="QDoubleSpinBox" name="doubleSpinBox_Width" >
+          <property name="sizePolicy" >
+           <sizepolicy vsizetype="Fixed" hsizetype="Preferred" >
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="suffix" >
            <string> mm</string>
           </property>
           <property name="maximum" >
-           <double>1000000000.000000000000000</double>
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="singleStep" >
+           <double>10.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -37,7 +46,10 @@
            <string> µm</string>
           </property>
           <property name="maximum" >
-           <double>1000000000.000000000000000</double>
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="singleStep" >
+           <double>50.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -47,7 +59,10 @@
            <string> mm</string>
           </property>
           <property name="maximum" >
-           <double>1000000000.000000000000000</double>
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="singleStep" >
+           <double>10.000000000000000</double>
           </property>
          </widget>
         </item>
