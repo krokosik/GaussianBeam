@@ -61,11 +61,13 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 	, OpticsBenchNotify(bench)
 {
 	setItemIndexMethod(QGraphicsScene::NoIndex);
-	m_bench.registerNotify(this);
 
 	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
 	m_targetBeamItem->setPlainStyle(false);
+	m_targetBeamItem->setPos(0., 0.);
 	addItem(m_targetBeamItem);
+
+	m_bench.registerNotify(this);
 }
 
 void OpticsScene::showTargetBeam(bool show)
@@ -78,9 +80,6 @@ void OpticsScene::showTargetBeam(bool show)
 
 void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 {
-	/// @todo this should go to a "bound changed" bench event
-	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
-
 	foreach (QGraphicsItem* graphicsItem, items())
 	{
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
@@ -111,16 +110,30 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
 		//qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
 	}
-
-	/// @todo this should go to a "bound changed" bench event
-	m_targetBeamItem->setPos(0., 0.);
-	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
-	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
 }
 
 void OpticsScene::OpticsBenchTargetBeamChanged()
 {
 	m_targetBeamItem->update();
+}
+
+void OpticsScene::OpticsBenchBoundariesChanged()
+{
+	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
+
+	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
+	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
+
+	if (m_beamItems.size() == m_bench.nOptics())
+	{
+		m_beamItems[0]->setLeftBound(m_bench.leftBoundary());
+		m_beamItems[m_bench.nOptics()-1]->setRightBound(m_bench.rightBoundary());
+	}
+
+	foreach (QGraphicsView* view, views())
+	{
+		dynamic_cast<OpticsView*>(view)->adjustRange();
+	}
 }
 
 void OpticsScene::OpticsBenchOpticsAdded(int index)
@@ -219,15 +232,16 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 
 	setResizeAnchor(QGraphicsView::AnchorViewCenter);
 	centerOn(0., 0.);
-}
 
-/// @todo this m_horizontalRange and m_verticalRange are redundant with view class information
+	connect(m_horizontalRuller, SIGNAL(valueChanged(int)), this, SLOT(scrollUpdated(int)));
+}
 
 void OpticsView::adjustRange()
 {
-	if (m_horizontalRange > scene()->width())
+	if ((m_horizontalRange > scene()->width()) || (m_horizontalRange == 0.))
 		m_horizontalRange = scene()->width();
-	if (m_verticalRange > scene()->height())
+
+	if ((m_verticalRange > scene()->height()) || (m_verticalRange == 0.))
 		m_verticalRange = scene()->height();
 
 	if ((m_horizontalRange == 0.) || (m_verticalRange == 0.) || (width() == 0.) || (height() == 0.))
@@ -252,9 +266,14 @@ bool OpticsView::propertiesVisible()
 	return m_opticsViewProperties->isVisible();
 }
 
+void OpticsView::scrollUpdated(int value)
+{
+	Q_UNUSED(value);
+	m_opticsViewProperties->setViewOrigin(origin());
+}
+
 double OpticsView::origin()
 {
-	qDebug() << horizontalScrollBar()->value();
 	return mapToScene(viewport()->rect().topLeft()).x();
 }
 
@@ -263,8 +282,15 @@ void OpticsView::setOrigin(double origin)
 	if (origin == OpticsView::origin())
 		return;
 
-	qDebug() << "setOrigin" << origin << origin/scene()->width();
-	horizontalScrollBar()->setValue(origin/scene()->width());
+	if (origin < sceneRect().left())
+		origin = sceneRect().left();
+
+	if (origin > sceneRect().right() - m_horizontalRange)
+		origin = sceneRect().right() - m_horizontalRange;
+
+	double value = origin*m_horizontalRuller->rullerScale();
+	horizontalScrollBar()->setValue(value);
+	m_opticsViewProperties->setViewOrigin(origin);
 }
 
 void OpticsView::setHorizontalRange(double horizontalRange)

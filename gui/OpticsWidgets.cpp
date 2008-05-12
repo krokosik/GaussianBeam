@@ -33,6 +33,18 @@ RullerSlider::RullerSlider(OpticsView* view, bool zoomScroll)
 	m_zoomScroll = zoomScroll;
 }
 
+double RullerSlider::rullerScale() const
+{
+	int length = maximum() + pageStep() - minimum();
+	double scale = double(length);
+	if (orientation() == Qt::Horizontal)
+		scale /= m_view->scene()->width();
+	else
+		scale /= m_view->scene()->height();
+
+	return scale;
+}
+
 void RullerSlider::mousePressEvent(QMouseEvent* event)
 {
 	Q_UNUSED(event);
@@ -73,12 +85,7 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	QPen mainTickPen(Qt::black);
 	QPen secondTickPen(Qt::lightGray);
 
-	int length = maximum() + pageStep() - minimum();
-	double scale = double(length);
-	if (orientation() == Qt::Horizontal)
-		scale /= m_view->scene()->width();
-	else
-		scale /= m_view->scene()->height();
+	double scale = rullerScale();
 	double spacing = (orientation() == Qt::Horizontal ? 0.01 : 0.00005);
 	int lastStep = int(double(value() + pageStep())/(scale*spacing)) + 1;
 	int firstStep = int(double(value())/(scale*spacing)) - 1;
@@ -91,7 +98,7 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	{
 		double pos = x*scale - double(value());
 		drawGraduation(painter, pos, 0.4);
-		if ((int(round(x/spacing)) % 10) == 5)
+		if (abs((int(round(x/spacing)) % 10)) == 5)
 			drawGraduation(painter, pos, 0.65);
 		else if ((int(round(x/spacing)) % 10) == 0)
 		{
@@ -117,36 +124,46 @@ OpticsViewProperties::OpticsViewProperties(OpticsView* view)
 	m_view = view;
 	setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
+	m_update = true;
 }
 
 void OpticsViewProperties::on_doubleSpinBox_Width_valueChanged(double value)
 {
-	m_view->setHorizontalRange(value*Units::getUnit(UnitPosition).multiplier());
+	if (m_update)
+		m_view->setHorizontalRange(value*Units::getUnit(UnitPosition).multiplier());
 }
 
 void OpticsViewProperties::on_doubleSpinBox_Height_valueChanged(double value)
 {
-	m_view->setVerticalRange(value*Units::getUnit(UnitWaist).multiplier());
+	if (m_update)
+		m_view->setVerticalRange(value*Units::getUnit(UnitWaist).multiplier());
 }
 
 void OpticsViewProperties::on_doubleSpinBox_Origin_valueChanged(double value)
 {
-	m_view->setOrigin(value*Units::getUnit(UnitPosition).multiplier());
+	if (m_update)
+		m_view->setOrigin(value*Units::getUnit(UnitPosition).multiplier());
 }
 
 void OpticsViewProperties::setViewWidth(double width)
 {
+	m_update = false;
 	doubleSpinBox_Width->setValue(width*Units::getUnit(UnitPosition).divider());
+	m_update = true;
 }
 
 void OpticsViewProperties::setViewHeight(double height)
 {
+	m_update = false;
 	doubleSpinBox_Height->setValue(height*Units::getUnit(UnitWaist).divider());
+	m_update = true;
 }
 
 void OpticsViewProperties::setViewOrigin(double origin)
 {
+	m_update = false;
 	doubleSpinBox_Origin->setValue(origin*Units::getUnit(UnitPosition).divider());
+	m_update = true;
 }
 
 /////////////////////////////////////////////////

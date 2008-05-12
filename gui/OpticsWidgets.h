@@ -30,6 +30,9 @@ class RullerSlider : public QScrollBar
 public:
 	RullerSlider(OpticsView* view, bool zoomScroll = false);
 
+public:
+	double rullerScale() const;
+
 protected:
 	virtual void paintEvent(QPaintEvent* event);
 	virtual void mousePressEvent(QMouseEvent* event);
@@ -63,6 +66,7 @@ protected slots:
 
 private:
 	OpticsView* m_view;
+	bool m_update;
 };
 
 class CornerWidget : public QWidget

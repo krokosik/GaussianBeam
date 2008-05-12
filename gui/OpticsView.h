@@ -48,6 +48,7 @@ public:
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
 	void OpticsBenchTargetBeamChanged();
+	void OpticsBenchBoundariesChanged();
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
 	void OpticsBenchFitDataChanged(int index);
@@ -63,6 +64,8 @@ private:
 
 class OpticsView : public QGraphicsView
 {
+Q_OBJECT
+
 public:
 	OpticsView(QGraphicsScene* scene);
 
@@ -87,6 +90,9 @@ protected:
 private:
 	void adjustRange();
 
+private slots:
+	void scrollUpdated(int value);
+
 private:
 	OpticsViewProperties* m_opticsViewProperties;
 	RullerSlider* m_horizontalRuller;
@@ -94,6 +100,9 @@ private:
 	QStatusBar* m_statusBar;
 	double m_horizontalRange;
 	double m_verticalRange;
+	double m_origin;
+
+friend class OpticsScene;
 };
 
 /// @todo don't forget prepareGeometryChange()

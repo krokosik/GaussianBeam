@@ -87,6 +87,8 @@ void GaussianBeamWidget::updateUnits()
 {
 	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string("m"));
 	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string("m"));
+	doubleSpinBox_LeftBoundary->setSuffix(Units::getUnit(UnitPosition).string("m"));
+	doubleSpinBox_RightBoundary->setSuffix(Units::getUnit(UnitPosition).string("m"));
 	/// @todo update table headers and status bar and wavelength
 }
 
@@ -97,13 +99,29 @@ void GaussianBeamWidget::OpticsBenchDataChanged(int /*startOptics*/, int /*endOp
 
 void GaussianBeamWidget::OpticsBenchTargetBeamChanged()
 {
-	doubleSpinBox_TargetWaist->setValue(m_bench.targetBeam().waist()/Units::getUnit(UnitWaist).multiplier());
-	doubleSpinBox_TargetPosition->setValue(m_bench.targetBeam().waistPosition()/Units::getUnit(UnitPosition).multiplier());
+	doubleSpinBox_TargetWaist->setValue(m_bench.targetBeam().waist()*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_TargetPosition->setValue(m_bench.targetBeam().waistPosition()*Units::getUnit(UnitPosition).divider());
 	displayOverlap();
 }
 
+void GaussianBeamWidget::OpticsBenchBoundariesChanged()
+{
+	doubleSpinBox_LeftBoundary->setValue(m_bench.leftBoundary()*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_RightBoundary->setValue(m_bench.rightBoundary()*Units::getUnit(UnitPosition).divider());
+}
+
 ///////////////////////////////////////////////////////////
-// CAVITY PAGE
+// OPTICS BENCH PAGE
+
+void GaussianBeamWidget::on_doubleSpinBox_LeftBoundary_valueChanged(double value)
+{
+	m_bench.setLeftBoundary(value*Units::getUnit(UnitPosition).multiplier());
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_RightBoundary_valueChanged(double value)
+{
+	m_bench.setRightBoundary(value*Units::getUnit(UnitPosition).multiplier());
+}
 
 ///////////////////////////////////////////////////////////
 // MAGIC WAIST PAGE
@@ -112,7 +130,7 @@ void GaussianBeamWidget::displayOverlap()
 {
 	if (m_bench.nOptics() > 0)
 	{
-		double overlap = GaussianBeam::overlap(m_bench.beam(m_bench.nOptics()-1), m_bench.targetBeam());
+		double overlap = Beam::overlap(m_bench.beam(m_bench.nOptics()-1), m_bench.targetBeam());
 		label_OverlapResult->setText(tr("Overlap: ") + QString::number(overlap*100., 'f', 2) + " %");
 	}
 	else

@@ -49,6 +49,9 @@ public:
 
 // UI slots
 protected slots:
+	// Optics bench
+	void on_doubleSpinBox_LeftBoundary_valueChanged(double value);
+	void on_doubleSpinBox_RightBoundary_valueChanged(double value);
 	// Magic waist
 	void on_pushButton_MagicWaist_clicked();
 	void on_checkBox_ShowTargetBeam_toggled(bool checked);
@@ -72,6 +75,7 @@ protected slots:
 private:
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
 	virtual void OpticsBenchTargetBeamChanged();
+	virtual void OpticsBenchBoundariesChanged();
 	virtual void OpticsBenchFitAdded(int index);
 	virtual void OpticsBenchFitRemoved(int index);
 	virtual void OpticsBenchFitDataChanged(int index);

@@ -61,6 +61,9 @@ public:
 	Beam(const std::complex<double>& q, double z, double wavelength);
 
 public:
+	bool isValid() const { return m_valid; }
+
+	// get/set properties
 	double waistPosition() const { return m_waistPosition; }
 	void setWaistPosition(double waistPosition) { m_waistPosition = waistPosition; }
 	double waist() const { return m_waist; }
@@ -72,16 +75,24 @@ public:
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength) { m_wavelength = wavelength; }
 
-	bool isValid() const { return m_valid; }
+	// Position dependent properties
 	double radius(double z) const;
 	double radiusDerivative(double z) const;
 	double radiusSecondDerivative(double z) const;
 	double curvature(double z) const;
 	double gouyPhase(double z) const;
 	std::complex<double> q(double z) const;
-	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }
 
+	/**
+	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
+	* This overlap does not depend on @p z if both beams have the same wavelength,
+	* hence the default value for z
+	*/
+	static double overlap(const Beam& beam1, const Beam& beam2, double z = 0.);
 	double approxNextPosition(double currentPosition, Approximation& approximation) const;
+
+private:
+	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }
 
 private:
 	double m_waist;

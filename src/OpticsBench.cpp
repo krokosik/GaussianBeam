@@ -127,6 +127,7 @@ void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 	m_notifyList.push_back(notify);
 
 	notify->OpticsBenchWavelengthChanged();
+	notify->OpticsBenchBoundariesChanged();
 
 	for (int i = 0; i < nOptics(); i++)
 		notify->OpticsBenchOpticsAdded(i);
@@ -148,12 +149,32 @@ void OpticsBench::setWavelength(double wavelength)
 		(*it)->OpticsBenchWavelengthChanged();
 }
 
+void OpticsBench::setLeftBoundary(double leftBoundary)
+{
+	if (leftBoundary < m_rightBoundary)
+		m_leftBoundary = leftBoundary;
+
+	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchBoundariesChanged();
+}
+
+void OpticsBench::setRightBoundary(double rightBoundary)
+{
+	if (rightBoundary > m_leftBoundary)
+		m_rightBoundary = rightBoundary;
+
+	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
+		(*it)->OpticsBenchBoundariesChanged();
+}
+
 void OpticsBench::addOptics(Optics* optics, int index)
 {
 	m_optics.insert(m_optics.begin() + index,  optics);
 	m_beams.insert(m_beams.begin() + index, Beam());
+
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsAdded(index);
+
 	computeBeams(index);
 }
 
@@ -414,7 +435,7 @@ vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const 
 
 	vector<Optics*> opticsClone = cloneOptics();
 
-	double initOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
+	double initOverlap = Beam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
 
 	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
 	{
@@ -423,7 +444,7 @@ vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const 
 			(*it)->setPositionCheckLock(initPosition + epsilon);
 		else
 			(*it)->setPosition(initPosition + epsilon);
-		double finalOverlap = GaussianBeam::overlap(beam, computeSingleBeam(opticsClone, opticsClone.size() - 1));
+		double finalOverlap = Beam::overlap(beam, computeSingleBeam(opticsClone, opticsClone.size() - 1));
 		if (checkLock)
 			(*it)->setPositionCheckLock(initPosition);
 		else
@@ -479,7 +500,7 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 		// Check waist
 		Beam beam = computeSingleBeam(opticsClone, nOptics()-1);
 		if (tolerance.overlap &&
-			(GaussianBeam::overlap(beam, m_targetBeam) > tolerance.minOverlap) ||
+			(Beam::overlap(beam, m_targetBeam) > tolerance.minOverlap) ||
 			(!tolerance.overlap) &&
 			(fabs(beam.waist() - m_targetBeam.waist()) < tolerance.waistTolerance*m_targetBeam.waist()) &&
 		    (fabs(beam.waistPosition() - m_targetBeam.waistPosition()) < tolerance.positionTolerance*m_targetBeam.rayleigh()))
@@ -548,30 +569,4 @@ const Beam OpticsBench::cavityEigenBeam(int index) const
 		beam = optics(i)->image(beam);
 
 	return beam;
-}
-
-/////////////////////////////////////////////////
-// GaussianBeam namespace
-
-double GaussianBeam::overlap(const Beam& beam1, const Beam& beam2, double z)
-{
-//	double w1 = beam1.radius(z);
-//	double w2 = beam2.radius(z);
-//	double w12 = sqr(beam1.radius(z));
-//	double w22 = sqr(beam2.radius(z));
-//	double k1 = 2.*M_PI/beam1.wavelength();
-//	double k2 = 2.*M_PI/beam2.wavelength();
-//	double R1 = beam1.curvature(z);
-//	double R2 = beam2.curvature(z);
-	double zred1 = beam1.zred(z);
-	double zred2 = beam2.zred(z);
-	double rho = sqr(beam1.radius(z)/beam2.radius(z));
-
-	//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
-	//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
-	double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
-
-//	cerr << "Coupling = " << eta << " // " << zred1 << " " << zred2 << " " << rho << endl;
-
-	return eta;
 }

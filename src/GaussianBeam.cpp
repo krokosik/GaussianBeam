@@ -142,3 +142,26 @@ double Beam::approxNextPosition(double currentPosition, Approximation& approxima
 
 	return currentPosition + (highBound - lowBound)/(gapApprox*waist()/approximation.resolution);
 }
+
+double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
+{
+//	double w1 = beam1.radius(z);
+//	double w2 = beam2.radius(z);
+//	double w12 = sqr(beam1.radius(z));
+//	double w22 = sqr(beam2.radius(z));
+//	double k1 = 2.*M_PI/beam1.wavelength();
+//	double k2 = 2.*M_PI/beam2.wavelength();
+//	double R1 = beam1.curvature(z);
+//	double R2 = beam2.curvature(z);
+	double zred1 = beam1.zred(z);
+	double zred2 = beam2.zred(z);
+	double rho = sqr(beam1.radius(z)/beam2.radius(z));
+
+	//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
+	//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
+	double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
+
+//	cerr << "Coupling = " << eta << " // " << zred1 << " " << zred2 << " " << rho << endl;
+
+	return eta;
+}

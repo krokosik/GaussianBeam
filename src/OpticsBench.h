@@ -38,6 +38,7 @@ public:
 	virtual void OpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {};
 	virtual void OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {};
 	virtual void OpticsBenchTargetBeamChanged() {};
+	virtual void OpticsBenchBoundariesChanged() {};
 	virtual void OpticsBenchFitAdded(int /*index*/) {};
 	virtual void OpticsBenchFitRemoved(int /*index*/) {};
 	virtual void OpticsBenchFitDataChanged(int /*index*/) {};
@@ -66,9 +67,9 @@ public:
 	double wavelength() const { return m_wavelength; }
 	void setWavelength(double wavelength);
 	double leftBoundary() { return m_leftBoundary; }
-	void setLeftBoundary(double leftBoundary) { m_leftBoundary = leftBoundary; }
+	void setLeftBoundary(double leftBoundary);
 	double rightBoundary() { return m_rightBoundary; }
-	void setRightBoundary(double rightBoundary) { m_rightBoundary = rightBoundary; }
+	void setRightBoundary(double rightBoundary);
 
 	/// Handle optics
 	int nOptics() const { return m_optics.size(); }
@@ -163,15 +164,5 @@ private:
 	/// Callback
 	std::list<OpticsBenchNotify*> m_notifyList;
 };
-
-namespace GaussianBeam
-{
-	/**
-	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
-	* This overlap does not depend on @p z if both beams have the same wavelength,
-	* hence the default value for z
-	*/
-	double overlap(const Beam& beam1, const Beam& beam2, double z = 0.);
-}
 
 #endif
