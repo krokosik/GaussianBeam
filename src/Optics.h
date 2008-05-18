@@ -60,74 +60,46 @@ public:
 	* @p outputBeam output beam
 	*/
 	virtual Beam antecedent(const Beam& outputBeam) const = 0;
+	/** Index jump from one side of the optics to the other
+	* @return final index / initial index
+	*/
+	virtual double indexJump() const { return 1.; }
 
 public:
-	/**
-	* @return the enum type of the optics
-	*/
+	/// @return the enum type of the optics
 	OpticsType type() const { return m_type; }
-	/**
-	* @return the position of the left boundary of the optics
-	*/
+	/// @return the position of the left boundary of the optics
 	double position() const { return m_position; }
-	/**
-	* Set the left position of the optics to @p position
-	*/
+	/// Set the left position of the optics to @p position
 	void setPosition(double position) { m_position = position; }
-	/**
-	* @return the right position of the optics
-	*/
+	/// @return the right position of the optics
 	double endPosition() const { return position() + width(); }
-	/**
-	* @return the width of the optics
-	*/
+	/// @return the width of the optics
 	double width() const { return m_width; }
-	/**
-	* Set the width of the optics
-	*/
+	/// Set the width of the optics
 	void setWidth(double width) { m_width = width; }
-	/**
-	* @return the name of the optics
-	*/
+	/// @return the name of the optics
 	std::string name() const { return m_name; }
-	/**
-	* Set the name of the optics
-	*/
+	/// Set the name of the optics
 	void setName(std::string name) { m_name = name; }
-	/**
-	* @return true if the optics is of type ABCD
-	*/
+	/// @return true if the optics is of type ABCD
 	bool isABCD() const { return m_ABCD; }
-	/**
-	* @return the unique ID of the optics
-	*/
+	/// @return the unique ID of the optics
 	int id() const { return m_id; }
-	/**
-	* Query absolute lock
-	* @return true if the lock is absolute, false otherwise
-	*/
+	/// Query absolute lock. @return true if the lock is absolute, false otherwise
 	bool absoluteLock() const { return m_absoluteLock; }
 	/**
 	* Set absolute lock state. Setting an absolute lock removes any relative lock
 	* @param absoluteLock if true, remove relative lock and set absolute lock. If false, removes absolute lock if present.
 	*/
 	void setAbsoluteLock(bool absoluteLock);
-	/**
-	* @return the relative lock parent. 0 if there is no parent
-	*/
+	/// @return the relative lock parent. 0 if there is no parent
 	const Optics* relativeLockParent() const { return m_relativeLockParent; }
-	/**
-	* @return a list of relative lock children
-	*/
+	/// @return a list of relative lock children
 	const std::list<Optics*>& relativeLockChildren() const { return m_relativeLockChildren; }
-	/**
-	* Query relative lock
-	* @return true if @p optics within the locking tree of this optics
-	*/
+	/// Query relative lock. @return true if @p optics within the locking tree of this optics
 	bool relativeLockedTo(const Optics* const optics) const;
-	/**
-	* @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
-	*/
+	/// @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
 	bool relativeLockTreeAbsoluteLock() const { return relativeLockRootConst()->absoluteLock(); }
 	/**
 	* Lock the optics to the given @p optics. Only works if @p optics is not within the locking tree of this optics.
@@ -148,7 +120,7 @@ public:
 	*/
 	void setPositionCheckLock(double position, bool respectAbsoluteLock = true);
 	/**
-	* Erase the locking tree structure of this optics withour affecting ascendant or descendant.
+	* Erase the locking tree structure of this optics without affecting ascendant or descendant.
 	* This is usefull for preserving or recreating the locking tree after cloning.
 	*/
 	void eraseLockingTree();
@@ -243,8 +215,7 @@ public:
 	virtual ~Interface() {}
 
 public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual double indexJump() const { return indexRatio(); }
 	virtual double D() const { return 1./indexRatio(); }
 };
 
@@ -254,7 +225,7 @@ public:
 class CreateBeam : public Optics
 {
 public:
-	CreateBeam(double waist, double waistPosition, std::string name = "");
+	CreateBeam(double waist, double waistPosition, double index, std::string name = "");
 	CreateBeam* clone() const { return new CreateBeam(*this); }
 
 public:
@@ -264,10 +235,13 @@ public:
 public:
 	double waist() const { return m_waist; }
 	void setWaist(double waist);
+	double index() const { return m_index; }
+	void setIndex(double index);
 	void setBeam(const Beam& beam);
 
 private:
 	double m_waist;
+	double m_index;
 };
 
 /////////////////////////////////////////////////

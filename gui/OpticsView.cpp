@@ -109,6 +109,7 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.rightBoundary());
 		else
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
+		qDebug() << "OpticsScene::OpticsBenchDataChanged" << i;
 	}
 }
 
@@ -340,6 +341,9 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 
 void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 {
+	Q_UNUSED(painter);
+	Q_UNUSED(rect);
+
 /*	/// @todo if drawing a grid and rullers, set background cache
 	const double pixel = scene()->width()/width();
 
@@ -379,7 +383,6 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench& bench)
 		setFlag(QGraphicsItem::ItemIgnoresTransformations);
 
 	m_update = true;
-
 }
 
 QRectF OpticsItem::boundingRect() const
@@ -536,6 +539,9 @@ QRectF BeamItem::boundingRect() const
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
+	Q_UNUSED(option);
+	Q_UNUSED(widget);
+
 	QColor beamColor = wavelengthColor(m_beam.wavelength());
 	beamColor.setAlpha(200);
 

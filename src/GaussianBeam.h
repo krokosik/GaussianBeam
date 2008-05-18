@@ -57,7 +57,7 @@ class Beam
 {
 public:
 	Beam();
-	Beam(double waist, double waistPosition, double wavelength, double index = 1.);
+	Beam(double waist, double waistPosition, double wavelength, double index);
 	Beam(const std::complex<double>& q, double z, double wavelength, double index);
 
 public:

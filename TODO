@@ -24,9 +24,13 @@ WISHLIST:
 	reimplement paint items in view for optics painting in scene coordinates
 	Thick lens, thermal lens
 	Conjugate gradient for magic waist
+	Non linear hyperbolic fit
+	Camera interfaces
 
 BUGS:
-	Strange things with flat interfaces and dielectric slabs
+	Loading and saving does not work
+	Check that the waist translation by a dielectric slab is right
+	Removing an optics does not work
 	Relative lock selection does not work anymore
 	Check initial values (e.g. magic waist)
 	implement ruller scale

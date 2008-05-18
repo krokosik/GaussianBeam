@@ -198,7 +198,7 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 	lockTree.push_back(QString());
 
 	if (element.tagName() == "inputBeam")
-		optics = new CreateBeam(1., 1., "");
+		optics = new CreateBeam(1., 1., 1., "");
 	else if (element.tagName() == "lens")
 		optics = new Lens(1., 1., "");
 	else if (element.tagName() == "flatMirror")
@@ -235,6 +235,8 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 			optics->setWidth(child.text().toDouble());
 		else if (child.tagName() == "waist")
 			dynamic_cast<CreateBeam*>(optics)->setWaist(child.text().toDouble());
+		else if (child.tagName() == "index")
+			dynamic_cast<CreateBeam*>(optics)->setIndex(child.text().toDouble());
 		else if (child.tagName() == "waistPosition") // For compatibility
 			dynamic_cast<CreateBeam*>(optics)->setPosition(child.text().toDouble());
 		else if (child.tagName() == "focal")
@@ -343,6 +345,7 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 	{
 		xmlWriter.writeStartElement("inputBeam");
 		xmlWriter.writeTextElement("waist", QString::number(dynamic_cast<const CreateBeam*>(optics)->waist()));
+		xmlWriter.writeTextElement("index", QString::number(dynamic_cast<const CreateBeam*>(optics)->index()));
 	}
 	else if (optics->type() == LensType)
 	{

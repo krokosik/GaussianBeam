@@ -137,28 +137,12 @@ void Optics::eraseLockingTree()
 }
 
 /////////////////////////////////////////////////
-// Interface class
-
-Beam Interface::image(const Beam& inputBeam) const
-{
-	Beam out = ABCD::image(inputBeam);
-	out.setIndex(out.index()*indexRatio());
-	return out;
-}
-
-Beam Interface::antecedent(const Beam& outputBeam) const
-{
-	Beam in = ABCD::antecedent(outputBeam);
-	in.setIndex(in.index()/indexRatio());
-	return in;
-}
-
-/////////////////////////////////////////////////
 // CreateBeam class
 
-CreateBeam::CreateBeam(double waist, double waistPosition, string name)
+CreateBeam::CreateBeam(double waist, double waistPosition, double index, string name)
 	: Optics(CreateBeamType, false/*Not ABCD*/, waistPosition, name)
 	, m_waist(waist)
+	, m_index(index)
 {}
 
 void CreateBeam::setWaist(double waist)
@@ -167,14 +151,20 @@ void CreateBeam::setWaist(double waist)
 		m_waist = waist;
 }
 
+void CreateBeam::setIndex(double index)
+{
+	if (index > 0.)
+		m_index = index;
+}
+
 Beam CreateBeam::image(const Beam& inputBeam) const
 {
-	return Beam(m_waist, position(), inputBeam.wavelength());
+	return Beam(m_waist, position(), inputBeam.wavelength(), m_index);
 }
 
 Beam CreateBeam::antecedent(const Beam& outputBeam) const
 {
-	return Beam(m_waist, position(), outputBeam.wavelength());
+	return Beam(m_waist, position(), outputBeam.wavelength(), m_index);
 }
 
 void CreateBeam::setBeam(const Beam& beam)
@@ -231,14 +221,14 @@ Beam ABCD::image(const Beam& inputBeam) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index());
+	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index()*indexJump());
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam) const
 {
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
-	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index());
+	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index()/indexJump());
 }
 
 bool ABCD::stabilityCriterion1() const

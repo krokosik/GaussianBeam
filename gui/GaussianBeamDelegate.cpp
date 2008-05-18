@@ -95,7 +95,9 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case PropertiesColumn:
 	{
 		QList<EditorProperty> properties;
-		if (optics->type() == LensType)
+		if (optics->type() == CreateBeamType)
+			properties << EditorProperty(0., Unit::infinity, "n = ", "");
+		else if (optics->type() == LensType)
 			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string());
 		else if (optics->type() == CurvedMirrorType)
 			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
@@ -166,7 +168,9 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	case PropertiesColumn:
 	{
 		PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
-		if (optics->type() == LensType)
+		if (optics->type() == CreateBeamType)
+			propertyEditor->setValue(0, dynamic_cast<const CreateBeam*>(optics)->index());
+		else if (optics->type() == LensType)
 			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider());
 		else if (optics->type() == CurvedMirrorType)
 			propertyEditor->setValue(0, dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Units::getUnit(UnitCurvature).divider());

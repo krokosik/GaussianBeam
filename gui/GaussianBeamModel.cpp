@@ -64,7 +64,11 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		return (m_bench.optics(row)->position() - m_bench.optics(row-1)->position())*Units::getUnit(UnitPosition).divider();
 	else if (column == PropertiesColumn)
 	{
-		if (m_bench.optics(row)->type() == LensType)
+		if (m_bench.optics(row)->type() == CreateBeamType)
+		{
+			return QString("n = ") + QString::number(dynamic_cast<const CreateBeam*>(m_bench.optics(row))->index());
+		}
+		else if (m_bench.optics(row)->type() == LensType)
 		{
 			return QString("f = ") + QString::number(dynamic_cast<const Lens*>(m_bench.optics(row))->focal()*Units::getUnit(UnitFocal).divider())
 			                       + Units::getUnit(UnitFocal).string();
@@ -195,7 +199,9 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	{
 		Optics* optics = m_bench.opticsForPropertyChange(row);
 
-		if (optics->type() == LensType)
+		if (optics->type() == CreateBeamType)
+			dynamic_cast<CreateBeam*>(optics)->setIndex(value.toList()[0].toDouble());
+		else if (optics->type() == LensType)
 			dynamic_cast<Lens*>(optics)->setFocal(value.toList()[0].toDouble()*Units::getUnit(UnitFocal).multiplier());
 		else if (optics->type() == CurvedMirrorType)
 			dynamic_cast<CurvedMirror*>(optics)->setCurvatureRadius(value.toList()[0].toDouble()*Units::getUnit(UnitCurvature).multiplier());
@@ -289,8 +295,7 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		(column == RayleighColumn) ||
 		(column == DivergenceColumn) ||
 		(column == PropertiesColumn)
-		 && (m_bench.optics(row)->type() != FlatMirrorType)
-		 && (m_bench.optics(row)->type() != CreateBeamType))
+		 && (m_bench.optics(row)->type() != FlatMirrorType))
 			flags |= Qt::ItemIsEditable;
 
 	if (column == PositionColumn)

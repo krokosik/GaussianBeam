@@ -54,7 +54,7 @@ OpticsBench::OpticsBench()
 	m_ringCavity = true;
 	m_optics.clear();
 
-	addOptics(new CreateBeam(180e-6, 10e-3, "w0"), 0);
+	addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
 	m_optics[0]->setAbsoluteLock(true);
 
 	m_wavelength = 461e-9;
@@ -284,7 +284,7 @@ void OpticsBench::opticsPropertyChanged(int /*index*/)
 void OpticsBench::setInputBeam(const Beam& beam)
 {
 	if (m_optics.size() <= 0)
-		addOptics(new CreateBeam(180e-6, 10e-3, "w0"), 0);
+		addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
 
 	CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
 	createBeam->setWaist(beam.waist());
@@ -335,8 +335,6 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	}
 
 	m_sensitivity = gradient(m_optics, m_beams.back(), false/*CheckLock*/, true/*Curvature*/);
-//	for (unsigned int i = 0; i < m_sensitivity.size(); i++)
-//		cerr << m_sensitivity[i] << endl;
 
 	// Compute the cavity
 	if ((m_firstCavityIndex > 0) && (nOptics() > m_lastCavityIndex) && (m_lastCavityIndex > m_firstCavityIndex))

@@ -76,7 +76,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	        this, SLOT(fitModelChanged(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
-	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength()));
+	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength(), 1.));
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
