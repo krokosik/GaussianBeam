@@ -21,9 +21,15 @@
 
 #include "ui_OpticsViewProperties.h"
 
+/// @todo remove this once Beam& -> Beam*
+#include "src/GaussianBeam.h"
+
 #include <QScrollBar>
 
 class OpticsView;
+class QCheckBox;
+class QListWidget;
+class QStatusBar;
 
 class RullerSlider : public QScrollBar
 {
@@ -72,14 +78,47 @@ private:
 class CornerWidget : public QWidget
 {
 public:
-	CornerWidget(OpticsView* view);
+	CornerWidget(QColor backgroundColor, const char*  pixmapName, QWidget* widget, QWidget* parent = 0);
 
 protected:
 	virtual void paintEvent(QPaintEvent* event);
 	virtual void mousePressEvent(QMouseEvent* event);
 
 private:
-	OpticsView* m_view;
+	QColor m_backgroundColor;
+	QPixmap m_pixmap;
+	QWidget* m_widget;
+};
+
+class StatusConfigWidget : public QWidget
+{
+public:
+	StatusConfigWidget(QWidget* parent = 0);
+	~StatusConfigWidget();
+
+private:
+	void readSettings();
+	void writeSettings();
+
+private:
+	QListWidget* m_propertyListWidget;
+	QCheckBox* m_symbolCheck;
+
+friend class StatusWidget;
+};
+
+class StatusWidget : public QWidget
+{
+public:
+	StatusWidget(QStatusBar* statusBar);
+
+public:
+	void showBeamInfo(const Beam& beam, double z);
+
+private:
+	QStatusBar* m_statusBar;
+	QLabel* m_label;
+	StatusConfigWidget* m_configWidget;
 };
 
 #endif

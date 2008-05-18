@@ -24,11 +24,10 @@
 class Unit
 {
 public:
-	Unit(int power);
+	Unit(int power, QString unitString);
 
 public:
-	QChar prefix() const;
-	QString string(QString unitString, bool space = true) const;
+	QString string(bool space = true) const;
 	double multiplier() const;
 	double divider() const;
 
@@ -36,12 +35,16 @@ public:
 	static const double infinity;
 
 private:
+	QChar prefix() const;
+
+private:
 	int m_power;
+	QString m_unitString;
 };
 
 enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
                UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth};
+               UnitWidth, UnitPhase, UnitLess};
 
 class Units
 {

@@ -188,8 +188,8 @@ public:
 	virtual ~ABCD() {}
 
 public:
-	Beam image(const Beam& inputBeam) const;
-	Beam antecedent(const Beam& outputBeam) const;
+	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam) const;
 
 public:
 	virtual double A() const { return 1.; }
@@ -243,6 +243,8 @@ public:
 	virtual ~Interface() {}
 
 public:
+	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam) const;
 	virtual double D() const { return 1./indexRatio(); }
 };
 

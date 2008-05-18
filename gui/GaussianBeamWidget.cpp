@@ -32,6 +32,7 @@
 #include <QMenu>
 #include <QColorDialog>
 #include <QInputDialog>
+#include <QSettings>
 
 #include <cmath>
 
@@ -60,8 +61,8 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 
 	// Waist fit
 	fitModel = new QStandardItemModel(0, 2, this);
-	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)");
-	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).prefix() + "m)");
+	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).string(false) + ")");
+	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
 	fitTable->setModel(fitModel);
 	fitTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	fitTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -79,16 +80,34 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
+	readSettings();
 
 	m_bench.registerNotify(this);
 }
 
+GaussianBeamWidget::~GaussianBeamWidget()
+{
+	writeSettings();
+}
+
+void GaussianBeamWidget::writeSettings()
+{
+	QSettings settings;
+	settings.setValue("GaussianBeamWidget/toolboxIndex", toolBox->currentIndex());
+}
+
+void GaussianBeamWidget::readSettings()
+{
+	QSettings settings;
+	toolBox->setCurrentIndex(settings.value("GaussianBeamWidget/toolboxIndex", 0).toInt());
+}
+
 void GaussianBeamWidget::updateUnits()
 {
-	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string("m"));
-	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string("m"));
-	doubleSpinBox_LeftBoundary->setSuffix(Units::getUnit(UnitPosition).string("m"));
-	doubleSpinBox_RightBoundary->setSuffix(Units::getUnit(UnitPosition).string("m"));
+	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
+	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
+	doubleSpinBox_LeftBoundary->setSuffix(Units::getUnit(UnitPosition).string());
+	doubleSpinBox_RightBoundary->setSuffix(Units::getUnit(UnitPosition).string());
 	/// @todo update table headers and status bar and wavelength
 }
 
@@ -238,8 +257,8 @@ void GaussianBeamWidget::updateFitInformation(int index)
 	else
 	{
 		Beam fitBeam = fit.beam(m_bench.wavelength());
-		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string("m") + "\n" +
-					tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string("m") + "\n" +
+		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
+					tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n" +
 					tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
 		label_FitResult->setText(text);
 		pushButton_SetInputBeam->setEnabled(true);

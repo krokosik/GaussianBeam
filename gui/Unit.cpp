@@ -22,9 +22,10 @@
 
 const double Unit::infinity = 1000000.;
 
-Unit::Unit(int power)
+Unit::Unit(int power, QString unitString)
 {
 	m_power = power;
+	m_unitString = unitString;
 }
 
 QChar Unit::prefix() const
@@ -59,9 +60,11 @@ QChar Unit::prefix() const
 	return '?';
 }
 
-QString Unit::string(QString unitString, bool space) const
+QString Unit::string(bool space) const
 {
-	return (space ? QString(" ") : QString("")) + prefix() + unitString;
+	QChar pre = prefix();
+
+	return (space ? QString(" ") : QString("")) + (pre.isNull() ? QString() : pre) + m_unitString;
 }
 
 double Unit::multiplier() const
@@ -80,27 +83,31 @@ Units::Units()
 const Unit Units::getUnit(UnitType unit)
 {
 	if (unit == UnitPosition)
-		return Unit(-3);
+		return Unit(-3, "m");
 	else if (unit == UnitFocal)
-		return Unit(-3);
+		return Unit(-3, "m");
 	else if (unit == UnitWaist)
-		return Unit(-6);
+		return Unit(-6, "m");
 	else if (unit == UnitRayleigh)
-		return Unit(-6);
+		return Unit(-6, "m");
 	else if (unit == UnitWavelength)
-		return Unit(-9);
+		return Unit(-9, "m");
 	else if (unit == UnitDivergence)
-		return Unit(-3);
+		return Unit(-3, "rad");
 	else if (unit == UnitCurvature)
-		return Unit(-3);
+		return Unit(-3, "m");
 	else if (unit == UnitHRange)
-		return Unit(-3);
+		return Unit(-3, "m");
 	else if (unit == UnitVRange)
-		return Unit(-6);
+		return Unit(-6, "m");
 	else if (unit == UnitABCD)
-		return Unit(-3);
+		return Unit(-3, "m");
 	else if (unit == UnitWidth)
-		return Unit(-3);
+		return Unit(-3, "m");
+	else if (unit == UnitPhase)
+		return Unit(0, "rad");
+	else if (unit == UnitLess)
+		return Unit(0, QString());
 
-	return Unit(0);
+	return Unit(0, "");
 }

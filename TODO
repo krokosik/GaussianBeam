@@ -2,7 +2,6 @@ WISHLIST:
 	Artwork
 	Relative waist position
 	Customize table columns
-	Configuration file
 	Lens selection
 	Sensitivity graph
 	Lens movement magnification -> multiple views
@@ -13,7 +12,6 @@ WISHLIST:
 	Diaphragme
 	Relative distances on graph
 	Better hyperbola interpolation
-	Customize status bar display & add Gouy phase & q
 	Export graph & tables to text data
 	Optical cavities, eigen mode and stability.
 	Waist relative to selection
@@ -28,6 +26,8 @@ WISHLIST:
 	Conjugate gradient for magic waist
 
 BUGS:
+	Strange things with flat interfaces and dielectric slabs
+	Relative lock selection does not work anymore
 	Check initial values (e.g. magic waist)
 	implement ruller scale
 	fit problem: some fits are plainly wrong
@@ -38,6 +38,5 @@ CONSTANT VIGILENCE:
 	Translations
 	Pedantic
 	Valgrind
-	rowCount() -> nOptics() ?
 	API documentation
 	check that .c_str() stl strings are enclosed in a QString::fromUtf8

@@ -16,11 +16,14 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "OpticsWidgets.h"
-#include "OpticsView.h"
+#include "gui/OpticsWidgets.h"
+#include "gui/OpticsView.h"
 #include "gui/Unit.h"
 
 #include <QWheelEvent>
+#include <QListWidget>
+#include <QCheckBox>
+#include <QSettings>
 #include <QDebug>
 
 /////////////////////////////////////////////////
@@ -169,10 +172,13 @@ void OpticsViewProperties::setViewOrigin(double origin)
 /////////////////////////////////////////////////
 // CornerWidget
 
-CornerWidget::CornerWidget(OpticsView* view)
-	: QWidget(view)
+CornerWidget::CornerWidget(QColor backgroundColor, const char* pixmapName, QWidget* widget, QWidget* parent)
+	: QWidget(parent)
+	, m_backgroundColor(backgroundColor)
+	, m_widget(widget)
 {
-	m_view = view;
+	m_pixmap = QPixmap(pixmapName);
+	setFixedSize(m_pixmap.rect().size());
 }
 
 void CornerWidget::paintEvent(QPaintEvent* event)
@@ -180,19 +186,188 @@ void CornerWidget::paintEvent(QPaintEvent* event)
 	Q_UNUSED(event);
 
 	QPainter painter(this);
-	QColor backgroundColor(245, 245, 200);
-	QBrush backgroundBrush(backgroundColor);
-	QPen backgroundPen(backgroundColor);
+	QBrush backgroundBrush(m_backgroundColor);
+	QPen backgroundPen(m_backgroundColor);
 	painter.setBrush(backgroundBrush);
 	painter.setPen(backgroundPen);
 	painter.drawRect(rect());
-	QPixmap pixmap(":/images/zoom-best-fit.png");
-	painter.drawPixmap(rect(), pixmap, pixmap.rect());
+	painter.drawPixmap(m_pixmap.rect(), m_pixmap, m_pixmap.rect());
 }
 
 void CornerWidget::mousePressEvent(QMouseEvent* event)
 {
 	Q_UNUSED(event);
 
-	m_view->showProperties(!m_view->propertiesVisible());
+	m_widget->setVisible(!m_widget->isVisible());
+}
+
+/////////////////////////////////////////////////
+// StatusConfigWidget
+
+enum BeamPropertyType {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyPhase,
+                       BeamDistanceToWaist, BeamParameter, BeamIndex};
+
+class ConfigItem
+{
+public:
+	ConfigItem() {};
+	ConfigItem(QString a_fullName, QString a_shortName, UnitType a_unit)
+		: fullName(a_fullName), shortName(a_shortName),  unit(a_unit) {};
+	QString fullName;
+	QString shortName;
+	UnitType unit;
+};
+
+QMap<BeamPropertyType, ConfigItem> configItems;
+
+StatusConfigWidget::StatusConfigWidget(QWidget* parent)
+	: QWidget(parent)
+{
+	setWindowTitle(tr("Configure status bar"));
+
+	configItems.clear();
+	configItems.insert(BeamPosition, ConfigItem(tr("Position"), tr("z"), UnitPosition));
+	configItems.insert(BeamRadius, ConfigItem(tr("Beam radius"), tr("w"), UnitWaist));
+	configItems.insert(BeamDiameter, ConfigItem(tr("Beam diameter"), tr("2w"), UnitWaist));
+	configItems.insert(BeamCurvature, ConfigItem(tr("Beam curvature"), tr("R"), UnitCurvature));
+	configItems.insert(BeamGouyPhase, ConfigItem(tr("Gouy phase"), tr("ζ"), UnitPhase));
+	configItems.insert(BeamDistanceToWaist, ConfigItem(tr("Distance to waist"), tr("z-zw"), UnitPosition));
+	configItems.insert(BeamParameter, ConfigItem(tr("Beam parameter"), tr("q"), UnitPosition));
+	configItems.insert(BeamIndex, ConfigItem(tr("Index"), tr("n"), UnitLess));
+
+	m_propertyListWidget = new QListWidget;
+	m_propertyListWidget->setDragDropMode(QAbstractItemView::InternalMove);
+
+	m_symbolCheck = new QCheckBox("Display full name");
+
+	QVBoxLayout* layout = new QVBoxLayout;
+	layout->addWidget(new QLabel("Check and sort properties:"));
+	layout->addWidget(m_propertyListWidget);
+	layout->addWidget(m_symbolCheck);
+	setLayout(layout);
+
+	readSettings();
+}
+
+StatusConfigWidget::~StatusConfigWidget()
+{
+	writeSettings();
+}
+
+void StatusConfigWidget::readSettings()
+{
+	QSettings settings;
+	QList<BeamPropertyType> propertyList;
+	QList<bool> checkList;
+	QList<QVariant> propertySettings = settings.value("StatusConfigWidget/properties").toList();
+	QList<QVariant> checkSettings = settings.value("StatusConfigWidget/checks").toList();
+
+	// Read settings
+	if ((propertySettings.size() == configItems.size()) && (checkSettings.size() ==  configItems.size()))
+		for (int i = 0; i < configItems.size(); i++)
+		{
+			propertyList << BeamPropertyType(propertySettings[i].toInt());
+			checkList << checkSettings[i].toBool();
+		}
+	// Default values
+	else
+	{
+		propertyList << BeamPosition << BeamRadius << BeamDiameter << BeamCurvature
+		             << BeamGouyPhase << BeamDistanceToWaist << BeamParameter << BeamIndex;
+		checkList << true << true << false << true
+		          << false << false << false << false;
+	}
+
+	m_propertyListWidget->clear();
+	for (int i = 0; i < configItems.size(); i++)
+	{
+		QListWidgetItem* widgetItem = new QListWidgetItem;
+		widgetItem->setText(configItems[propertyList[i]].fullName + " (" + configItems[propertyList[i]].shortName + ")");
+		widgetItem->setCheckState(checkList[i] ? Qt::Checked : Qt::Unchecked);
+		widgetItem->setData(Qt::UserRole, propertyList[i]);
+		m_propertyListWidget->addItem(widgetItem);
+	}
+
+	m_symbolCheck->setCheckState(Qt::CheckState(settings.value("StatusConfigWidget/fullName", Qt::Checked).toInt()));
+}
+
+void StatusConfigWidget::writeSettings()
+{
+	QList<QVariant> propertySettings;
+	QList<QVariant> checkSettings;
+
+	for (int i = 0; i < m_propertyListWidget->count(); i++)
+	{
+		propertySettings << m_propertyListWidget->item(i)->data(Qt::UserRole);
+		checkSettings << (m_propertyListWidget->item(i)->checkState() == Qt::Checked);
+	}
+
+	QSettings settings;
+	settings.setValue("StatusConfigWidget/properties", propertySettings);
+	settings.setValue("StatusConfigWidget/checks", checkSettings);
+	settings.setValue("StatusConfigWidget/fullName", m_symbolCheck->checkState());
+}
+
+/////////////////////////////////////////////////
+// StatusWidget
+
+StatusWidget::StatusWidget(QStatusBar* statusBar)
+	: QWidget(statusBar)
+	, m_statusBar(statusBar)
+{
+	m_configWidget = new StatusConfigWidget(this);
+	m_configWidget->setWindowFlags(Qt::Window);
+	CornerWidget* corner = new CornerWidget(Qt::transparent, ":/images/preferences-system.png",
+	                       m_configWidget, this);
+	m_label = new QLabel;
+	QHBoxLayout* layout = new QHBoxLayout;
+	layout->setContentsMargins(0, 0, 0, 0);
+	layout->addWidget(corner);
+	layout->addWidget(m_label);
+	setLayout(layout);
+}
+
+void StatusWidget::showBeamInfo(const Beam& beam, double z)
+{
+	m_statusBar->clearMessage();
+
+	bool fullName = m_configWidget->m_symbolCheck->checkState() == Qt::Checked;
+	QString text;
+
+	for (int i = 0; i <  m_configWidget->m_propertyListWidget->count(); i++)
+	{
+		if (m_configWidget->m_propertyListWidget->item(i)->checkState() != Qt::Checked)
+			continue;
+		BeamPropertyType type = BeamPropertyType(m_configWidget->m_propertyListWidget->item(i)->data(Qt::UserRole).toInt());
+		ConfigItem property = configItems[type];
+		text += fullName ? (property.fullName + tr(": ")) : (property.shortName + tr(" = "));
+		double value = 0.;
+		if (type == BeamPosition)
+			value = z;
+		else if (type == BeamRadius)
+			value = beam.radius(z);
+		else if (type == BeamDiameter)
+			value = 2.*beam.radius(z);
+		else if (type == BeamCurvature)
+			value = beam.curvature(z);
+		else if (type == BeamGouyPhase)
+			value = beam.gouyPhase(z);
+		else if ((type == BeamDistanceToWaist) || (type == BeamParameter))
+			value = z - beam.waistPosition();
+		else if (type == BeamIndex)
+			value = beam.index();
+
+		value *=  Units::getUnit(property.unit).divider();
+		text += QString::number(value, 'f', 2) + Units::getUnit(property.unit).string();
+
+		if (type == BeamParameter)
+		{
+			value = beam.rayleigh();
+			text += " + i" + QString::number(value, 'f', 2) + Units::getUnit(UnitRayleigh).string();
+		}
+
+		text += "    ";
+
+	}
+	m_label->setText(text);
 }

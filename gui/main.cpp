@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 
+	QCoreApplication::setOrganizationName("GaussianBeam");
+	QCoreApplication::setApplicationName("GaussianBeam");
+
 	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
 	QTranslator translator;
 	QString locale = QLocale::system().name();

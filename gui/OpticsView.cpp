@@ -64,6 +64,7 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 
 	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
 	m_targetBeamItem->setPlainStyle(false);
+	m_targetBeamItem->setAuxiliary(true);
 	m_targetBeamItem->setPos(0., 0.);
 	addItem(m_targetBeamItem);
 
@@ -108,7 +109,6 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.rightBoundary());
 		else
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
-		//qDebug() << i << m_beamItems[i]->leftBound() <<  m_beamItems[i]->rightBound();
 	}
 }
 
@@ -139,7 +139,6 @@ void OpticsScene::OpticsBenchBoundariesChanged()
 void OpticsScene::OpticsBenchOpticsAdded(int index)
 {
 	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
-	//qDebug() << "WAIST OpticsBenchOpticsAdded" <<  m_bench.beam(index).waist();
 	addItem(opticsItem);
 
 	// recreate BeamItem list (reference or pointer to list element don't survive a list resize !)
@@ -216,6 +215,7 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setBackgroundBrush(Qt::white);
 	m_horizontalRange = 0.;
 	m_verticalRange = 0.;
+	m_statusWidget = 0;
 
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -227,7 +227,8 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	m_opticsViewProperties = new OpticsViewProperties(this);
 	m_opticsViewProperties->hide();
 
-	CornerWidget* cornerWidget = new CornerWidget(this);
+	CornerWidget* cornerWidget = new CornerWidget(QColor(245, 245, 200),
+	              ":/images/zoom-best-fit.png", m_opticsViewProperties, this);
 	setCornerWidget(cornerWidget);
 
 	setResizeAnchor(QGraphicsView::AnchorViewCenter);
@@ -320,22 +321,18 @@ void OpticsView::wheelEvent(QWheelEvent* event)
 
 void OpticsView::mouseMoveEvent(QMouseEvent* event)
 {
-	if (m_statusBar)
+	if (m_statusWidget)
 	{
 		QPointF position = mapToScene(event->pos());
 		position.setY(0.);
-		QString text = tr("Position: ") + QString::number(position.x()*Units::getUnit(UnitPosition).divider(), 'f', 2) + " " + tr("mm") + "    ";
 
 		foreach (QGraphicsItem* graphicsItem, items())
 			if (BeamItem* beamItem = dynamic_cast<BeamItem*>(graphicsItem))
-				if (beamItem->boundingRect().contains(position))
+				if (beamItem->boundingRect().contains(position) && !beamItem->auxiliary())
 				{
-					text += tr("Beam radius: ") + QString::number(beamItem->beam().radius(position.x())*Units::getUnit(UnitWaist).divider(), 'f', 2) + " " +  tr("µm") + "    " +
-							tr("Beam curvature: ") + QString::number(beamItem->beam().curvature(position.x())*Units::getUnit(UnitCurvature).divider(), 'f', 2) +  " " + tr("mm") + "    ";
+					m_statusWidget->showBeamInfo(beamItem->beam(), position.x());
 					break;
 				}
-
-		m_statusBar->showMessage(text);
 	}
 
 	QGraphicsView::mouseMoveEvent(event);
@@ -513,6 +510,7 @@ BeamItem::BeamItem(const Beam& beam)
 {
 	m_drawText = true;
 	m_style = true;
+	m_auxiliary = false;
 	setZValue(0.);
 }
 
@@ -566,11 +564,9 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 
 		if (approximation.minZ + epsilon < approximation.maxZ)
 		{
-			//qDebug() << " Drawing waist" << approximation.minZ << approximation.maxZ;
 			QPolygonF beamPolygonUp, beamPolygonDown;
 			for (double z = approximation.minZ; z <= approximation.maxZ; z = m_beam.approxNextPosition(z, approximation))
 			{
-				//qDebug() << z;
 				beamPolygonUp.append(QPointF(z, m_beam.radius(z)));
 				beamPolygonDown.prepend(QPointF(z, -m_beam.radius(z)));
 				if (z == approximation.maxZ)

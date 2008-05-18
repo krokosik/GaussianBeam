@@ -137,6 +137,23 @@ void Optics::eraseLockingTree()
 }
 
 /////////////////////////////////////////////////
+// Interface class
+
+Beam Interface::image(const Beam& inputBeam) const
+{
+	Beam out = ABCD::image(inputBeam);
+	out.setIndex(out.index()*indexRatio());
+	return out;
+}
+
+Beam Interface::antecedent(const Beam& outputBeam) const
+{
+	Beam in = ABCD::antecedent(outputBeam);
+	in.setIndex(in.index()/indexRatio());
+	return in;
+}
+
+/////////////////////////////////////////////////
 // CreateBeam class
 
 CreateBeam::CreateBeam(double waist, double waistPosition, string name)
@@ -214,14 +231,14 @@ Beam ABCD::image(const Beam& inputBeam) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-	return Beam(qOut, position() + width(), inputBeam.wavelength());
+	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index());
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam) const
 {
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
-	return Beam(qIn, position(), outputBeam.wavelength());
+	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index());
 }
 
 bool ABCD::stabilityCriterion1() const
@@ -236,7 +253,8 @@ bool ABCD::stabilityCriterion2() const
 
 Beam ABCD::eigenMode(double wavelength) const
 {
-	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength);
+	/// @todo what is the index ?
+	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength, 1.0);
 }
 
 /////////////////////////////////////////////////

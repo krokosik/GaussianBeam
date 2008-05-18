@@ -67,12 +67,12 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		if (m_bench.optics(row)->type() == LensType)
 		{
 			return QString("f = ") + QString::number(dynamic_cast<const Lens*>(m_bench.optics(row))->focal()*Units::getUnit(UnitFocal).divider())
-			                       + Units::getUnit(UnitFocal).string("m");
+			                       + Units::getUnit(UnitFocal).string();
 		}
 		else if (m_bench.optics(row)->type() == CurvedMirrorType)
 		{
 			return QString("R = ") + QString::number(dynamic_cast<const CurvedMirror*>(m_bench.optics(row))->curvatureRadius()*Units::getUnit(UnitCurvature).divider())
-			                       + Units::getUnit(UnitCurvature).string("m");
+			                       + Units::getUnit(UnitCurvature).string();
 		}
 		else if (m_bench.optics(row)->type() == FlatInterfaceType)
 		{
@@ -83,26 +83,26 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			const CurvedInterface* optics = dynamic_cast<const CurvedInterface*>(m_bench.optics(row));
 			return QString("n2/n1 = ") + QString::number(optics->indexRatio()) +
 			       QString("\nR = ") + QString::number(optics->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
-			                       + Units::getUnit(UnitCurvature).string("m");
+			                       + Units::getUnit(UnitCurvature).string();
 		}
 		else if (m_bench.optics(row)->type() == DielectricSlabType)
 		{
 			const DielectricSlab* optics = dynamic_cast<const DielectricSlab*>(m_bench.optics(row));
 			return QString("n2/n1 = ") + QString::number(optics->indexRatio()) +
 			       QString("\n") + tr("width") + " = " + QString::number(m_bench.optics(row)->width()*Units::getUnit(UnitWidth).divider())
-			                       + Units::getUnit(UnitWidth).string("m");
+			                       + Units::getUnit(UnitWidth).string();
 		}
 		else if (m_bench.optics(row)->type() == GenericABCDType)
 		{
 			const ABCD* optics = dynamic_cast<const ABCD*>(m_bench.optics(row));
 			return QString("A = ") + QString::number(optics->A()) +
 			       QString("\nB = ") + QString::number(optics->B()*Units::getUnit(UnitABCD).divider())
-			                         + Units::getUnit(UnitABCD).string("m") +
+			                         + Units::getUnit(UnitABCD).string() +
 			       QString("\nC = ") + QString::number(optics->C()/Units::getUnit(UnitABCD).divider())
-			                         + " /" + Units::getUnit(UnitABCD).string("m", false) +
+			                         + " /" + Units::getUnit(UnitABCD).string(false) +
 			       QString("\nD = ") + QString::number(optics->D()) +
 			       QString("\n") + tr("width") + " = " + QString::number(m_bench.optics(row)->width()*Units::getUnit(UnitWidth).divider())
-			                       + Units::getUnit(UnitWidth).string("m");
+			                       + Units::getUnit(UnitWidth).string();
 		}
 	}
 	else if (column == WaistColumn)
@@ -141,21 +141,21 @@ QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation,
 				case OpticsColumn:
 					return tr("Optics");
 				case PositionColumn:
-					return tr("Position") + "\n(" + Units::getUnit(UnitPosition).prefix() + "m)";
+					return tr("Position") + "\n(" + Units::getUnit(UnitPosition).string(false) + ")";
 				case RelativePositionColumn:
 					return tr("Relative\nposition");
 				case PropertiesColumn:
 					return tr("Properties");
 				case WaistColumn:
-					return tr("Waist") + " (" + Units::getUnit(UnitWaist).prefix() + "m)";
+					return tr("Waist") + " (" + Units::getUnit(UnitWaist).string(false) + ")";
 				case WaistPositionColumn:
-					return tr("Waist\nPosition") + " (" + Units::getUnit(UnitPosition).prefix() + "m)";
+					return tr("Waist\nPosition") + " (" + Units::getUnit(UnitPosition).string(false) + ")";
 				case RayleighColumn:
-					return tr("Rayleigh\nlength") + " (" + Units::getUnit(UnitRayleigh).prefix() + "m)";
+					return tr("Rayleigh\nlength") + " (" + Units::getUnit(UnitRayleigh).string(false) + ")";
 				case DivergenceColumn:
-					return tr("Divergence") + "\n(" + Units::getUnit(UnitDivergence).prefix() + "rad)";
+					return tr("Divergence") + "\n(" + Units::getUnit(UnitDivergence).string(false) + ")";
 				case SensitivityColumn:
-					return tr("Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).prefix() + tr("m²") + ")";
+					return tr("Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).string(false) + tr("²") + ")";
 				case NameColumn:
 					return tr("Name");
 				case LockColumn:

@@ -96,23 +96,23 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	{
 		QList<EditorProperty> properties;
 		if (optics->type() == LensType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string("m"));
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string());
 		else if (optics->type() == CurvedMirrorType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string("m"));
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == FlatInterfaceType)
 			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "");
 		else if (optics->type() == CurvedInterfaceType)
 			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string("m"));
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == DielectricSlabType)
 			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
-			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string("m"));
+			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
 		else if (optics->type() == GenericABCDType)
 			properties << EditorProperty(-Unit::infinity, Unit::infinity, "A = ", "")
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "B = ", Units::getUnit(UnitABCD).string("m"))
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string("m", false))
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "B = ", Units::getUnit(UnitABCD).string())
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string(false))
 			           << EditorProperty(-Unit::infinity, Unit::infinity, "D = ", "")
-			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string("m"));
+			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
 
 		return new PropertyEditor(properties, parent);
 	}
@@ -222,9 +222,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	if (!index.isValid() || (editor == 0))
 		return;
 
-	int row = index.row();
 	ColumnContent column = m_model->columnContent(index.column());
-	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{

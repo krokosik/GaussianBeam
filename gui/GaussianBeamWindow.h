@@ -56,6 +56,9 @@ protected slots:
 	void on_action_AddDielectricSlab_triggered()  { insertOptics(DielectricSlabType);  }
 	void on_WavelengthSpinBox_valueChanged(double wavelength);
 
+protected:
+	virtual void closeEvent(QCloseEvent* event);
+
 // optics bench inherited virtual functions
 private:
 	virtual void OpticsBenchWavelengthChanged();
@@ -65,6 +68,8 @@ private:
 	void saveFile(const QString& path = QString());
 	void setCurrentFile(const QString& path);
 	void insertOptics(OpticsType opticsType);
+	void readSettings();
+	void writeSettings();
 
 // Loading stuff that should logically be moved to OpticsBench, but depend on Qt.
 // In addition, a GaussianBeam file contains view properties that do not belong to OpticsBench.

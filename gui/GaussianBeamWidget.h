@@ -41,10 +41,9 @@ class GaussianBeamWidget : public QWidget, private OpticsBenchNotify, private Ui
 
 public:
 	GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget* parent = 0);
+	~GaussianBeamWidget();
 
 public:
-	bool openFile(const QString& fileName = QString());
-	bool saveFile(const QString& fileName = QString());
 	void displayOverlap();
 
 // UI slots
@@ -70,7 +69,6 @@ protected slots:
 	void on_pushButton_FitAddRow_clicked();
 	void on_pushButton_FitRemoveRow_clicked();
 
-
 // optics bench inherited virtual functions
 private:
 	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
@@ -87,6 +85,8 @@ private:
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
 	void updateFitInformation(int index);
+	void readSettings();
+	void writeSettings();
 
 private:
 	OpticsScene* m_opticsScene;

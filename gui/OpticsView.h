@@ -36,6 +36,7 @@ class OpticsItem;
 class BeamItem;
 class RullerSlider;
 class OpticsViewProperties;
+class StatusWidget;
 
 class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
 {
@@ -70,7 +71,7 @@ public:
 	OpticsView(QGraphicsScene* scene);
 
 public:
-	void setStatusBar(QStatusBar* statusBar) { m_statusBar = statusBar; }
+	void setStatusWidget(StatusWidget* statusWidget) { m_statusWidget = statusWidget; }
 	double verticalRange() { return m_verticalRange; }
 	void setVerticalRange(double verticalRange);
 	double horizontalRange() { return m_horizontalRange; }
@@ -97,7 +98,7 @@ private:
 	OpticsViewProperties* m_opticsViewProperties;
 	RullerSlider* m_horizontalRuller;
 	RullerSlider* m_verticalRuller;
-	QStatusBar* m_statusBar;
+	StatusWidget* m_statusWidget;
 	double m_horizontalRange;
 	double m_verticalRange;
 	double m_origin;
@@ -149,6 +150,8 @@ public:
 	void setRightBound(double rightBound);
 	const Beam& beam() const { return m_beam; }
 	void setPlainStyle(bool style = true) { m_style = style; }
+	bool auxiliary() const { return m_auxiliary; }
+	void setAuxiliary(bool auxiliary) { m_auxiliary = auxiliary; }
 
 private:
 	const Beam& m_beam;
@@ -156,6 +159,7 @@ private:
 	double m_rightBound;
 	bool m_drawText;
 	bool m_style;
+	bool m_auxiliary;
 };
 
 /*

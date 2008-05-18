@@ -8,5 +8,6 @@
         <file>images/edit-add.png</file>
         <file>images/edit-delete.png</file>
         <file>images/zoom-best-fit.png</file>
+        <file>images/preferences-system.png</file>
     </qresource>
 </RCC>

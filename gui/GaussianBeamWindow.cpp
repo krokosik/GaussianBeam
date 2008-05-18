@@ -18,6 +18,7 @@
 
 #include "gui/GaussianBeamWindow.h"
 #include "gui/OpticsView.h"
+#include "gui/OpticsWidgets.h"
 #include "gui/Unit.h"
 
 #include <QDebug>
@@ -27,6 +28,7 @@
 #include <QFileDialog>
 #include <QMenu>
 #include <QDockWidget>
+#include <QSettings>
 
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	: QMainWindow()
@@ -87,8 +89,9 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_fileToolBar->addSeparator();
 	m_fileToolBar->addWidget(wavelengthWidget);
 
-	statusBar()->showMessage(tr("Ready"));
-	m_opticsView->setStatusBar(statusBar());
+	StatusWidget* statusWidget = new StatusWidget(statusBar());
+	statusBar()->addWidget(statusWidget, 1);
+	m_opticsView->setStatusWidget(statusWidget);
 
 	// Layouts
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
@@ -112,6 +115,30 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	if (!fileName.isEmpty())
 		openFile(fileName);
+
+	readSettings();
+}
+
+void GaussianBeamWindow::closeEvent(QCloseEvent* event)
+{
+	Q_UNUSED(event);
+	writeSettings();
+}
+
+void GaussianBeamWindow::writeSettings()
+{
+	QSettings settings;
+	settings.setValue("GaussianBeamWindow/size", size());
+	settings.setValue("GaussianBeamWindow/pos", pos());
+	settings.setValue("GaussianBeamWindow/wavelength", m_bench.wavelength());
+}
+
+void GaussianBeamWindow::readSettings()
+{
+	QSettings settings;
+	resize(settings.value("GaussianBeamWindow/size", QSize(800, 600)).toSize());
+	move(settings.value("GaussianBeamWindow/pos", QPoint(100, 100)).toPoint());
+	m_bench.setWavelength(settings.value("GaussianBeamWindow/wavelength", 461e-9).toDouble());
 }
 
 void GaussianBeamWindow::on_action_AddOptics_triggered()
@@ -161,10 +188,12 @@ void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 
 void GaussianBeamWindow::openFile(const QString& path)
 {
+	QSettings settings;
 	QString fileName = path;
+	QString dir = settings.value("GaussianBeamWindow/lastDirectory", "").toString();
 
 	if (fileName.isNull())
-		fileName = QFileDialog::getOpenFileName(this, tr("Choose a data file"), "", "*.xml");
+		fileName = QFileDialog::getOpenFileName(this, tr("Choose a data file"), dir, "*.xml");
 	if (fileName.isEmpty())
 		return;
 
@@ -172,15 +201,18 @@ void GaussianBeamWindow::openFile(const QString& path)
 	{
 		setCurrentFile(fileName);
 		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("loaded"));
+		settings.setValue("GaussianBeamWindow/lastDirectory", QFileInfo(fileName).path());
 	}
 }
 
 void GaussianBeamWindow::saveFile(const QString& path)
 {
+	QSettings settings;
 	QString fileName = path;
+	QString dir = settings.value("GaussianBeamWindow/lastDirectory", "").toString();
 
 	if (fileName.isNull())
-		fileName = QFileDialog::getSaveFileName(this, tr("Save File"), QDir::currentPath(), "*.xml");
+		fileName = QFileDialog::getSaveFileName(this, tr("Save File"), dir, "*.xml");
 	if (fileName.isEmpty())
 		return;
 	if (!fileName.endsWith(".xml"))
@@ -190,6 +222,7 @@ void GaussianBeamWindow::saveFile(const QString& path)
 	{
 		setCurrentFile(fileName);
 		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("saved"));
+		settings.setValue("GaussianBeamWindow/lastDirectory", QFileInfo(fileName).path());
 	}
 }
 
