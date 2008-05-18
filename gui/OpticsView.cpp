@@ -164,10 +164,18 @@ void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
 			if (m_bench.opticsIndex(opticsItem->optics()) == -1)
 				removeItem(graphicsItem);
 
-	for (int i = index + count - 1; i >= index; i--)
+	// recreate BeamItem list (reference or pointer to list element don't survive a list resize !)
+	while (!m_beamItems.isEmpty())
 	{
-		removeItem(m_beamItems[i]);
-		m_beamItems.removeAt(i);
+		removeItem(m_beamItems.last());
+		m_beamItems.removeLast();
+	}
+
+	for (int i = 0; i < m_bench.nOptics(); i++)
+	{
+		BeamItem* beamItem = new BeamItem(m_bench.beam(i));
+		m_beamItems.append(beamItem);
+		addItem(beamItem);
 	}
 }
 

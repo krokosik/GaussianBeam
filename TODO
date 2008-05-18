@@ -30,10 +30,9 @@ WISHLIST:
 BUGS:
 	Loading and saving does not work
 	Check that the waist translation by a dielectric slab is right
-	Removing an optics does not work
 	Relative lock selection does not work anymore
 	Check initial values (e.g. magic waist)
-	implement ruller scale
+	implement ruller scale & vertical labels
 	fit problem: some fits are plainly wrong
 	change all parameters (e.g. fit result) when changing the wavelength
 
