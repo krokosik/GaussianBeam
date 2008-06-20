@@ -126,11 +126,11 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case LockColumn:
 	{
 		QComboBox* editor = new QComboBox(parent);
-		editor->addItem(tr("none"));
-		editor->addItem(tr("absolute"));
+		editor->addItem(tr("none"), -2);
+		editor->addItem(tr("absolute"), -1);
 		for (int i = 0; i < m_model->rowCount(); i++)
 			if ((!m_bench.optics(i)->relativeLockedTo(optics)) || (m_bench.optics(i) == optics->relativeLockParent()))
-				editor->addItem(QString::fromUtf8(m_bench.optics(i)->name().c_str()));
+				editor->addItem(QString::fromUtf8(m_bench.optics(i)->name().c_str()), m_bench.optics(i)->id());
 		return editor;
 	}
 	default:
@@ -211,8 +211,13 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	case LockColumn:
 	{
 		QString value = m_model->data(index, Qt::DisplayRole).toString();
+		int lockId = -2;
+		if (optics->absoluteLock())
+			lockId = -1;
+		else if (m_bench.optics(row)->relativeLockParent())
+			lockId = m_bench.optics(row)->relativeLockParent()->id();
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
-		comboBox->setCurrentIndex(comboBox->findText(value));
+		comboBox->setCurrentIndex(comboBox->findData(lockId));
 		break;
 	}
 	default:
@@ -233,7 +238,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	case LockColumn:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
-		model->setData(index, comboBox->itemText(comboBox->currentIndex()));
+		model->setData(index, comboBox->itemData(comboBox->currentIndex()));
 		break;
 	}
 	case PropertiesColumn:

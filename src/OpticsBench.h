@@ -86,6 +86,7 @@ public:
 	int setOpticsPosition(int index, double position, bool respectAbsoluteLock = true);
 	void setOpticsName(int index, std::string name);
 	void lockTo(int index, std::string opticsName);
+	void lockTo(int index, int id);
 	/**
 	* Retrieve a non constant pointer to an optics for property change.
 	* When finished, call opticsPropertyChanged()
@@ -126,9 +127,12 @@ public:
 	/// Optics change callback
 	void registerNotify(OpticsBenchNotify* notify);
 
+	void printTree();
+
 private:
 	std::vector<Optics*> cloneOptics() const;
 	void lockTo(std::vector<Optics*>& opticsVector, int index, std::string opticsName) const;
+	void lockTo(std::vector<Optics*>& opticsVector, int index, int id) const;
 	void setOpticsPosition(std::vector<Optics*>& opticsVector, int index, double position, bool respectAbsoluteLock = true) const;
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);

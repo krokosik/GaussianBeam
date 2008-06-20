@@ -211,7 +211,6 @@ void OpticsBench::addOptics(OpticsType opticsType, int index)
 
 void OpticsBench::removeOptics(int index, int count)
 {
-	cerr << "Remove optics" << index << count << endl;
 	for (int i = index; i < index + count; i++)
 	{
 		delete m_optics[index];
@@ -219,15 +218,10 @@ void OpticsBench::removeOptics(int index, int count)
 		m_beams.erase(m_beams.begin() + index);
 	}
 
-	cerr << " notifying" << endl;
-
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsRemoved(index, count);
 
-	cerr << " computing beams" << endl;
-
 	computeBeams(index);
-	cerr << " done" << endl;
 }
 
 int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
@@ -255,14 +249,64 @@ void OpticsBench::lockTo(int index, string opticsName)
 	emitChange(0, nOptics()-1);
 }
 
+void OpticsBench::lockTo(int index, int id)
+{
+	lockTo(m_optics, index, id);
+	emitChange(0, nOptics()-1);
+}
+
 void OpticsBench::lockTo(vector<Optics*>& opticsVector, int index, string opticsName) const
 {
+	cerr << "OpticsBench::lockTo--" << opticsName << "--" << endl;
 	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
+	{
+		cerr << "Trying--" << (*it)->name() << "-- " <<  (*it)->name().compare(opticsName) << endl;
 		if ((*it)->name() == opticsName)
 		{
 			opticsVector[index]->relativeLockTo(*it);
+			cerr << " found--" << (*it)->name() << endl;
 			break;
 		}
+	}
+
+	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
+	{
+		cerr << "Optics " << (*it)->name() << " " <<  (*it)->id() << endl;
+		if (const Optics* parent = (*it)->relativeLockParent())
+			cerr << " parent = " << parent->name() << " " << parent->id() << endl;
+		for (list<Optics*>::const_iterator cit = (*it)->relativeLockChildren().begin(); cit != (*it)->relativeLockChildren().end(); cit++)
+			cerr << " child = " << (*cit)->name() << " " << (*cit)->id() << endl;
+	}
+}
+
+void OpticsBench::printTree()
+{
+	cerr << "Locking tree" << endl;
+
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+	{
+		cerr << " Optics " << (*it)->name() << " " <<  (*it)->id() << endl;
+		if (const Optics* parent = (*it)->relativeLockParent())
+			cerr << "  parent = " << parent->name() << " " << parent->id() << endl;
+		for (list<Optics*>::const_iterator cit = (*it)->relativeLockChildren().begin(); cit != (*it)->relativeLockChildren().end(); cit++)
+			cerr << "  child = " << (*cit)->name() << " " << (*cit)->id() << endl;
+	}
+}
+
+void OpticsBench::lockTo(vector<Optics*>& opticsVector, int index, int id) const
+{
+	cerr << "OpticsBench::lockTo " << id << endl;
+	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
+	{
+		cerr << "Trying " << (*it)->name() << " : " << (*it)->id() << endl;
+		if ((*it)->id() == id)
+		{
+			opticsVector[index]->relativeLockTo(*it);
+			cerr << " found " << (*it)->name() << " : " << (*it)->id() << endl;
+			break;
+		}
+	}
+
 }
 
 void OpticsBench::setOpticsName(int index, std::string name)
@@ -410,7 +454,7 @@ vector<Optics*> OpticsBench::cloneOptics() const
 
 	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
 		if ((*it)->relativeLockParent())
-			lockTo(opticsClone, it - m_optics.begin(), (*it)->relativeLockParent()->name());
+			lockTo(opticsClone, it - m_optics.begin(), (*it)->relativeLockParent()->id());
 
 	return opticsClone;
 }

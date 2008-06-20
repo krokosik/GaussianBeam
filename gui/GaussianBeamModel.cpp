@@ -260,24 +260,26 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
  	else if (column == LockColumn)
 	{
 		/// @todo make specific functions in OpticsBench to change this. Move this logic to OpticsBench
-		QString string = value.toString();
-		if (string == tr("absolute"))
-		{
-			Optics* optics = m_bench.opticsForPropertyChange(row);
-			optics->setAbsoluteLock(true);
-			m_bench.opticsPropertyChanged(row);
-		}
-		else if (string == tr("none"))
+		m_bench.printTree();
+		int lockId = value.toInt();
+		if (value == -2)
 		{
 			Optics* optics = m_bench.opticsForPropertyChange(row);
 			optics->setAbsoluteLock(false);
 			optics->relativeUnlock();
 			m_bench.opticsPropertyChanged(row);
 		}
+		else if (value == -1)
+		{
+			Optics* optics = m_bench.opticsForPropertyChange(row);
+			optics->setAbsoluteLock(true);
+			m_bench.opticsPropertyChanged(row);
+		}
 		else
-			m_bench.lockTo(row, string.toUtf8().data());
+			m_bench.lockTo(row, lockId);
 	}
 
+	m_bench.printTree();
 	return true;
 }
 

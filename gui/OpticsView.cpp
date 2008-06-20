@@ -109,7 +109,6 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 			m_beamItems[i]->setRightBound(m_bench.rightBoundary());
 		else
 			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
-		qDebug() << "OpticsScene::OpticsBenchDataChanged" << i;
 	}
 }
 
