@@ -98,7 +98,7 @@ private:
 	QTableView* m_table;
 	OpticsView* m_opticsView;
 	OpticsScene* m_opticsScene;
-
+	QMap<OpticsType, QString> m_opticsElements;
 
 	QString m_currentFile;
 };
