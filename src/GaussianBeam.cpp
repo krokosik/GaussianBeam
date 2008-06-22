@@ -28,21 +28,23 @@ Beam::Beam()
 	m_valid = false;
 }
 
-Beam::Beam(double waist, double waistPosition, double wavelength, double index)
+Beam::Beam(double waist, double waistPosition, double wavelength, double index, double M2)
 	: m_waist(waist)
 	, m_waistPosition(waistPosition)
 	, m_wavelength(wavelength)
 	, m_index(index)
+	, m_M2(M2)
 {
 	m_valid = true;
 }
 
-Beam::Beam(const complex<double>& q, double z, double wavelength, double index)
+Beam::Beam(const complex<double>& q, double z, double wavelength, double index, double M2)
 	: m_wavelength(wavelength)
 	, m_index(index)
+	, m_M2(M2)
 {
 	const double z0 = q.imag();
-	m_waist = sqrt(z0*wavelength/(m_index*M_PI));
+	m_waist = sqrt(z0*wavelength*m_M2/(m_index*M_PI));
 	m_waistPosition = z - q.real();
 	m_valid = true;
 }
@@ -52,13 +54,13 @@ double Beam::divergence() const
 	if (m_waist == 0.)
 		return 0.;
 
-	return atan(m_wavelength/(m_index*M_PI*m_waist));
+	return atan(m_wavelength*m_M2/(m_index*M_PI*m_waist));
 }
 
 void Beam::setDivergence(double divergence)
 {
 	if ((divergence > 0.) && (divergence < M_PI/2.))
-		m_waist = m_wavelength/(m_index*M_PI*tan(divergence));
+		m_waist = m_wavelength*m_M2/(m_index*M_PI*tan(divergence));
 }
 
 double Beam::rayleigh() const
@@ -66,13 +68,13 @@ double Beam::rayleigh() const
 	if (m_wavelength == 0.)
 		return 0.;
 
-	return m_index*M_PI*sqr(m_waist)/m_wavelength;
+	return m_index*M_PI*sqr(m_waist)/(m_wavelength*m_M2);
 }
 
 void Beam::setRayleigh(double rayleigh)
 {
 	if (rayleigh > 0.)
-		m_waist = sqrt(rayleigh*m_wavelength/(m_index*M_PI));
+		m_waist = sqrt(rayleigh*m_wavelength*m_M2/(m_index*M_PI));
 }
 
 double Beam::radius(double z) const

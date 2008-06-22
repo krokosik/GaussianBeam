@@ -96,24 +96,25 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	{
 		QList<EditorProperty> properties;
 		if (optics->type() == CreateBeamType)
-			properties << EditorProperty(0., Unit::infinity, "n = ", "");
+			properties << EditorProperty(0., Unit::infinity, "n = ")
+			           << EditorProperty(1., Unit::infinity, tr("M²") + " = ");
 		else if (optics->type() == LensType)
 			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string());
 		else if (optics->type() == CurvedMirrorType)
 			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == FlatInterfaceType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "");
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ");
 		else if (optics->type() == CurvedInterfaceType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ")
 			           << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == DielectricSlabType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ", "")
+			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ")
 			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
 		else if (optics->type() == GenericABCDType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "A = ", "")
+			properties << EditorProperty(-Unit::infinity, Unit::infinity, "A = ")
 			           << EditorProperty(-Unit::infinity, Unit::infinity, "B = ", Units::getUnit(UnitABCD).string())
 			           << EditorProperty(-Unit::infinity, Unit::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string(false))
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "D = ", "")
+			           << EditorProperty(-Unit::infinity, Unit::infinity, "D = ")
 			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
 
 		return new PropertyEditor(properties, parent);
@@ -169,7 +170,11 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	{
 		PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
 		if (optics->type() == CreateBeamType)
-			propertyEditor->setValue(0, dynamic_cast<const CreateBeam*>(optics)->index());
+		{
+			const CreateBeam* createBeam = dynamic_cast<const CreateBeam*>(optics);
+			propertyEditor->setValue(0, createBeam->index());
+			propertyEditor->setValue(1, createBeam->M2());
+		}
 		else if (optics->type() == LensType)
 			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider());
 		else if (optics->type() == CurvedMirrorType)

@@ -143,7 +143,9 @@ CreateBeam::CreateBeam(double waist, double waistPosition, double index, string 
 	: Optics(CreateBeamType, false/*Not ABCD*/, waistPosition, name)
 	, m_waist(waist)
 	, m_index(index)
-{}
+{
+	m_M2 = 1.;
+}
 
 void CreateBeam::setWaist(double waist)
 {
@@ -157,20 +159,28 @@ void CreateBeam::setIndex(double index)
 		m_index = index;
 }
 
+void CreateBeam::setM2(double M2)
+{
+	if (M2 >= 1.)
+		m_M2 = M2;
+}
+
 Beam CreateBeam::image(const Beam& inputBeam) const
 {
-	return Beam(m_waist, position(), inputBeam.wavelength(), m_index);
+	return Beam(m_waist, position(), inputBeam.wavelength(), m_index, m_M2);
 }
 
 Beam CreateBeam::antecedent(const Beam& outputBeam) const
 {
-	return Beam(m_waist, position(), outputBeam.wavelength(), m_index);
+	return Beam(m_waist, position(), outputBeam.wavelength(), m_index, m_M2);
 }
 
 void CreateBeam::setBeam(const Beam& beam)
 {
 	setPosition(beam.waistPosition());
 	setWaist(beam.waist());
+	setIndex(beam.index());
+	setM2(beam.M2());
 }
 
 
@@ -221,14 +231,14 @@ Beam ABCD::image(const Beam& inputBeam) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index()*indexJump());
+	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index()*indexJump(), inputBeam.M2());
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam) const
 {
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
-	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index()/indexJump());
+	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index()/indexJump(), outputBeam.M2());
 }
 
 bool ABCD::stabilityCriterion1() const
@@ -244,7 +254,7 @@ bool ABCD::stabilityCriterion2() const
 Beam ABCD::eigenMode(double wavelength) const
 {
 	/// @todo what is the index ?
-	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength, 1.0);
+	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength, 1.0, 1.0);
 }
 
 /////////////////////////////////////////////////

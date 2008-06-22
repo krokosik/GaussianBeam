@@ -74,6 +74,7 @@ private:
 // Loading stuff that should logically be moved to OpticsBench, but depend on Qt.
 // In addition, a GaussianBeam file contains view properties that do not belong to OpticsBench.
 private:
+	void initSaveVariables();
 	bool parseFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
 	void parseBench(const QDomElement& element);

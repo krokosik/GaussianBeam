@@ -57,8 +57,8 @@ class Beam
 {
 public:
 	Beam();
-	Beam(double waist, double waistPosition, double wavelength, double index);
-	Beam(const std::complex<double>& q, double z, double wavelength, double index);
+	Beam(double waist, double waistPosition, double wavelength, double index, double M2);
+	Beam(const std::complex<double>& q, double z, double wavelength, double index, double M2);
 
 public:
 	bool isValid() const { return m_valid; }
@@ -76,6 +76,8 @@ public:
 	void setWavelength(double wavelength) { m_wavelength = wavelength; }
 	double index() const { return m_index; }
 	void setIndex(double index) { m_index = index; }
+	double M2() const { return m_M2; }
+	void setM2(double M2) { m_M2 = M2; }
 
 	// Position dependent properties
 	double radius(double z) const;
@@ -101,6 +103,7 @@ private:
 	double m_waistPosition;
 	double m_wavelength;
 	double m_index;
+	double m_M2;
 	bool m_valid;
 };
 

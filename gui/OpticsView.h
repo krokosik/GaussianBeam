@@ -45,6 +45,7 @@ public:
 
 public:
 	void showTargetBeam(bool show = true);
+	bool targetBeamVisible();
 
 private:
 	void OpticsBenchDataChanged(int startOptics, int endOptics);

@@ -237,11 +237,14 @@ public:
 	void setWaist(double waist);
 	double index() const { return m_index; }
 	void setIndex(double index);
+	double M2() const { return m_M2; }
+	void setM2(double M2);
 	void setBeam(const Beam& beam);
 
 private:
 	double m_waist;
 	double m_index;
+	double m_M2;
 };
 
 /////////////////////////////////////////////////

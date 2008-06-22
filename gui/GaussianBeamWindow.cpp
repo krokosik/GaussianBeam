@@ -37,6 +37,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_currentFile = QString();
 
 	setupUi(this);
+	initSaveVariables();
 
 	// Table
 	m_model = new GaussianBeamModel(m_bench, this);

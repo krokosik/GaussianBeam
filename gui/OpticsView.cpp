@@ -76,6 +76,11 @@ void OpticsScene::showTargetBeam(bool show)
 	m_targetBeamItem->setVisible(show);
 }
 
+bool OpticsScene::targetBeamVisible()
+{
+	return m_targetBeamItem->isVisible();
+}
+
 /// @todo get rid of this trick
 #define SCENEHALFHEIGHT 0.005
 

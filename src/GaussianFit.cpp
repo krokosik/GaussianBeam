@@ -136,8 +136,8 @@ void Fit::fitBeam(double wavelength) const
 	const double fpz = stats.m;
 	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
 	const double alpha = M_PI*fz*fpz/wavelength;
-	/// @todo index = 1. ?
-	m_beam = Beam(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1.);
+	/// @todo index = 1., M2 = 1. ?
+	m_beam = Beam(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1., 1.);
 	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
 	m_rho2 = stats.rho2;
 	m_dirty = false;

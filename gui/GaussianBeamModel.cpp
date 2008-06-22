@@ -66,7 +66,8 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 	{
 		if (m_bench.optics(row)->type() == CreateBeamType)
 		{
-			return QString("n = ") + QString::number(dynamic_cast<const CreateBeam*>(m_bench.optics(row))->index());
+			return QString("n = ") + QString::number(dynamic_cast<const CreateBeam*>(m_bench.optics(row))->index()) +
+			       QString(", " + tr("M²") + " = ") + QString::number(dynamic_cast<const CreateBeam*>(m_bench.optics(row))->M2());
 		}
 		else if (m_bench.optics(row)->type() == LensType)
 		{
@@ -200,7 +201,11 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		Optics* optics = m_bench.opticsForPropertyChange(row);
 
 		if (optics->type() == CreateBeamType)
-			dynamic_cast<CreateBeam*>(optics)->setIndex(value.toList()[0].toDouble());
+		{
+			CreateBeam* createBeam = dynamic_cast<CreateBeam*>(optics);
+			createBeam->setIndex(value.toList()[0].toDouble());
+			createBeam->setM2(value.toList()[1].toDouble());
+		}
 		else if (optics->type() == LensType)
 			dynamic_cast<Lens*>(optics)->setFocal(value.toList()[0].toDouble()*Units::getUnit(UnitFocal).multiplier());
 		else if (optics->type() == CurvedMirrorType)
