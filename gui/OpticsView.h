@@ -54,6 +54,7 @@ private:
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
 	void OpticsBenchFitDataChanged(int index);
+	void OpticsBenchFitsRemoved(int index, int count);
 
 private:
 	void addFitPoint(double position, double radius, QRgb color);

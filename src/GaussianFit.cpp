@@ -24,17 +24,26 @@
 
 #define epsilon 1e-50
 
+int Fit::m_fitCount = 0;
+
 using namespace std;
 
-Fit::Fit(string name)
+Fit::Fit(int nData, string name)
 {
+	if (name.empty())
+	{
+		stringstream stream;
+		stream << "Fit" << m_fitCount++ << ends;
+		stream >> name;
+	}
+
 	m_name = name;
 	m_dirty = true;
 	m_lastWavelength = 0.;
 	m_dataType = Diameter_e2;
 	m_color = 0;
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < nData; i++)
 		addData(0., 0.);
 }
 

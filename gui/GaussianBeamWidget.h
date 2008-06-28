@@ -75,7 +75,7 @@ private:
 	virtual void OpticsBenchTargetBeamChanged();
 	virtual void OpticsBenchBoundariesChanged();
 	virtual void OpticsBenchFitAdded(int index);
-	virtual void OpticsBenchFitRemoved(int index);
+	virtual void OpticsBenchFitsRemoved(int index, int count);
 	virtual void OpticsBenchFitDataChanged(int index);
 
 private slots:

@@ -33,7 +33,7 @@ enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 class Fit
 {
 public:
-	Fit(std::string name = "Fit");
+	Fit(int nData = 0, std::string name = "");
 
 public:
 	int size() const { return m_positions.size(); }
@@ -68,6 +68,8 @@ private:
 	mutable Beam m_beam;
 	mutable double m_rho2;
 	mutable double m_lastWavelength;
+
+	static int m_fitCount;
 };
 
 #endif

@@ -195,6 +195,13 @@ void OpticsScene::addFitPoint(double position, double radius, QRgb color)
 	addItem(fitItem);
 }
 
+void OpticsScene::OpticsBenchFitsRemoved(int index, int count)
+{
+	Q_UNUSED(count);
+	/// @todo with more houskeeping in OpticsScene::OpticsBenchFitDataChanged this will not work any more
+	OpticsBenchFitDataChanged(index);
+}
+
 void OpticsScene::OpticsBenchFitDataChanged(int index)
 {
 	Q_UNUSED(index);

@@ -85,6 +85,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	readSettings();
 
 	m_bench.registerNotify(this);
+	updateFitInformation(comboBox_Fit->currentIndex());
 }
 
 GaussianBeamWidget::~GaussianBeamWidget()
@@ -222,9 +223,37 @@ void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 
 void GaussianBeamWidget::updateFitInformation(int index)
 {
-	qDebug() << "updateFitInformation" << index;
+	if (index >= m_bench.nFit())
+		return;
+
+	// Enable or disable widgets
+	if (index < 0)
+	{
+		pushButton_RemoveFit->setEnabled(false);
+		pushButton_RenameFit->setEnabled(false);
+		pushButton_FitColor->setEnabled(false);
+		pushButton_FitAddRow->setEnabled(false);
+		pushButton_FitRemoveRow->setEnabled(false);
+		comboBox_FitData->setEnabled(false);
+		fitTable->setEnabled(false);
+
+		pushButton_SetInputBeam->setEnabled(false);
+		pushButton_SetTargetBeam->setEnabled(false);
+		return;
+	}
+	else
+	{
+		pushButton_RemoveFit->setEnabled(true);
+		pushButton_RenameFit->setEnabled(true);
+		pushButton_FitColor->setEnabled(true);
+		pushButton_FitAddRow->setEnabled(true);
+		pushButton_FitRemoveRow->setEnabled(true);
+		comboBox_FitData->setEnabled(true);
+		fitTable->setEnabled(true);
+	}
 
 	m_updatingFit = true;
+	// Fill widgets
 	Fit& fit = m_bench.fit(index);
 	comboBox_Fit->setItemText(index, QString::fromUtf8(fit.name().c_str()));
 	pushButton_FitColor->setPalette(QPalette(QColor(fit.color())));
@@ -235,7 +264,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 			fitModel->insertRow(0);
 	else if (fit.size() < fitModel->rowCount())
 		for (int i = 0; i < fitModel->rowCount() - fit.size(); i++)
-			qDebug() << fitModel->removeRow(0);
+			fitModel->removeRow(0);
 
 	for (int i = 0; i < fit.size(); i++)
 	{
@@ -274,14 +303,14 @@ void GaussianBeamWidget::updateFitInformation(int index)
 
 void GaussianBeamWidget::on_comboBox_Fit_currentIndexChanged(int index)
 {
-	if (index < 0)
-		return;
 	updateFitInformation(index);
 }
 
 void GaussianBeamWidget::on_pushButton_AddFit_clicked()
 {
-	m_bench.addFit(m_bench.nFit());
+	int index = m_bench.nFit();
+	m_bench.addFit(index, 3);
+	m_bench.notifyFitChange(index);
 }
 
 void GaussianBeamWidget::on_pushButton_RemoveFit_clicked()
@@ -300,7 +329,7 @@ void GaussianBeamWidget::on_pushButton_RenameFit_clicked()
 		return;
 
 	bool ok;
-	QString text = QInputDialog::getText(this, tr("Rename fit)"),
+	QString text = QInputDialog::getText(this, tr("Rename fit"),
 		tr("Enter a new name for the current fit:"), QLineEdit::Normal,
 		m_bench.fit(index).name().c_str(), &ok);
 	if (ok && !text.isEmpty())
@@ -340,13 +369,10 @@ void GaussianBeamWidget::fitModelChanged(const QModelIndex& start, const QModelI
 
 	Fit& fit = m_bench.fit(index);
 
-	qDebug() << start.row() << stop.row();
-
 	for (int row = start.row(); row <= stop.row(); row++)
 	{
 		double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
 		double value = fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
-		qDebug() << "Fit changed" << row << position << value;
 		fit.setData(row, position, value);
 	}
 
@@ -391,15 +417,14 @@ void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 
 void GaussianBeamWidget::OpticsBenchFitAdded(int index)
 {
-	qDebug() << "Insert fit item" << index;
 	comboBox_Fit->insertItem(index, QString::fromUtf8(m_bench.fit(index).name().c_str()));
 	comboBox_Fit->setCurrentIndex(index);
 }
 
-void GaussianBeamWidget::OpticsBenchFitRemoved(int index)
+void GaussianBeamWidget::OpticsBenchFitsRemoved(int index, int count)
 {
-	qDebug() << "Remove fit item" << index;
-	comboBox_Fit->removeItem(index);
+	for (int i = index; i < index + count; i++)
+		comboBox_Fit->removeItem(i);
 }
 
 void GaussianBeamWidget::OpticsBenchFitDataChanged(int index)

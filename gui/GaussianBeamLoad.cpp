@@ -91,6 +91,7 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	else if ((majorVersion == 1) && (minorVersion == 1))
 	{
 		m_bench.removeOptics(0, m_bench.nOptics());
+		m_bench.removeFits(0, m_bench.nFit());
 		parseXml(root);
 	}
 	else
@@ -141,28 +142,28 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 			while (!targetBeamElement.isNull())
 			{
 				if (targetBeamElement.tagName() == "position")
-					targetBeam.setWaistPosition(child.text().toDouble());
-				if (targetBeamElement.tagName() == "waist")
-					targetBeam.setWaist(child.text().toDouble());
+					targetBeam.setWaistPosition(targetBeamElement.text().toDouble());
+				else if (targetBeamElement.tagName() == "waist")
+					targetBeam.setWaist(targetBeamElement.text().toDouble());
 				else
-					qDebug() << " -> Unknown tag: " << element.tagName();
+					qDebug() << " -> Unknown tag: " << targetBeamElement.tagName();
 				targetBeamElement = targetBeamElement.nextSiblingElement();
 			}
 			m_bench.setTargetBeam(targetBeam);
 		}
 		else if (child.tagName() == "beamFit")
 		{
+			Fit& fit = m_bench.addFit(m_bench.nFit());
 			QDomElement fitElement = child.firstChildElement();
 			while (!fitElement.isNull())
 			{
-				Fit& fit = m_bench.addFit(m_bench.nFit());
 				if (fitElement.tagName() == "name")
-					fit.setName(child.text().toUtf8().data());
-				if (fitElement.tagName() == "dataType")
-					fit.setDataType(FitDataType(child.text().toInt()));
-				if (fitElement.tagName() == "color")
-					fit.setColor(child.text().toInt());
-				if (fitElement.tagName() == "data")
+					fit.setName(fitElement.text().toUtf8().data());
+				else if (fitElement.tagName() == "dataType")
+					fit.setDataType(FitDataType(fitElement.text().toInt()));
+				else if (fitElement.tagName() == "color")
+					fit.setColor(fitElement.text().toUInt());
+				else if (fitElement.tagName() == "data")
 				{
 					QDomElement fitDataElement = fitElement.firstChildElement();
 					double position = 0.;
@@ -170,19 +171,20 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 					while (!fitDataElement.isNull())
 					{
 						if (fitDataElement.tagName() == "position")
-							position = child.text().toDouble();
-						if (fitDataElement.tagName() == "value")
-							value = child.text().toDouble();
+							position = fitDataElement.text().toDouble();
+						else if (fitDataElement.tagName() == "value")
+							value = fitDataElement.text().toDouble();
 						else
-							qDebug() << " -> Unknown tag: " << element.tagName();
+							qDebug() << " -> Unknown tag: " << fitDataElement.tagName();
 						fitDataElement = fitDataElement.nextSiblingElement();
 					}
 					fit.addData(position, value);
 				}
 				else
-					qDebug() << " -> Unknown tag: " << element.tagName();
+					qDebug() << " -> Unknown tag: " << fitElement.tagName();
 				fitElement = fitElement.nextSiblingElement();
 			}
+			m_bench.notifyFitChange(m_bench.nFit()-1);
 		}
 		else if (child.tagName() == "opticsList")
 		{

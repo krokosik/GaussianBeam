@@ -40,7 +40,7 @@ public:
 	virtual void OpticsBenchTargetBeamChanged() {};
 	virtual void OpticsBenchBoundariesChanged() {};
 	virtual void OpticsBenchFitAdded(int /*index*/) {};
-	virtual void OpticsBenchFitRemoved(int /*index*/) {};
+	virtual void OpticsBenchFitsRemoved(int /*index*/, int /*count*/) {};
 	virtual void OpticsBenchFitDataChanged(int /*index*/) {};
 
 protected:
@@ -105,9 +105,10 @@ public:
 
 	/// Waist fit
 	int nFit() const;
-	Fit& addFit(unsigned int index);
+	Fit& addFit(unsigned int index, int nData = 0);
 	Fit& fit(unsigned int index);
 	void removeFit(unsigned int index);
+	void removeFits(unsigned int startIndex, int n);
 	/**
 	* If you modified a Fit class obtained by the fit function, call this
 	* function to notify this modification

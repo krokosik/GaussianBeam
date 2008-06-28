@@ -65,7 +65,7 @@ OpticsBench::OpticsBench()
 	m_firstCavityIndex = 1;
 	m_lastCavityIndex = 2;
 
-	m_fits.push_back(Fit("Fit 0"));
+	m_fits.push_back(Fit(3));
 }
 
 OpticsBench::~OpticsBench()
@@ -80,9 +80,9 @@ int OpticsBench::nFit() const
 	return m_fits.size();
 }
 
-Fit& OpticsBench::addFit(unsigned int index)
+Fit& OpticsBench::addFit(unsigned int index, int nData)
 {
-	m_fits.insert(m_fits.begin() + index, Fit());
+	m_fits.insert(m_fits.begin() + index, Fit(nData));
 
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchFitAdded(index);
@@ -98,10 +98,15 @@ Fit& OpticsBench::fit(unsigned int index)
 
 void OpticsBench::removeFit(unsigned int index)
 {
-	m_fits.erase(m_fits.begin() + index);
+	removeFits(index, 1);
+}
+
+void OpticsBench::removeFits(unsigned int startIndex, int n)
+{
+	m_fits.erase(m_fits.begin() + startIndex, m_fits.begin() + startIndex + n);
 
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchFitRemoved(index);
+		(*it)->OpticsBenchFitsRemoved(startIndex, n);
 }
 
 int OpticsBench::opticsIndex(const Optics* optics) const
