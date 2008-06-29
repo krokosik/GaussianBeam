@@ -83,16 +83,14 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	int majorVersion = versionList[0].toInt();
 	int minorVersion = versionList[1].toInt();
 	qDebug() << "File version" << majorVersion << minorVersion;
-	if ((majorVersion == 1) && (minorVersion == 0))
-	{
-		m_bench.removeOptics(0, m_bench.nOptics());
-		//parseXml10(root);
-	}
-	else if ((majorVersion == 1) && (minorVersion == 1))
+	if ((majorVersion == 1) && ((minorVersion == 0) || (minorVersion == 1)))
 	{
 		m_bench.removeOptics(0, m_bench.nOptics());
 		m_bench.removeFits(0, m_bench.nFit());
-		parseXml(root);
+		if (minorVersion == 0)
+			parseXml10(root);
+		else if (minorVersion == 1)
+			parseXml(root);
 	}
 	else
 	{
@@ -135,57 +133,9 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 		else if (child.tagName() == "rightBoundary")
 			m_bench.setRightBoundary(child.text().toDouble());
 		else if (child.tagName() == "targetBeam")
-		{
-			QDomElement targetBeamElement = child.firstChildElement();
-			/// @todo check targetbeam wavelength
-			Beam targetBeam = m_bench.targetBeam();
-			while (!targetBeamElement.isNull())
-			{
-				if (targetBeamElement.tagName() == "position")
-					targetBeam.setWaistPosition(targetBeamElement.text().toDouble());
-				else if (targetBeamElement.tagName() == "waist")
-					targetBeam.setWaist(targetBeamElement.text().toDouble());
-				else
-					qDebug() << " -> Unknown tag: " << targetBeamElement.tagName();
-				targetBeamElement = targetBeamElement.nextSiblingElement();
-			}
-			m_bench.setTargetBeam(targetBeam);
-		}
+			parseTargetBeam(child);
 		else if (child.tagName() == "beamFit")
-		{
-			Fit& fit = m_bench.addFit(m_bench.nFit());
-			QDomElement fitElement = child.firstChildElement();
-			while (!fitElement.isNull())
-			{
-				if (fitElement.tagName() == "name")
-					fit.setName(fitElement.text().toUtf8().data());
-				else if (fitElement.tagName() == "dataType")
-					fit.setDataType(FitDataType(fitElement.text().toInt()));
-				else if (fitElement.tagName() == "color")
-					fit.setColor(fitElement.text().toUInt());
-				else if (fitElement.tagName() == "data")
-				{
-					QDomElement fitDataElement = fitElement.firstChildElement();
-					double position = 0.;
-					double value = 0.;
-					while (!fitDataElement.isNull())
-					{
-						if (fitDataElement.tagName() == "position")
-							position = fitDataElement.text().toDouble();
-						else if (fitDataElement.tagName() == "value")
-							value = fitDataElement.text().toDouble();
-						else
-							qDebug() << " -> Unknown tag: " << fitDataElement.tagName();
-						fitDataElement = fitDataElement.nextSiblingElement();
-					}
-					fit.addData(position, value);
-				}
-				else
-					qDebug() << " -> Unknown tag: " << fitElement.tagName();
-				fitElement = fitElement.nextSiblingElement();
-			}
-			m_bench.notifyFitChange(m_bench.nFit()-1);
-		}
+			parseFit(child);
 		else if (child.tagName() == "opticsList")
 		{
 			QDomElement opticsElement = child.firstChildElement();
@@ -204,6 +154,65 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 	for (int i = 0; i < lockTree.size(); i++)
 		if (!lockTree[i].isEmpty())
 			m_bench.lockTo(i, lockTree[i].toUtf8().data());
+}
+
+void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
+{
+	QDomElement child = element.firstChildElement();
+	Beam targetBeam = m_bench.targetBeam();
+
+	// Alternative names are for the 1.0 file version
+	while (!child.isNull())
+	{
+		/// @todo waistTolerance, positionTolerance, overlap and showTargetBeam(/Waist) are missing
+		if ((child.tagName() == "position") || (child.tagName() == "targetPosition"))
+			targetBeam.setWaistPosition(child.text().toDouble());
+		else if ((child.tagName() == "waist") || (child.tagName() == "targetWaist"))
+			targetBeam.setWaist(child.text().toDouble());
+		else
+			qDebug() << " -> Unknown tag: " << child.tagName();
+		child = child.nextSiblingElement();
+	}
+	m_bench.setTargetBeam(targetBeam);
+}
+
+void GaussianBeamWindow::parseFit(const QDomElement& element)
+{
+	QDomElement child = element.firstChildElement();
+	Fit& fit = m_bench.addFit(m_bench.nFit());
+
+	// Alternative names are for the 1.0 file version
+	while (!child.isNull())
+	{
+		if (child.tagName() == "name")
+			fit.setName(child.text().toUtf8().data());
+		else if ((child.tagName() == "dataType") || (child.tagName() == "fitDataType"))
+			fit.setDataType(FitDataType(child.text().toInt()));
+		else if (child.tagName() == "color")
+			fit.setColor(child.text().toUInt());
+		else if ((child.tagName() == "data") || (child.tagName() == "fitData"))
+		{
+			QDomElement dataElement = child.firstChildElement();
+			double position = 0.;
+			double value = 0.;
+			while (!dataElement.isNull())
+			{
+				if ((dataElement.tagName() == "position") || (dataElement.tagName() == "dataPosition"))
+					position = dataElement.text().toDouble();
+				else if ((dataElement.tagName() == "value") || (dataElement.tagName() == "dataValue"))
+					value = dataElement.text().toDouble();
+				else
+					qDebug() << " -> Unknown tag: " << dataElement.tagName();
+				dataElement = dataElement.nextSiblingElement();
+			}
+			fit.addData(position, value);
+		}
+		else
+			qDebug() << " -> Unknown tag: " << child.tagName();
+		child = child.nextSiblingElement();
+	}
+
+	m_bench.notifyFitChange(m_bench.nFit()-1);
 }
 
 void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>& lockTree)
@@ -253,8 +262,8 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 			dynamic_cast<CreateBeam*>(optics)->setIndex(child.text().toDouble());
 		else if (child.tagName() == "M2")
 			dynamic_cast<CreateBeam*>(optics)->setM2(child.text().toDouble());
-		else if (child.tagName() == "waistPosition") // For compatibility
-			dynamic_cast<CreateBeam*>(optics)->setPosition(child.text().toDouble());
+		else if (child.tagName() == "waistPosition") // For compatibility with very old 1.0 files
+			optics->setPosition(child.text().toDouble());
 		else if (child.tagName() == "focal")
 			dynamic_cast<Lens*>(optics)->setFocal(child.text().toDouble());
 		else if (child.tagName() == "curvatureRadius")
@@ -300,3 +309,42 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 		child = child.nextSiblingElement();
 	}
 }
+
+/////////////////////////////////////////////////
+// Compatibility with 1.0 file version
+
+void GaussianBeamWindow::parseXml10(const QDomElement& element)
+{
+	QDomElement child = element.firstChildElement();
+
+	QList<QString> lockTree;
+
+	while (!child.isNull())
+	{
+		if (child.tagName() == "wavelength")
+			m_bench.setWavelength(child.text().toDouble());
+		else if (child.tagName() == "magicWaist")
+			parseTargetBeam(child);
+		else if (child.tagName() == "waistFit")
+			parseFit(child);
+		else if (child.tagName() == "display")
+			parseXml10(child);
+		else if (child.tagName() == "HRange")
+			;//doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+		else if (child.tagName() == "VRange")
+			;//doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+		else if (child.tagName() == "HOffset")
+			;//doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+		else if (m_opticsElements.values().contains(child.tagName()))
+			parseOptics(child, lockTree);
+		else
+			qDebug() << " -> Unknown tag: " << child.tagName();
+
+		child = child.nextSiblingElement();
+	}
+
+	for (int i = 0; i < lockTree.size(); i++)
+		if (!lockTree[i].isEmpty())
+			m_bench.lockTo(i, lockTree[i].toUtf8().data());
+}
+

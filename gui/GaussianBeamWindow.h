@@ -26,6 +26,7 @@
 #include "ui_GaussianBeamWindow.h"
 #include "src/Optics.h"
 #include "src/OpticsBench.h"
+#include "src/GaussianFit.h"
 
 #include <QMainWindow>
 
@@ -78,6 +79,8 @@ private:
 	bool parseFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
 	void parseBench(const QDomElement& element);
+	void parseTargetBeam(const QDomElement& element);
+	void parseFit(const QDomElement& element);
 	void parseOptics(const QDomElement& element, QList<QString>& lockTree);
 	void parseView(const QDomElement& element);
 	bool writeFile(const QString& path = QString());
