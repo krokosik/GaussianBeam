@@ -330,11 +330,11 @@ void GaussianBeamWindow::parseXml10(const QDomElement& element)
 		else if (child.tagName() == "display")
 			parseXml10(child);
 		else if (child.tagName() == "HRange")
-			;//doubleSpinBox_HRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			m_opticsView->setHorizontalRange(child.text().toDouble());
 		else if (child.tagName() == "VRange")
-			;//doubleSpinBox_VRange->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			m_opticsView->setVerticalRange(child.text().toDouble());
 		else if (child.tagName() == "HOffset")
-			;//doubleSpinBox_HOffset->setValue(child.text().toDouble()*Units::getUnit(UnitPosition).divider());
+			m_opticsView->setOrigin(child.text().toDouble());
 		else if (m_opticsElements.values().contains(child.tagName()))
 			parseOptics(child, lockTree);
 		else
@@ -342,6 +342,13 @@ void GaussianBeamWindow::parseXml10(const QDomElement& element)
 
 		child = child.nextSiblingElement();
 	}
+
+	m_bench.setLeftBoundary(m_opticsView->origin());
+	m_bench.setRightBoundary(m_opticsView->origin() + m_opticsView->horizontalRange());
+	if (m_bench.nFit() > 0)
+		m_bench.fit(0).setName("Fit");
+	m_bench.notifyFitChange(0);
+
 
 	for (int i = 0; i < lockTree.size(); i++)
 		if (!lockTree[i].isEmpty())
