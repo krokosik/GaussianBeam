@@ -159,7 +159,7 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 {
 	QDomElement child = element.firstChildElement();
-	Beam targetBeam = m_bench.targetBeam();
+	TargetBeam targetBeam = m_bench.targetBeam();
 
 	// Alternative names are for the 1.0 file version
 	while (!child.isNull())
@@ -169,6 +169,14 @@ void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 			targetBeam.setWaistPosition(child.text().toDouble());
 		else if ((child.tagName() == "waist") || (child.tagName() == "targetWaist"))
 			targetBeam.setWaist(child.text().toDouble());
+		else if (child.tagName() == "positionTolerance")
+			targetBeam.setPositionTolerance(child.text().toDouble());
+		else if (child.tagName() == "waistTolerance")
+			targetBeam.setWaistTolerance(child.text().toDouble());
+		else if (child.tagName() == "minOverlap")
+			targetBeam.setMinOverlap(child.text().toDouble());
+		else if (child.tagName() == "overlapCriterion")
+			targetBeam.setOverlapCriterion(child.text().toDouble());
 		else
 			qDebug() << " -> Unknown tag: " << child.tagName();
 		child = child.nextSiblingElement();

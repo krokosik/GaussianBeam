@@ -78,7 +78,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsSc
 	// Set up default values
 	/// @todo index = 1. ? target = 1.
 	/// @todo values for overlap and targetbeam
-	m_bench.setTargetBeam(Beam(0.000150, 0.6, m_bench.wavelength(), 1., 1.));
+	m_bench.setTargetBeam(TargetBeam(0.000150, 0.6, m_bench.wavelength(), 1., 1.));
 	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
@@ -119,19 +119,6 @@ void GaussianBeamWidget::OpticsBenchDataChanged(int /*startOptics*/, int /*endOp
 	displayOverlap();
 }
 
-void GaussianBeamWidget::OpticsBenchTargetBeamChanged()
-{
-	doubleSpinBox_TargetWaist->setValue(m_bench.targetBeam().waist()*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_TargetPosition->setValue(m_bench.targetBeam().waistPosition()*Units::getUnit(UnitPosition).divider());
-	displayOverlap();
-}
-
-void GaussianBeamWidget::OpticsBenchBoundariesChanged()
-{
-	doubleSpinBox_LeftBoundary->setValue(m_bench.leftBoundary()*Units::getUnit(UnitPosition).divider());
-	doubleSpinBox_RightBoundary->setValue(m_bench.rightBoundary()*Units::getUnit(UnitPosition).divider());
-}
-
 ///////////////////////////////////////////////////////////
 // OPTICS BENCH PAGE
 
@@ -143,6 +130,12 @@ void GaussianBeamWidget::on_doubleSpinBox_LeftBoundary_valueChanged(double value
 void GaussianBeamWidget::on_doubleSpinBox_RightBoundary_valueChanged(double value)
 {
 	m_bench.setRightBoundary(value*Units::getUnit(UnitPosition).multiplier());
+}
+
+void GaussianBeamWidget::OpticsBenchBoundariesChanged()
+{
+	doubleSpinBox_LeftBoundary->setValue(m_bench.leftBoundary()*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_RightBoundary->setValue(m_bench.rightBoundary()*Units::getUnit(UnitPosition).divider());
 }
 
 ///////////////////////////////////////////////////////////
@@ -162,7 +155,7 @@ void GaussianBeamWidget::displayOverlap()
 void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	Beam beam = m_bench.targetBeam();
+	TargetBeam beam = m_bench.targetBeam();
 	beam.setWaist(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier());
 	m_bench.setTargetBeam(beam);
 }
@@ -170,8 +163,32 @@ void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
 void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
 {
 	Q_UNUSED(value);
-	Beam beam = m_bench.targetBeam();
+	TargetBeam beam = m_bench.targetBeam();
 	beam.setWaistPosition(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier());
+	m_bench.setTargetBeam(beam);
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_WaistTolerance_valueChanged(double value)
+{
+	Q_UNUSED(value);
+	TargetBeam beam = m_bench.targetBeam();
+	beam.setWaistTolerance(doubleSpinBox_WaistTolerance->value()*0.01);
+	m_bench.setTargetBeam(beam);
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_PositionTolerance_valueChanged(double value)
+{
+	Q_UNUSED(value);
+	TargetBeam beam = m_bench.targetBeam();
+	beam.setPositionTolerance(doubleSpinBox_PositionTolerance->value()*0.01);
+	m_bench.setTargetBeam(beam);
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_MinOverlap_valueChanged(double value)
+{
+	Q_UNUSED(value);
+	TargetBeam beam = m_bench.targetBeam();
+	beam.setMinOverlap(doubleSpinBox_MinOverlap->value()*0.01);
 	m_bench.setTargetBeam(beam);
 }
 
@@ -182,6 +199,8 @@ void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 
 void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)
 {
+	qDebug() << "on_radioButton_Tolerance_toggled(" << checked << ")";
+
 	if (checked)
 	{
 		label_MinOverlap->setVisible(false);
@@ -200,22 +219,31 @@ void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)
 		label_MinOverlap->setVisible(true);
 		doubleSpinBox_MinOverlap->setVisible(true);
 	}
+
+	TargetBeam beam = m_bench.targetBeam();
+	beam.setOverlapCriterion(!checked);
+	m_bench.setTargetBeam(beam);
 }
 
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
 {
 	label_MagicWaistResult->setText("");
 
-	Tolerance tolerance;
-	tolerance.overlap = radioButton_Overlap->isChecked();
-	tolerance.minOverlap = doubleSpinBox_MinOverlap->value()*0.01;
-	tolerance.waistTolerance = doubleSpinBox_WaistTolerance->value()*0.01;
-	tolerance.positionTolerance = doubleSpinBox_PositionTolerance->value()*0.01;
-
-	if (!m_bench.magicWaist(tolerance))
+	if (!m_bench.magicWaist())
 		label_MagicWaistResult->setText(tr("Desired waist could not be found !"));
 	else
 		displayOverlap();
+}
+
+void GaussianBeamWidget::OpticsBenchTargetBeamChanged()
+{
+	doubleSpinBox_TargetWaist->setValue(m_bench.targetBeam().waist()*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_TargetPosition->setValue(m_bench.targetBeam().waistPosition()*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_WaistTolerance->setValue(m_bench.targetBeam().waistTolerance()*100.);
+	doubleSpinBox_PositionTolerance->setValue(m_bench.targetBeam().positionTolerance()*100.);
+	doubleSpinBox_MinOverlap->setValue(m_bench.targetBeam().minOverlap()*100.);
+	radioButton_Overlap->setChecked(m_bench.targetBeam().overlapCriterion());
+	displayOverlap();
 }
 
 ///////////////////////////////////////////////////////////
@@ -409,8 +437,11 @@ void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
+	TargetBeam targetBeam = m_bench.targetBeam();
 	Beam fitBeam = m_bench.fit(0).beam(m_bench.wavelength());
-	m_bench.setTargetBeam(fitBeam);
+	targetBeam.setWaist(fitBeam.waist());
+	targetBeam.setWaistPosition(fitBeam.waistPosition());
+	m_bench.setTargetBeam(targetBeam);
 }
 
 // OpticsBench callbacks

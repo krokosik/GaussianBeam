@@ -362,7 +362,7 @@ void StatusWidget::showBeamInfo(const Beam& beam, double z)
 
 		if (type == BeamParameter)
 		{
-			value = beam.rayleigh();
+			value = beam.rayleigh()*Units::getUnit(UnitRayleigh).divider();
 			text += " + i" + QString::number(value, 'f', 2) + Units::getUnit(UnitRayleigh).string();
 		}
 

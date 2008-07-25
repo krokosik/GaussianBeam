@@ -56,6 +56,9 @@ protected slots:
 	void on_checkBox_ShowTargetBeam_toggled(bool checked);
 	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
+	void on_doubleSpinBox_WaistTolerance_valueChanged(double value);
+	void on_doubleSpinBox_PositionTolerance_valueChanged(double value);
+	void on_doubleSpinBox_MinOverlap_valueChanged(double value);
 	void on_radioButton_Tolerance_toggled(bool checked);
 	// Waist fit
 	void on_comboBox_Fit_currentIndexChanged(int index);

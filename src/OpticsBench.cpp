@@ -347,7 +347,7 @@ void OpticsBench::setBeam(const Beam& beam, int index)
 	computeBeams(index, true);
 }
 
-void OpticsBench::setTargetBeam(const Beam& beam)
+void OpticsBench::setTargetBeam(const TargetBeam& beam)
 {
 	m_targetBeam = beam;
 	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
@@ -498,7 +498,6 @@ vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const 
 			(*it)->setPosition(initPosition);
 		double slope = (finalOverlap - initOverlap)/(curvature ? sqr(epsilon) : epsilon);
 		result.push_back(slope);
-		//cerr << setprecision(20) << initOverlap << " " << finalOverlap << " " << epsilon << endl;
 	}
 
 	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
@@ -513,7 +512,7 @@ void OpticsBench::emitChange(int startOptics, int endOptics) const
 		(*it)->OpticsBenchDataChanged(startOptics, endOptics);
 }
 
-bool OpticsBench::magicWaist(const Tolerance& tolerance)
+bool OpticsBench::magicWaist()
 {
 //	for (int i = 0; i < nOptics(); i++)
 //		cerr << "m_optics[" << i << "] " << m_optics[i] << " has parent " << m_optics[i]->relativeLockParent() << endl;
@@ -534,8 +533,6 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 	const double minPos = m_leftBoundary;
 	const double maxPos = m_rightBoundary;
 
-	cerr << m_leftBoundary << " LR " << m_rightBoundary << endl;
-
 	for (int i = 0; i < nTry; i++)
 	{
 		/// @todo find a suitable RNG
@@ -546,11 +543,11 @@ bool OpticsBench::magicWaist(const Tolerance& tolerance)
 
 		// Check waist
 		Beam beam = computeSingleBeam(opticsClone, nOptics()-1);
-		if (tolerance.overlap &&
-			(Beam::overlap(beam, m_targetBeam) > tolerance.minOverlap) ||
-			(!tolerance.overlap) &&
-			(fabs(beam.waist() - m_targetBeam.waist()) < tolerance.waistTolerance*m_targetBeam.waist()) &&
-		    (fabs(beam.waistPosition() - m_targetBeam.waistPosition()) < tolerance.positionTolerance*m_targetBeam.rayleigh()))
+		if ((m_targetBeam.overlapCriterion() &&
+			(Beam::overlap(beam, m_targetBeam) > m_targetBeam.minOverlap())) ||
+			((!m_targetBeam.overlapCriterion()) &&
+			(fabs(beam.waist() - m_targetBeam.waist()) < m_targetBeam.waistTolerance()*m_targetBeam.waist()) &&
+		    (fabs(beam.waistPosition() - m_targetBeam.waistPosition()) < m_targetBeam.positionTolerance()*m_targetBeam.rayleigh())))
 		{
 			cerr << "found waist : " << beam.waist() << " @ " << beam.waistPosition() << " // try = " << i << endl;
 			found = true;

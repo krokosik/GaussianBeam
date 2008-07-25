@@ -47,15 +47,6 @@ protected:
 	OpticsBench& m_bench;
 };
 
-struct Tolerance
-{
-	/// True for tolerance on overlap, false for tolerance on waist and position
-	bool overlap;
-	double minOverlap;
-	double waistTolerance;
-	double positionTolerance;
-};
-
 class OpticsBench
 {
 public:
@@ -115,11 +106,10 @@ public:
 	*/
 	void notifyFitChange(unsigned int index);
 
-
 	/// Magic waist
-	const Beam& targetBeam() const { return m_targetBeam; }
-	void setTargetBeam(const Beam& beam);
-	bool magicWaist(const Tolerance& tolerance);
+	const TargetBeam& targetBeam() const { return m_targetBeam; }
+	void setTargetBeam(const TargetBeam& beam);
+	bool magicWaist();
 
 	/// Cavity stuff : @todo make a new class ?
 	bool isCavityStable() const;
@@ -154,7 +144,7 @@ private:
 	std::vector<Fit> m_fits;
 
 	/// Magic waist
-	Beam m_targetBeam;
+	TargetBeam m_targetBeam;
 
 	/// Cavity
 	GenericABCD m_cavity;

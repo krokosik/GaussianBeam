@@ -16,7 +16,7 @@ WISHLIST:
 	Optical cavities, eigen mode and stability.
 	Waist relative to selection
 	Wavefront on graph
-	Tune the number of significative digits in editors
+	Tune the number of significative digits in editors and delegates
 	grid
 	when moving an optics, display the optics position
 	make unit tests for saving/loading
@@ -28,7 +28,6 @@ WISHLIST:
 	Camera interfaces
 
 BUGS:
-	Loading and saving does not work
 	Check that the waist translation by a dielectric slab is right
 	Relative lock selection does not work anymore
 	Check initial values (e.g. magic waist)

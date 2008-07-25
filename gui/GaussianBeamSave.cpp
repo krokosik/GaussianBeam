@@ -68,6 +68,10 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
 	xmlWriter.writeAttribute("id", "0");
 		xmlWriter.writeTextElement("position", QString::number(m_bench.targetBeam().waistPosition()));
 		xmlWriter.writeTextElement("waist", QString::number(m_bench.targetBeam().waist()));
+		xmlWriter.writeTextElement("positionTolerance", QString::number(m_bench.targetBeam().positionTolerance()));
+		xmlWriter.writeTextElement("waistTolerance", QString::number(m_bench.targetBeam().waistTolerance()));
+		xmlWriter.writeTextElement("minOverlap", QString::number(m_bench.targetBeam().minOverlap()));
+		xmlWriter.writeTextElement("overlapCriterion", QString::number(m_bench.targetBeam().overlapCriterion()));
 	xmlWriter.writeEndElement();
 
 	for (int i = 0; i < m_bench.nFit(); i++)

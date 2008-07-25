@@ -28,17 +28,7 @@ inline double sqr(double x)
 {
 	return x*x;
 }
-/*
-inline double min(double x, double y)
-{
-	return y < x ? y : x;
-}
 
-inline double max(double x, double y)
-{
-	return y > x ? y : x;
-}
-*/
 inline double sign(double x)
 {
 	return x < 0. ? -1. : 1.;
@@ -105,6 +95,35 @@ private:
 	double m_index;
 	double m_M2;
 	bool m_valid;
+};
+
+class TargetBeam : public Beam
+{
+public:
+	TargetBeam() : Beam() {}
+	TargetBeam(double waist, double waistPosition, double wavelength, double index, double M2)
+		: Beam(waist, waistPosition, wavelength, index, M2)
+		, m_overlapCriterion(true)
+		, m_minOverlap(0.98)
+		, m_waistTolerance(0.05)
+		, m_positionTolerance(0.1) {}
+
+public:
+	bool overlapCriterion() const { return m_overlapCriterion; }
+	void setOverlapCriterion(double overlapCriterion) { m_overlapCriterion =  overlapCriterion; }
+	double minOverlap() const { return m_minOverlap; }
+	void setMinOverlap(double minOverlap) { m_minOverlap = minOverlap; }
+	double waistTolerance() const { return m_waistTolerance; }
+	void setWaistTolerance(double waistTolerance) { m_waistTolerance = waistTolerance; }
+	double positionTolerance() const { return m_positionTolerance; }
+	void setPositionTolerance(double positionTolerance) { m_positionTolerance = positionTolerance; }
+
+private:
+	/// True for tolerance on overlap, false for tolerance on waist and position
+	bool m_overlapCriterion;
+	double m_minOverlap;
+	double m_waistTolerance;
+	double m_positionTolerance;
 };
 
 #endif

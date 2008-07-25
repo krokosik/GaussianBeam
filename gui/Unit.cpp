@@ -89,7 +89,7 @@ const Unit Units::getUnit(UnitType unit)
 	else if (unit == UnitWaist)
 		return Unit(-6, "m");
 	else if (unit == UnitRayleigh)
-		return Unit(-6, "m");
+		return Unit(-3, "m");
 	else if (unit == UnitWavelength)
 		return Unit(-9, "m");
 	else if (unit == UnitDivergence)
