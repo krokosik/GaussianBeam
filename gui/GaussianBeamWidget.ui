@@ -30,15 +30,15 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_Bench" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>233</width>
-          <height>487</height>
+          <width>235</width>
+          <height>126</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -115,13 +115,48 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="page_Cavity" >
+        <property name="geometry" >
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>234</width>
+          <height>450</height>
+         </rect>
+        </property>
+        <attribute name="label" >
+         <string>Cavity</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout" >
+         <item>
+          <widget class="QLabel" name="label_CavityMode" >
+           <property name="text" >
+            <string>Cavity</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="verticalSpacer" >
+           <property name="orientation" >
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0" >
+            <size>
+             <width>20</width>
+             <height>197</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="page_MagicWaist" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>195</width>
-          <height>488</height>
+          <width>200</width>
+          <height>509</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -290,6 +325,13 @@
           </spacer>
          </item>
          <item>
+          <widget class="QPushButton" name="pushButton_LocalOptimum" >
+           <property name="text" >
+            <string>Local optimum</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="pushButton_MagicWaist" >
            <property name="text" >
             <string>Find</string>
@@ -308,13 +350,6 @@
             </size>
            </property>
           </spacer>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_WaistResult" >
-           <property name="text" >
-            <string/>
-           </property>
-          </widget>
          </item>
          <item>
           <spacer>
@@ -336,8 +371,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>234</width>
-          <height>487</height>
+          <width>207</width>
+          <height>443</height>
          </rect>
         </property>
         <attribute name="label" >

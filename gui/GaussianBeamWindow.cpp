@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -29,6 +29,7 @@
 #include <QMenu>
 #include <QDockWidget>
 #include <QSettings>
+#include <QHeaderView>
 
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	: QMainWindow()
@@ -40,18 +41,27 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	initSaveVariables();
 
 	// Table
-	m_model = new GaussianBeamModel(m_bench, this);
+	m_tableConfigWidget = new TablePropertySelector(this);
+	m_tableConfigWidget->setWindowFlags(Qt::Window);
+	m_tableCornerWidget = new CornerWidget(Qt::transparent, ":/images/preferences-system.png", m_tableConfigWidget, this);
+	m_model = new GaussianBeamModel(m_bench, m_tableConfigWidget, this);
 	m_table = new QTableView(this);
 	m_table->setModel(m_model);
 	m_table->setSelectionBehavior(QAbstractItemView::SelectRows);
 	m_table->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	//m_table->setShowGrid(false);
+	m_table->verticalHeader()->hide();
+	m_table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+	m_table->setAlternatingRowColors(true);
 	m_selectionModel = new QItemSelectionModel(m_model);
 	m_table->setSelectionModel(m_selectionModel);
 	m_table->resizeColumnsToContents();
 	GaussianBeamDelegate* delegate = new GaussianBeamDelegate(this, m_model, m_bench);
 	m_table->setItemDelegate(delegate);
+	m_table->setCornerWidget(m_tableCornerWidget);
+	connect(m_model, SIGNAL(modelReset()), m_table, SLOT(resizeColumnsToContents()));
 
-	for (int i = 1; i < 3; i++)
+	for (int i = 0; i < 2; i++)
 		m_bench.addOptics(LensType, m_bench.nOptics());
 
 	// View
@@ -159,7 +169,6 @@ void GaussianBeamWindow::on_action_AddOptics_triggered()
 
 void GaussianBeamWindow::on_action_RemoveOptics_triggered()
 {
-	/// @bug this does not work for block selection with MAJ !
 	for (int row = m_model->rowCount() - 1; row >= 0; row--)
 		if ((m_bench.optics(row)->type() != CreateBeamType) &&
 		    m_selectionModel->isRowSelected(row, QModelIndex()))

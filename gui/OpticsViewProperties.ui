@@ -5,12 +5,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>215</width>
-    <height>148</height>
+    <width>236</width>
+    <height>149</height>
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>Form</string>
+   <string/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2" >
    <item>

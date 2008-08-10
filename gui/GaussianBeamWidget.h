@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -53,6 +53,7 @@ protected slots:
 	void on_doubleSpinBox_RightBoundary_valueChanged(double value);
 	// Magic waist
 	void on_pushButton_MagicWaist_clicked();
+	void on_pushButton_LocalOptimum_clicked();
 	void on_checkBox_ShowTargetBeam_toggled(bool checked);
 	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
 	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
@@ -80,6 +81,7 @@ private:
 	virtual void OpticsBenchFitAdded(int index);
 	virtual void OpticsBenchFitsRemoved(int index, int count);
 	virtual void OpticsBenchFitDataChanged(int index);
+	virtual void OpticsBenchWavelengthChanged();
 
 private slots:
 	void fitModelChanged(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
@@ -87,6 +89,7 @@ private slots:
 private:
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
+	void updateCavityInformation();
 	void updateFitInformation(int index);
 	void readSettings();
 	void writeSettings();

@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -17,6 +17,7 @@
 */
 
 #include "Optics.h"
+#include "Utils.h"
 
 #include <iostream>
 #include <cmath>
@@ -35,7 +36,7 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	, m_absoluteLock(false)
 	, m_relativeLockParent(0)
 {
-	cerr << "Creating optics with id " << m_id << endl;
+//	cerr << "Creating optics with id " << m_id << endl;
 }
 
 Optics::~Optics()
@@ -278,4 +279,3 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 	r *= abcd2;
 	return r;
 }
-

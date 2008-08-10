@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -66,12 +66,12 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
 
 	xmlWriter.writeStartElement("targetBeam");
 	xmlWriter.writeAttribute("id", "0");
-		xmlWriter.writeTextElement("position", QString::number(m_bench.targetBeam().waistPosition()));
-		xmlWriter.writeTextElement("waist", QString::number(m_bench.targetBeam().waist()));
-		xmlWriter.writeTextElement("positionTolerance", QString::number(m_bench.targetBeam().positionTolerance()));
-		xmlWriter.writeTextElement("waistTolerance", QString::number(m_bench.targetBeam().waistTolerance()));
-		xmlWriter.writeTextElement("minOverlap", QString::number(m_bench.targetBeam().minOverlap()));
-		xmlWriter.writeTextElement("overlapCriterion", QString::number(m_bench.targetBeam().overlapCriterion()));
+		xmlWriter.writeTextElement("position", QString::number(m_bench.targetBeam()->waistPosition()));
+		xmlWriter.writeTextElement("waist", QString::number(m_bench.targetBeam()->waist()));
+		xmlWriter.writeTextElement("positionTolerance", QString::number(m_bench.targetBeam()->positionTolerance()));
+		xmlWriter.writeTextElement("waistTolerance", QString::number(m_bench.targetBeam()->waistTolerance()));
+		xmlWriter.writeTextElement("minOverlap", QString::number(m_bench.targetBeam()->minOverlap()));
+		xmlWriter.writeTextElement("overlapCriterion", QString::number(m_bench.targetBeam()->overlapCriterion()));
 	xmlWriter.writeEndElement();
 
 	for (int i = 0; i < m_bench.nFit(); i++)
@@ -138,7 +138,7 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 	xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
 	xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
 	if (optics->relativeLockParent())
-		xmlWriter.writeTextElement("relativeLockParent", QString(optics->relativeLockParent()->name().c_str()));
+		xmlWriter.writeTextElement("relativeLockParent", QString::number(optics->relativeLockParent()->id()));
 	xmlWriter.writeEndElement();
 }
 

@@ -1,7 +1,6 @@
 WISHLIST:
 	Artwork
 	Relative waist position
-	Customize table columns
 	Lens selection
 	Sensitivity graph
 	Lens movement magnification -> multiple views
@@ -23,22 +22,23 @@ WISHLIST:
 	undo framework
 	reimplement paint items in view for optics painting in scene coordinates
 	Thick lens, thermal lens
-	Conjugate gradient for magic waist
 	Non linear hyperbolic fit
 	Camera interfaces
+	Set view limits to bench limits button
+	Horizontal and vertical waists
+	TEMmn modes
 
 BUGS:
 	Check that the waist translation by a dielectric slab is right
-	Relative lock selection does not work anymore
-	Check initial values (e.g. magic waist)
 	implement ruller scale & vertical labels
-	fit problem: some fits are plainly wrong
-	change all parameters (e.g. fit result) when changing the wavelength
 
 CONSTANT VIGILENCE:
+	change all parameters when changing the wavelength
+	Check initial values
 	Check that the save command saves all parameters & optics
 	Translations
 	Pedantic
 	Valgrind
 	API documentation
 	check that .c_str() stl strings are enclosed in a QString::fromUtf8
+	check const functions

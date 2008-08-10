@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -31,6 +31,8 @@
 #include <QMainWindow>
 
 class QXmlStreamWriter;
+class CornerWidget;
+class TablePropertySelector;
 
 class GaussianBeamWindow : public QMainWindow, private OpticsBenchNotify, private Ui::GaussianBeamWindow
 {
@@ -99,6 +101,8 @@ private:
 	GaussianBeamModel* m_model;
 	QItemSelectionModel* m_selectionModel;
 	QTableView* m_table;
+	TablePropertySelector* m_tableConfigWidget;
+	CornerWidget* m_tableCornerWidget;
 	OpticsView* m_opticsView;
 	OpticsScene* m_opticsScene;
 	QMap<OpticsType, QString> m_opticsElements;

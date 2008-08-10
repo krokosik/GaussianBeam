@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -124,15 +124,12 @@ void Fit::fitBeam(double wavelength) const
 	if (!m_dirty && (wavelength == m_lastWavelength) || m_positions.empty())
 		return;
 
-	cerr << "Fit::fitBeam recomputing fit" << endl;
-
 	vector<double> positions, radii;
 	for (int i = 0; i < size(); i++)
 		if (radius(i) > epsilon)
 		{
 			positions.push_back(position(i));
 			radii.push_back(radius(i));
-//			cerr << position(i) << " " << radius(i) << endl;
 		}
 
 	Statistics stats(positions, radii);

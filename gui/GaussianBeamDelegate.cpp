@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -67,14 +67,14 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	/// @todo where are all these "new" things deleted ? Check Qt example
 
 	int row = index.row();
-	ColumnContent column = m_model->columnContent(index.column());
+	Property::Type column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{
-	case WaistColumn:
-	case RayleighColumn:
-	case DivergenceColumn:
+	case Property::BeamWaist:
+	case Property::BeamRayleigh:
+	case Property::BeamDivergence:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
@@ -82,9 +82,9 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->setMaximum(Unit::infinity);
 		return editor;
 	}
-	case PositionColumn:
-	case RelativePositionColumn:
-	case WaistPositionColumn:
+	case Property::OpticsPosition:
+	case Property::OpticsRelativePosition:
+	case Property::BeamWaistPosition:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
@@ -92,7 +92,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->setMaximum(Unit::infinity);
 		return editor;
 	}
-	case PropertiesColumn:
+	case Property::OpticsProperties:
 	{
 		QList<EditorProperty> properties;
 		if (optics->type() == CreateBeamType)
@@ -119,12 +119,12 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 
 		return new PropertyEditor(properties, parent);
 	}
-	case NameColumn:
+	case Property::OpticsName:
 	{
 		QLineEdit* editor = new QLineEdit(parent);
 		return editor;
 	}
-	case LockColumn:
+	case Property::OpticsLock:
 	{
 		QComboBox* editor = new QComboBox(parent);
 		editor->addItem(tr("none"), -2);
@@ -149,24 +149,24 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		return;
 
 	int row = index.row();
-	ColumnContent column = m_model->columnContent(index.column());
+	Property::Type column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench.optics(row);
 
 	switch (column)
 	{
-	case PositionColumn:
-	case RelativePositionColumn:
-	case WaistColumn:
-	case WaistPositionColumn:
-	case RayleighColumn:
-	case DivergenceColumn:
+	case Property::OpticsPosition:
+	case Property::OpticsRelativePosition:
+	case Property::BeamWaist:
+	case Property::BeamWaistPosition:
+	case Property::BeamRayleigh:
+	case Property::BeamDivergence:
 	{
 		double value = m_model->data(index, Qt::DisplayRole).toDouble();
 		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
 		spinBox->setValue(value);
 		break;
 	}
-	case PropertiesColumn:
+	case Property::OpticsProperties:
 	{
 		PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
 		if (optics->type() == CreateBeamType)
@@ -206,14 +206,14 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 
 		break;
 	}
-	case NameColumn:
+	case Property::OpticsName:
 	{
 		QString name = m_model->data(index, Qt::DisplayRole).toString();
 		QLineEdit* lineEdit = static_cast<QLineEdit*>(editor);
 		lineEdit->setText(name);
 		break;
 	}
-	case LockColumn:
+	case Property::OpticsLock:
 	{
 		QString value = m_model->data(index, Qt::DisplayRole).toString();
 		int lockId = -2;
@@ -236,17 +236,17 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	if (!index.isValid() || (editor == 0))
 		return;
 
-	ColumnContent column = m_model->columnContent(index.column());
+	Property::Type column = m_model->columnContent(index.column());
 
 	switch (column)
 	{
-	case LockColumn:
+	case Property::OpticsLock:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
 		model->setData(index, comboBox->itemData(comboBox->currentIndex()));
 		break;
 	}
-	case PropertiesColumn:
+	case Property::OpticsProperties:
 	{
 		model->setData(index, static_cast<PropertyEditor*>(editor)->values());
 		break;

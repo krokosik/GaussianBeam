@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,43 +16,36 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef UNIT_H
-#define UNIT_H
+#ifndef OPTICSFUNCTION_H
+#define OPTICSFUNCTION_H
 
-#include <QString>
+#include "Function.h"
+#include "GaussianBeam.h"
 
-class Unit
+class Optics;
+class OpticsBench;
+
+class OpticsFunction : public Function
 {
 public:
-	Unit(int power, QString unitString);
+	OpticsFunction(const std::vector<Optics*>& optics, double wavelength);
 
 public:
-	QString string(bool space = true) const;
-	double multiplier() const;
-	double divider() const;
-
-public:
-	static const double infinity;
+	virtual double value(const std::vector<double>& x) const;
+	/// @todo this should be private
+	Beam beam(const std::vector<double>& x) const;
+	std::vector<double> currentPosition() const;
+	void setCheckLock(bool checkLock) { m_checkLock = checkLock; }
+	void setOverlapBeam(const Beam& beam) { m_overlapBeam = beam; }
 
 private:
-	QChar prefix() const;
+	std::vector<Optics*> cloneOptics() const;
 
 private:
-	int m_power;
-	QString m_unitString;
-};
-
-enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
-               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth, UnitPhase, UnitLess};
-
-class Units
-{
-public:
-	Units();
-
-public:
-	static const Unit getUnit(UnitType unit);
+	const std::vector<Optics*>& m_optics;
+	double m_wavelength;
+	bool m_checkLock;
+	Beam m_overlapBeam;
 };
 
 #endif

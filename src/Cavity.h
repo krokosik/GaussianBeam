@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,43 +16,31 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef UNIT_H
-#define UNIT_H
+#ifndef CAVITY_H
+#define CAVITY_H
 
-#include <QString>
+#include "GaussianBeam.h"
+#include "Optics.h"
 
-class Unit
+class OpticsBench;
+
+class Cavity
 {
 public:
-	Unit(int power, QString unitString);
+	Cavity(OpticsBench& bench);
 
 public:
-	QString string(bool space = true) const;
-	double multiplier() const;
-	double divider() const;
-
-public:
-	static const double infinity;
+	void computeBeam();
+	bool isStable() const;
+	const Beam eigenBeam(int index) const;
+	void addOptics(const Optics* optics);
+	void removeOptics(const Optics* optics);
 
 private:
-	QChar prefix() const;
-
-private:
-	int m_power;
-	QString m_unitString;
-};
-
-enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
-               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth, UnitPhase, UnitLess};
-
-class Units
-{
-public:
-	Units();
-
-public:
-	static const Unit getUnit(UnitType unit);
+	OpticsBench& m_bench;
+	GenericABCD m_matrix;
+	bool m_ringCavity;
+	std::list<const ABCD*> m_opticsList;
 };
 
 #endif

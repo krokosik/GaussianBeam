@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -17,6 +17,8 @@
 */
 
 #include "OpticsBench.h"
+#include "OpticsFunction.h"
+#include "Utils.h"
 
 #include <iostream>
 #include <iomanip>
@@ -32,14 +34,13 @@ using namespace std;
 
 OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
 	: m_bench(opticsBench)
-{
-}
+{}
 
 /////////////////////////////////////////////////
 // OpticsBench
 
 OpticsBench::OpticsBench()
-	: m_cavity(1., 0., 1., 0., 0., 0.)
+	: m_cavity(*this)
 {
 	m_opticsPrefix[LensType]            = "L";
 	m_opticsPrefix[FlatMirrorType]      = "M";
@@ -49,21 +50,13 @@ OpticsBench::OpticsBench()
 	m_opticsPrefix[GenericABCDType]     = "G";
 	m_opticsPrefix[DielectricSlabType]  = "D";
 
-	m_firstCavityIndex = 0;
-	m_lastCavityIndex = 0;
-	m_ringCavity = true;
 	m_optics.clear();
-
 	addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
 	m_optics[0]->setAbsoluteLock(true);
 
 	m_wavelength = 461e-9;
 	m_leftBoundary = -0.1;
 	m_rightBoundary = 0.7;
-
-	/// @todo remove this later
-	m_firstCavityIndex = 1;
-	m_lastCavityIndex = 2;
 
 	m_fits.push_back(Fit(3));
 }
@@ -72,6 +65,10 @@ OpticsBench::~OpticsBench()
 {
 	// Delete optics
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		delete (*it);
+
+	// Delelte beams
+	for (vector<Beam*>::iterator it = m_beams.begin(); it != m_beams.end(); it++)
 		delete (*it);
 }
 
@@ -92,8 +89,12 @@ Fit& OpticsBench::addFit(unsigned int index, int nData)
 
 Fit& OpticsBench::fit(unsigned int index)
 {
+	static Fit defaultFit;
+
 	if (index < m_fits.size())
 		return m_fits[index];
+
+	return defaultFit;
 }
 
 void OpticsBench::removeFit(unsigned int index)
@@ -175,7 +176,7 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 void OpticsBench::addOptics(Optics* optics, int index)
 {
 	m_optics.insert(m_optics.begin() + index,  optics);
-	m_beams.insert(m_beams.begin() + index, Beam());
+	m_beams.insert(m_beams.begin() + index, new Beam());
 
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchOpticsAdded(index);
@@ -220,6 +221,7 @@ void OpticsBench::removeOptics(int index, int count)
 	{
 		delete m_optics[index];
 		m_optics.erase(m_optics.begin() + index);
+		delete m_beams[index];
 		m_beams.erase(m_beams.begin() + index);
 	}
 
@@ -232,7 +234,8 @@ void OpticsBench::removeOptics(int index, int count)
 int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
 {
 	Optics* movedOptics = m_optics[index];
-	setOpticsPosition(m_optics, index, position, respectAbsoluteLock);
+	m_optics[index]->setPositionCheckLock(position, respectAbsoluteLock);
+	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 	computeBeams();
 
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
@@ -242,46 +245,26 @@ int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsol
 	return index;
 }
 
-void OpticsBench::setOpticsPosition(vector<Optics*>& opticsVector, int index, double position, bool respectAbsoluteLock) const
-{
-	opticsVector[index]->setPositionCheckLock(position, respectAbsoluteLock);
-	sort(opticsVector.begin() + 1, opticsVector.end(), less<Optics*>());
-}
-
 void OpticsBench::lockTo(int index, string opticsName)
 {
-	lockTo(m_optics, index, opticsName);
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->name() == opticsName)
+		{
+			m_optics[index]->relativeLockTo(*it);
+			break;
+		}
 	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::lockTo(int index, int id)
 {
-	lockTo(m_optics, index, id);
-	emitChange(0, nOptics()-1);
-}
-
-void OpticsBench::lockTo(vector<Optics*>& opticsVector, int index, string opticsName) const
-{
-	cerr << "OpticsBench::lockTo--" << opticsName << "--" << endl;
-	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
-	{
-		cerr << "Trying--" << (*it)->name() << "-- " <<  (*it)->name().compare(opticsName) << endl;
-		if ((*it)->name() == opticsName)
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->id() == id)
 		{
-			opticsVector[index]->relativeLockTo(*it);
-			cerr << " found--" << (*it)->name() << endl;
+			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	}
-
-	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
-	{
-		cerr << "Optics " << (*it)->name() << " " <<  (*it)->id() << endl;
-		if (const Optics* parent = (*it)->relativeLockParent())
-			cerr << " parent = " << parent->name() << " " << parent->id() << endl;
-		for (list<Optics*>::const_iterator cit = (*it)->relativeLockChildren().begin(); cit != (*it)->relativeLockChildren().end(); cit++)
-			cerr << " child = " << (*cit)->name() << " " << (*cit)->id() << endl;
-	}
+	emitChange(0, nOptics()-1);
 }
 
 void OpticsBench::printTree()
@@ -291,27 +274,13 @@ void OpticsBench::printTree()
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 	{
 		cerr << " Optics " << (*it)->name() << " " <<  (*it)->id() << endl;
+		if ((*it)->absoluteLock())
+			cerr << "  absolutely locked" << endl;
 		if (const Optics* parent = (*it)->relativeLockParent())
 			cerr << "  parent = " << parent->name() << " " << parent->id() << endl;
 		for (list<Optics*>::const_iterator cit = (*it)->relativeLockChildren().begin(); cit != (*it)->relativeLockChildren().end(); cit++)
 			cerr << "  child = " << (*cit)->name() << " " << (*cit)->id() << endl;
 	}
-}
-
-void OpticsBench::lockTo(vector<Optics*>& opticsVector, int index, int id) const
-{
-	cerr << "OpticsBench::lockTo " << id << endl;
-	for (vector<Optics*>::iterator it = opticsVector.begin(); it != opticsVector.end(); it++)
-	{
-		cerr << "Trying " << (*it)->name() << " : " << (*it)->id() << endl;
-		if ((*it)->id() == id)
-		{
-			opticsVector[index]->relativeLockTo(*it);
-			cerr << " found " << (*it)->name() << " : " << (*it)->id() << endl;
-			break;
-		}
-	}
-
 }
 
 void OpticsBench::setOpticsName(int index, std::string name)
@@ -343,7 +312,7 @@ void OpticsBench::setInputBeam(const Beam& beam)
 
 void OpticsBench::setBeam(const Beam& beam, int index)
 {
-	m_beams[index] = beam;
+	*m_beams[index] = beam;
 	computeBeams(index, true);
 }
 
@@ -363,12 +332,12 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 
 	if (backward)
 	{
-		beam = m_beams[changedIndex];
+		beam = *m_beams[changedIndex];
 		for (int i = changedIndex + 1; i < nOptics(); i++)
-			m_beams[i] = beam = m_optics[i]->image(beam);
-		beam = m_beams[changedIndex];
+			*m_beams[i] = beam = m_optics[i]->image(beam);
+		beam = *m_beams[changedIndex];
 		for (int i = changedIndex - 1; i >= 0; i--)
-			m_beams[i] = beam = m_optics[i+1]->antecedent(beam);
+			*m_beams[i] = beam = m_optics[i+1]->antecedent(beam);
 		CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
 		createBeam->setBeam(beam);
 	}
@@ -377,133 +346,20 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 		if (changedIndex == 0)
 			beam.setWavelength(wavelength());
 		else
-			beam = m_beams[changedIndex - 1];
+			beam = *m_beams[changedIndex - 1];
 
 		for (int i = changedIndex; i < nOptics(); i++)
-			m_beams[i] = beam = m_optics[i]->image(beam);
+			*m_beams[i] = beam = m_optics[i]->image(beam);
 	}
 
-	m_sensitivity = gradient(m_optics, m_beams.back(), false/*CheckLock*/, true/*Curvature*/);
+	OpticsFunction function(m_optics, m_wavelength);
+	function.setOverlapBeam(*m_beams.back());
+	function.setCheckLock(false);
 
-	// Compute the cavity
-	if ((m_firstCavityIndex > 0) && (nOptics() > m_lastCavityIndex) && (m_lastCavityIndex > m_firstCavityIndex))
-	{
-		const Optics* first_cavity_optics = optics(m_firstCavityIndex);
-		const Optics* last_cavity_optics  = optics(m_lastCavityIndex);
-
-		// Test coherence
-		if (!first_cavity_optics->isABCD() || ! last_cavity_optics->isABCD())
-			cerr << "Warning : cavity boundaries are not of ABCD type" << endl;
-		if (!(m_lastCavityIndex > 0) || !(m_lastCavityIndex >= m_firstCavityIndex))
-			cerr << "Warning m_lastCavityIndex seems to be wrong !" << endl;
-
-		// Compute cavity
-		m_cavity = *dynamic_cast<const ABCD*>(first_cavity_optics);
-//		cerr << "Initial Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-		for (int i = m_firstCavityIndex + 1; i <= m_lastCavityIndex; i++)
-		{
-			static FreeSpace freeSpace(0., 0.);
-			freeSpace.setWidth(optics(i)->position() - optics(i-1)->endPosition());
-			freeSpace.setPosition(optics(i)->endPosition());
-//			cerr << "freespace B = " << freeSpace.B() << endl;
-			m_cavity = m_cavity * freeSpace;
-//			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-			if (optics(i)->isABCD())
-				m_cavity *= *dynamic_cast<const ABCD*>(optics(i));
-//			cerr << "added Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-		}
-
-//		cerr << "Backwards" << endl;
-
-/*		if (m_ringCavity)
-		{
-			for (int i = m_lastCavityIndex - 1; i > m_firstCavityIndex; i--)
-			{
-				FreeSpace freeSpace(optics(i)->endPosition() - optics(i-1)->endPosition(), optics(i-1)->endPosition());
-				m_cavity *= freeSpace;
-				cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-				if (optics(i)->isABCD())
-					m_cavity *= *dynamic_cast<const ABCD*>(optics(i));
-				cerr << "added Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-			}
-			FreeSpace freeSpace(optics(i+1)->position() - optics(i)->endPosition(), optics(i)->endPosition());
-			m_cavity *= freeSpace;
-			cerr << "freespace Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-		}
-		else
-		{
-			/// @todo add a user defined free space between the last and the first optics for linear cavities.
-		}
-*/
-		static FreeSpace freeSpace(0., 0.);
-		freeSpace.setWidth(optics(m_lastCavityIndex)->position() - optics(m_firstCavityIndex)->endPosition());
-		freeSpace.setPosition(optics(m_firstCavityIndex)->endPosition());
-		m_cavity *= freeSpace;
-
-//		cerr << "Final Cavity ABCD = " << m_cavity.A() << " " << m_cavity.B() << " " << m_cavity.C() << " " << m_cavity.D() << endl;
-
-	}
+	m_sensitivity = function.curvature(function.currentPosition())/2.;
+	m_cavity.computeBeam();
 
 	emitChange(changedIndex, nOptics()-1);
-}
-
-vector<Optics*> OpticsBench::cloneOptics() const
-{
-	vector<Optics*> opticsClone;
-
-	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
-	{
-		opticsClone.push_back((*it)->clone());
-		opticsClone.back()->eraseLockingTree();
-	}
-
-	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		if ((*it)->relativeLockParent())
-			lockTo(opticsClone, it - m_optics.begin(), (*it)->relativeLockParent()->id());
-
-	return opticsClone;
-}
-
-Beam OpticsBench::computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const
-{
-	Beam beam;
-	beam.setWavelength(wavelength());
-
-	for (int i = 0; i <= index; i++)
-		beam = opticsVector[i]->image(beam);
-
-	return beam;
-}
-
-vector<double> OpticsBench::gradient(const vector<Optics*>& opticsVector, const Beam& beam, bool checkLock, bool curvature) const
-{
-	double epsilon = 1e-6;
-	vector<double> result;
-
-	vector<Optics*> opticsClone = cloneOptics();
-
-	double initOverlap = Beam::overlap(beam, computeSingleBeam(opticsVector, opticsVector.size() - 1));
-
-	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
-	{
-		double initPosition = (*it)->position();
-		if (checkLock)
-			(*it)->setPositionCheckLock(initPosition + epsilon);
-		else
-			(*it)->setPosition(initPosition + epsilon);
-		double finalOverlap = Beam::overlap(beam, computeSingleBeam(opticsClone, opticsClone.size() - 1));
-		if (checkLock)
-			(*it)->setPositionCheckLock(initPosition);
-		else
-			(*it)->setPosition(initPosition);
-		double slope = (finalOverlap - initOverlap)/(curvature ? sqr(epsilon) : epsilon);
-		result.push_back(slope);
-	}
-
-	for (vector<Optics*>::const_iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
-		delete (*it);
-
-	return result;
 }
 
 void OpticsBench::emitChange(int startOptics, int endOptics) const
@@ -514,15 +370,14 @@ void OpticsBench::emitChange(int startOptics, int endOptics) const
 
 bool OpticsBench::magicWaist()
 {
-//	for (int i = 0; i < nOptics(); i++)
-//		cerr << "m_optics[" << i << "] " << m_optics[i] << " has parent " << m_optics[i]->relativeLockParent() << endl;
-
-	vector<Optics*> opticsClone = cloneOptics();
+	OpticsFunction function(m_optics, m_wavelength);
+	function.setOverlapBeam(m_targetBeam);
+	function.setCheckLock(true);
 
 	vector<int> opticsMovable;
-	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
-		if (!(*it)->absoluteLock() && !(*it)->relativeLockParent())
-			opticsMovable.push_back(it - opticsClone.begin());
+	for (int i = 0; i < nOptics(); i++)
+		if (!optics(i)->absoluteLock() && !optics(i)->relativeLockParent())
+			opticsMovable.push_back(i);
 
 	if (opticsMovable.empty())
 		return false;
@@ -533,16 +388,19 @@ bool OpticsBench::magicWaist()
 	const double minPos = m_leftBoundary;
 	const double maxPos = m_rightBoundary;
 
+	vector<double> positions = function.currentPosition();
+
 	for (int i = 0; i < nTry; i++)
 	{
 		/// @todo find a suitable RNG
 		// Randomly moves a random optics
-		int index = rand() % (opticsMovable.size());
+		int index = rand() % nOptics();
 		double position = double(rand())/double(RAND_MAX)*(maxPos - minPos) + minPos;
-		setOpticsPosition(opticsClone, opticsMovable[index], position);
+		positions[index] = position;
+//		positions = function.localMaximum(positions);
 
 		// Check waist
-		Beam beam = computeSingleBeam(opticsClone, nOptics()-1);
+		Beam beam = function.beam(positions);
 		if ((m_targetBeam.overlapCriterion() &&
 			(Beam::overlap(beam, m_targetBeam) > m_targetBeam.minOverlap())) ||
 			((!m_targetBeam.overlapCriterion()) &&
@@ -555,62 +413,35 @@ bool OpticsBench::magicWaist()
 		}
 	}
 
+	positions = function.localMaximum(positions);
+
 	if (found)
 	{
-		/// @todo gradient method
-		/// @todo is there a better way to identify an optics than a name ? Create a UID ?
-		for (vector<Optics*>::iterator itClone = opticsClone.begin(); itClone != opticsClone.end(); itClone++)
-			for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
-				if ((*itClone)->name() == (*it)->name())
-				{
-					(*it)->setPosition((*itClone)->position());
-					break;
-				}
+		for (unsigned int i = 0; i < positions.size(); i++)
+			m_optics[i]->setPositionCheckLock(positions[i]);
 		sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 		computeBeams();
     }
 	else
 		cerr << "Beam not found !!!" << endl;
 
-	for (vector<Optics*>::iterator it = opticsClone.begin(); it != opticsClone.end(); it++)
-		delete (*it);
-
 	return found;
 }
 
-//////////////////////////////////////////
-// Cavity stuff
-
-bool OpticsBench::isCavityStable() const
+bool OpticsBench::localOptimum()
 {
-	if (m_firstCavityIndex == 0)
+	OpticsFunction function(m_optics, m_wavelength);
+	function.setOverlapBeam(m_targetBeam);
+	function.setCheckLock(true);
+	vector<double> positions = function.localMaximum(function.currentPosition());
+
+	if (!function.optimizationSuccess())
 		return false;
 
-	if (m_cavity.stabilityCriterion1())
-	{
-		if (m_cavity.stabilityCriterion2())
-			return true;
-		else
-			cerr << "Cavity stable for 1 and not 2 !!!!";
-	}
-	else if (m_cavity.stabilityCriterion2())
-		cerr << "Cavity stable for 2 and not 1 !!!!";
+	for (unsigned int i = 0; i < positions.size(); i++)
+		m_optics[i]->setPositionCheckLock(positions[i]);
+	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
+	computeBeams();
 
-	return false;
-}
-
-const Beam OpticsBench::cavityEigenBeam(int index) const
-{
-	if (!isCavityStable() ||
-	   (index < m_firstCavityIndex) ||
-	   (m_ringCavity && (index >= m_lastCavityIndex)) ||
-	   (!m_ringCavity && (index > m_lastCavityIndex)))
-		return Beam();
-
-	Beam beam = m_cavity.eigenMode(wavelength());
-
-	for (int i = m_firstCavityIndex; i <= index; i++)
-		beam = optics(i)->image(beam);
-
-	return beam;
+	return true;
 }

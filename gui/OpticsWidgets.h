@@ -1,4 +1,4 @@
-/* This file is part of the Gaussian Beam project
+/* This file is part of the GaussianBeam project
    Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
@@ -21,18 +21,24 @@
 
 #include "ui_OpticsViewProperties.h"
 
-/// @todo remove this once Beam& -> Beam*
 #include "src/GaussianBeam.h"
 
 #include <QScrollBar>
+#include <QModelIndex>
 
 class OpticsView;
 class QCheckBox;
 class QListWidget;
+class QListWidgetItem;
 class QStatusBar;
 
+/**
+* Displays graduated rullers instead of scroll bars
+*/
 class RullerSlider : public QScrollBar
 {
+	Q_OBJECT
+
 public:
 	RullerSlider(OpticsView* view, bool zoomScroll = false);
 
@@ -52,6 +58,9 @@ private:
 	bool m_zoomScroll;
 };
 
+/**
+* Widget used to tune the range and offset of a view
+*/
 class OpticsViewProperties : public QWidget, private Ui::OpticsViewProperties
 {
 	Q_OBJECT
@@ -75,6 +84,9 @@ private:
 	bool m_update;
 };
 
+/**
+* Widget that displays a small icon used to trigger a widget
+*/
 class CornerWidget : public QWidget
 {
 public:
@@ -90,35 +102,77 @@ private:
 	QWidget* m_widget;
 };
 
-class StatusConfigWidget : public QWidget
+/**
+* Widget with a selectable and sortable list of properties
+*/
+class PropertySelector : public QWidget
 {
+	Q_OBJECT
+
 public:
-	StatusConfigWidget(QWidget* parent = 0);
-	~StatusConfigWidget();
+	PropertySelector(QWidget* parent = 0);
+	~PropertySelector();
+
+public:
+	bool showFullName() const;
+	QList<Property::Type> checkedItems() const;
+
+signals:
+	void propertyChanged();
+
+protected:
+	void readSettings(QList<Property::Type> propertyList, QList<bool> checkList);
 
 private:
-	void readSettings();
-	void writeSettings();
+	void writeSettings() const;
+
+protected:
+	QString m_settingsKey;
 
 private:
 	QListWidget* m_propertyListWidget;
 	QCheckBox* m_symbolCheck;
 
-friend class StatusWidget;
+private slots:
+	void checkBoxModified(int state);
+	void itemModified(QListWidgetItem* item);
 };
 
+/**
+* Property selector for status bar properties
+*/
+class StatusPropertySelector : public PropertySelector
+{
+public:
+	StatusPropertySelector(QWidget* parent = 0);
+};
+
+/**
+* Property selector for table columns
+*/
+class TablePropertySelector : public PropertySelector
+{
+public:
+	TablePropertySelector(QWidget* parent = 0);
+};
+
+/**
+* Optics view status bar widget
+*/
 class StatusWidget : public QWidget
 {
+	Q_OBJECT
+
 public:
 	StatusWidget(QStatusBar* statusBar);
 
 public:
-	void showBeamInfo(const Beam& beam, double z);
+	void showBeamInfo(const Beam* beam, double z);
 
 private:
 	QStatusBar* m_statusBar;
 	QLabel* m_label;
-	StatusConfigWidget* m_configWidget;
+	StatusPropertySelector* m_configWidget;
 };
 
 #endif

@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -64,7 +64,7 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	QDomElement root = domDocument.documentElement();
 	if (root.tagName() != "gaussianBeam")
 	{
-		QMessageBox::information(window(), tr("XML error"), tr("The file is not an Gaussian Beam file."));
+		QMessageBox::information(window(), tr("XML error"), tr("The file is not an GaussianBeam file."));
 		return false;
 	}
 
@@ -94,7 +94,7 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	}
 	else
 	{
-		QMessageBox::information(window(), tr("XML error"), tr("Your version of Gaussian Beam is too old."));
+		QMessageBox::information(window(), tr("XML error"), tr("Your version of GaussianBeam is too old."));
 		return false;
 	}
 
@@ -153,13 +153,13 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 
 	for (int i = 0; i < lockTree.size(); i++)
 		if (!lockTree[i].isEmpty())
-			m_bench.lockTo(i, lockTree[i].toUtf8().data());
+			m_bench.lockTo(i, lockTree[i].toInt());
 }
 
 void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 {
 	QDomElement child = element.firstChildElement();
-	TargetBeam targetBeam = m_bench.targetBeam();
+	TargetBeam targetBeam = *m_bench.targetBeam();
 
 	// Alternative names are for the 1.0 file version
 	while (!child.isNull())
@@ -249,6 +249,7 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 	if (!optics)
 		return;
 
+	optics->setId(element.attribute("id").toInt());
 	QDomElement child = element.firstChildElement();
 	lockTree.push_back(QString());
 

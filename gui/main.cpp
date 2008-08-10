@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -18,6 +18,7 @@
 
 #include "gui/GaussianBeamWidget.h"
 #include "gui/GaussianBeamWindow.h"
+#include "gui/Names.h"
 
 #include <QApplication>
 #include <QTextCodec>
@@ -35,6 +36,8 @@ int main(int argc, char *argv[])
 	QString locale = QLocale::system().name();
 	translator.load(QString("GaussianBeam_") + locale);
 	app.installTranslator(&translator);
+
+	initNames(&app);
 
 	///@todo parse other arguments ?
 	QString file;

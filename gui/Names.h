@@ -16,43 +16,32 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef UNIT_H
-#define UNIT_H
+#ifndef NAMES_H
+#define NAMES_H
+
+#include <src/GaussianBeam.h>
+#include <src/Optics.h>
+#include <gui/Unit.h>
 
 #include <QString>
+#include <QMap>
+#include <QApplication>
 
-class Unit
+namespace Property
 {
-public:
-	Unit(int power, QString unitString);
+	extern QMap<Property::Type, QString> fullName;
+	extern QMap<Property::Type, QString> shortName;
+	extern QMap<Property::Type, UnitType> unit;
+}
 
-public:
-	QString string(bool space = true) const;
-	double multiplier() const;
-	double divider() const;
-
-public:
-	static const double infinity;
-
-private:
-	QChar prefix() const;
-
-private:
-	int m_power;
-	QString m_unitString;
-};
-
-enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
-               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth, UnitPhase, UnitLess};
-
-class Units
+namespace OpticsName
 {
-public:
-	Units();
+	extern QMap<OpticsType, QString> fullName;
+}
 
-public:
-	static const Unit getUnit(UnitType unit);
-};
+/// Called by main() to fill name maps
+void initNames(QApplication* app);
+/// Break a string in two lines of minimal length
+QString breakString(QString string);
 
 #endif

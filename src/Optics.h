@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -86,6 +86,8 @@ public:
 	bool isABCD() const { return m_ABCD; }
 	/// @return the unique ID of the optics
 	int id() const { return m_id; }
+	/// set the optics id. This function is reserved to loading functions. Do not use
+	void setId(double id) { m_id = id; }
 	/// Query absolute lock. @return true if the lock is absolute, false otherwise
 	bool absoluteLock() const { return m_absoluteLock; }
 	/**
@@ -349,6 +351,9 @@ public:
 class GenericABCD : public ABCD
 {
 public:
+	GenericABCD()
+		: ABCD(GenericABCDType, 0.)
+		, m_A(1.), m_B(0.), m_C(0.), m_D(1.) {}
 	GenericABCD(const ABCD& abcd)
 		: ABCD(abcd)
 		, m_A(abcd.A()), m_B(abcd.B()), m_C(abcd.C()), m_D(abcd.D())

@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -22,6 +22,7 @@
 #include "Optics.h"
 #include "GaussianBeam.h"
 #include "GaussianFit.h"
+#include "Cavity.h"
 
 #include <vector>
 #include <list>
@@ -88,11 +89,18 @@ public:
 	void opticsPropertyChanged(int index);
 
 	/// Beams handling
-	const Beam& beam(int index) const { return m_beams[index]; }
-//	const Beam* beamPtr(int index) const { return &(m_beams[index]); }
+	const Beam* beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
 	double sensitivity(int index) const { return m_sensitivity[index]; }
+
+	/// Cavity
+	Cavity& cavity() { return m_cavity; }
+	/**
+	* If you modified a Cavity class obtained by the cavity() function, call this
+	* function to notify this modification
+	*/
+	void notifyCavityChange();
 
 	/// Waist fit
 	int nFit() const;
@@ -101,40 +109,32 @@ public:
 	void removeFit(unsigned int index);
 	void removeFits(unsigned int startIndex, int n);
 	/**
-	* If you modified a Fit class obtained by the fit function, call this
+	* If you modified a Fit class obtained by the fit() function, call this
 	* function to notify this modification
 	*/
 	void notifyFitChange(unsigned int index);
 
 	/// Magic waist
-	const TargetBeam& targetBeam() const { return m_targetBeam; }
+	const TargetBeam* targetBeam() const { return &m_targetBeam; }
 	void setTargetBeam(const TargetBeam& beam);
 	bool magicWaist();
+	bool localOptimum();
 
-	/// Cavity stuff : @todo make a new class ?
-	bool isCavityStable() const;
-	const Beam cavityEigenBeam(int index) const;
-
-	/// Optics change callback
+	/// Register modification callback
 	void registerNotify(OpticsBenchNotify* notify);
 
+	/// Debugging
 	void printTree();
 
 private:
-	std::vector<Optics*> cloneOptics() const;
-	void lockTo(std::vector<Optics*>& opticsVector, int index, std::string opticsName) const;
-	void lockTo(std::vector<Optics*>& opticsVector, int index, int id) const;
-	void setOpticsPosition(std::vector<Optics*>& opticsVector, int index, double position, bool respectAbsoluteLock = true) const;
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
-	Beam computeSingleBeam(const std::vector<Optics*>& opticsVector, int index) const;
 	void emitChange(int startOptics, int endOptics) const;
-	std::vector<double> gradient(const std::vector<Optics*>& opticsVector, const Beam& beam, bool checkLock, bool curvature) const;
 
 private:
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
-	std::vector<Beam> m_beams;
+	std::vector<Beam*> m_beams;
 	std::vector<double> m_sensitivity;
 
 	/// Exclusion area
@@ -147,10 +147,7 @@ private:
 	TargetBeam m_targetBeam;
 
 	/// Cavity
-	GenericABCD m_cavity;
-	int m_firstCavityIndex;
-	int m_lastCavityIndex;
-	bool m_ringCavity;
+	Cavity m_cavity;
 
 	/// Optics naming
 	std::map<OpticsType, int> m_lastOpticsName;
@@ -158,6 +155,9 @@ private:
 
 	/// Callback
 	std::list<OpticsBenchNotify*> m_notifyList;
+
+	/// @todo it might be possible to remove this
+	friend class OpticsFunction;
 };
 
 #endif

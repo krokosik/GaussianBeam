@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -21,17 +21,12 @@
 
 #include <complex>
 
-
-/// @todo some of these are defined by the STL library
-
-inline double sqr(double x)
+namespace Property
 {
-	return x*x;
-}
-
-inline double sign(double x)
-{
-	return x < 0. ? -1. : 1.;
+enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyPhase, BeamDistanceToWaist,
+            BeamParameter, BeamWaist, BeamWaistPosition, BeamRayleigh, BeamDivergence, Index,
+            OpticsType, OpticsPosition, OpticsRelativePosition, OpticsProperties, OpticsName,
+            OpticsLock, OpticsSensitivity};
 }
 
 struct Approximation

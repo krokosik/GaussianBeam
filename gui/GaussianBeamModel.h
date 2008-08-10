@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -26,16 +26,14 @@
 #include <QAbstractTableModel>
 #include <QList>
 
-enum ColumnContent {OpticsColumn, PositionColumn, RelativePositionColumn, PropertiesColumn,
-                    WaistColumn, WaistPositionColumn, RayleighColumn, DivergenceColumn,
-                    NameColumn, LockColumn, SensitivityColumn};
+class TablePropertySelector;
 
 class GaussianBeamModel : public QAbstractTableModel, private OpticsBenchNotify
 {
 	Q_OBJECT
 
 public:
-	GaussianBeamModel(OpticsBench& bench, QObject* parent = 0);
+	GaussianBeamModel(OpticsBench& bench, TablePropertySelector* propertySelector, QObject* parent = 0);
 	~GaussianBeamModel();
 
 	int rowCount(const QModelIndex& parent = QModelIndex()) const;
@@ -47,16 +45,19 @@ public:
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole);
 	bool insertRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
-	ColumnContent columnContent(int column) const { return m_columns[column]; }
+	Property::Type columnContent(int column) const { return m_columns[column]; }
 
 private:
-	QString opticsName(OpticsType opticsType) const;
 	void OpticsBenchDataChanged(int startOptics, int endOptics);
 	void OpticsBenchOpticsAdded(int index);
 	void OpticsBenchOpticsRemoved(int index, int count);
 
+private slots:
+	void propertyWidgetModified();
+
 private:
-	QList<ColumnContent> m_columns;
+	QList<Property::Type> m_columns;
+	TablePropertySelector* m_propertySelector;
 };
 
 #endif

@@ -1,5 +1,5 @@
-/* This file is part of the Gaussian Beam project
-   Copyright (C) 2007 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+/* This file is part of the GaussianBeam project
+   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -138,7 +138,7 @@ private:
 class BeamItem : public QGraphicsItem
 {
 public:
-	BeamItem(const Beam& beam);
+	BeamItem(const Beam* beam);
 
 /// Inherited public functions
 public:
@@ -150,13 +150,13 @@ public:
 	double rightBound() const { return m_rightBound; }
 	void setLeftBound(double leftBound);
 	void setRightBound(double rightBound);
-	const Beam& beam() const { return m_beam; }
+	const Beam* beam() const { return m_beam; }
 	void setPlainStyle(bool style = true) { m_style = style; }
 	bool auxiliary() const { return m_auxiliary; }
 	void setAuxiliary(bool auxiliary) { m_auxiliary = auxiliary; }
 
 private:
-	const Beam& m_beam;
+	const Beam* m_beam;
 	double m_leftBound;
 	double m_rightBound;
 	bool m_drawText;
