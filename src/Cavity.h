@@ -24,20 +24,34 @@
 
 class OpticsBench;
 
+/**
+* This class defines a cavity by a set of optics. It can
+* tell whether the cavity is stable or not and give the eigen modes
+*/
 class Cavity
 {
 public:
-	Cavity(OpticsBench& bench);
+	/// Constructor
+	Cavity();
 
 public:
-	void computeBeam();
+	/// @return true if there exist a Gaussian cavity eigen-mode
 	bool isStable() const;
-	const Beam eigenBeam(int index) const;
+	/**
+	* @return the cavity eigen-mode
+	* @p wavelength wavelength of the eigen-mode
+	* @p index return the beam as it is after the @p index cavity optics
+	*/
+	const Beam eigenBeam(double wavelength, int index) const;
+	/// Add the optics @p optics to the cavity
 	void addOptics(const Optics* optics);
+	/// Remove the optics @p optics from the cavity
 	void removeOptics(const Optics* optics);
 
 private:
-	OpticsBench& m_bench;
+	void computeBeam();
+
+private:
 	GenericABCD m_matrix;
 	bool m_ringCavity;
 	std::list<const ABCD*> m_opticsList;

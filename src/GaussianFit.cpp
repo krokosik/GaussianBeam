@@ -121,7 +121,7 @@ double Fit::rho2(double wavelength) const
 
 void Fit::fitBeam(double wavelength) const
 {
-	if (!m_dirty && (wavelength == m_lastWavelength) || m_positions.empty())
+	if ((!m_dirty && (wavelength == m_lastWavelength)) || m_positions.empty())
 		return;
 
 	vector<double> positions, radii;

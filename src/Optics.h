@@ -29,6 +29,9 @@ enum OpticsType {CreateBeamType, FreeSpaceType,
                  FlatInterfaceType, CurvedInterfaceType,
                  DielectricSlabType, ThickLensType, ThermalLensType, GenericABCDType, UserType};
 
+/**
+* Generic optics class. An optics is a transformation of a Gaussian beam
+*/
 class Optics
 {
 public:
@@ -40,13 +43,9 @@ public:
 	* @p name name of the optics
 	*/
 	Optics(OpticsType type, bool ABCD, double position, std::string name);
-	/**
-	* Destructor
-	*/
+	/// Destructor
 	virtual ~Optics();
-	/**
-	* Duplicate the optics into a new independant class
-	*/
+	/// Duplicate the optics into a new independant class. This function can clone an optics without knowing its actual type.
 	virtual Optics* clone() const = 0;
 
 public:
@@ -60,7 +59,8 @@ public:
 	* @p outputBeam output beam
 	*/
 	virtual Beam antecedent(const Beam& outputBeam) const = 0;
-	/** Index jump from one side of the optics to the other
+	/**
+	* Index jump from one side of the optics to the other
 	* @return final index / initial index
 	*/
 	virtual double indexJump() const { return 1.; }
@@ -155,65 +155,76 @@ private:
 /////////////////////////////////////////////////
 // Pure virtual Optics classes
 
+/**
+* Generic class for ABCD tranformation optics
+* All ABCD type optics should inherit from this class
+* By default, this classs implements the identity optics
+*/
 class ABCD : public Optics
 {
 public:
+	/// Constructor
 	ABCD(OpticsType type, double position, std::string name = "");
+	/// Destructor
 	virtual ~ABCD() {}
 
 public:
+	/// @return the image of @p inputBeam
 	virtual Beam image(const Beam& inputBeam) const;
+	/// @return the antecedent if @p outputBeam
 	virtual Beam antecedent(const Beam& outputBeam) const;
 
 public:
+	/// @return coefficient A of the ABCD matrix
 	virtual double A() const { return 1.; }
+	/// @return coefficient B of the ABCD matrix
 	virtual double B() const { return 0.; }
+	/// @return coefficient C of the ABCD matrix
 	virtual double C() const { return 0.; }
+	/// @return coefficient D of the ABCD matrix
 	virtual double D() const { return 1.; }
 
-/// Cavity functions
+/// @todo transfer this to the cavity class
 public:
 	bool stabilityCriterion1() const;
 	bool stabilityCriterion2() const;
 	Beam eigenMode(double wavelength) const;
 };
 
-class GenericLens : public ABCD
-{
-public:
-	GenericLens(OpticsType type, double focal, double position, std::string name = "")
-		: ABCD(type, position, name) , m_focal(focal) {}
-	virtual ~GenericLens() {}
-
-public:
-	virtual double C() const { return -1./focal(); }
-
-public:
-	double focal() const { return m_focal; }
-	void setFocal(double focal);
-
-private:
-	double m_focal;
-};
-
+/**
+* Generic class for dielectric materials
+*/
 class Dielectric
 {
 public:
+	/// Constructor
 	Dielectric(double indexRatio) : m_indexRatio(indexRatio) {}
 
 public:
+	/**
+	* @return the refractive index jump characterizing the dielectric.
+	* This index jump is the ratio between the index on the 
+	* right hand side of the optics (i.e. output index) and the
+	* index on the left hand side of the optics (i.e. input index)
+	*/
 	double indexRatio() const { return m_indexRatio; }
+	/// Set the index jump to @p indexRatio
 	void setIndexRatio(double indexRatio);
 
 private:
 	double m_indexRatio;
 };
 
+/**
+* Generic class for interface type optics
+*/
 class Interface : public ABCD, public Dielectric
 {
 public:
+	/// Constructor
 	Interface(OpticsType type, double indexRatio, double position, std::string name = "")
 		: ABCD(type, position, name), Dielectric(indexRatio) {}
+	/// Destructor
 	virtual ~Interface() {}
 
 public:
@@ -224,23 +235,37 @@ public:
 /////////////////////////////////////////////////
 // Non ABCD optics
 
+/**
+* This optics is used to construct the input beam of an optics set
+* Its image is constant whatever the antecedent is, and is defined
+* by the class parameters. This  class enables to include the input
+* beam specifications in an optics set.
+*/
 class CreateBeam : public Optics
 {
 public:
+	/// Constructor
 	CreateBeam(double waist, double waistPosition, double index, std::string name = "");
-	CreateBeam* clone() const { return new CreateBeam(*this); }
+	virtual CreateBeam* clone() const { return new CreateBeam(*this); }
 
 public:
-	Beam image(const Beam& inputBeam) const;
-	Beam antecedent(const Beam& outputBeam) const;
+	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam) const;
 
 public:
+	/// @return the waist width of the input beam
 	double waist() const { return m_waist; }
+	/// Set the waist width to @p waist
 	void setWaist(double waist);
+	/// @return the refractive index of the medium in which the input beam propagates
 	double index() const { return m_index; }
+	/// Set the index of the input beam
 	void setIndex(double index);
+	/// @return the beam quality factor M² of the input beam
 	double M2() const { return m_M2; }
+	/// Set the input beam quality factor
 	void setM2(double M2);
+	/// Copy all properties of beam @p beam to class properties
 	void setBeam(const Beam& beam);
 
 private:
@@ -252,32 +277,59 @@ private:
 /////////////////////////////////////////////////
 // ABCD optics
 
+/**
+* This class inplements the free space propagation of a Gaussian beam
+* This is the identity tranformation with respect to beam transformation,
+* but not regarding ABCD matrices.
+*/
 class FreeSpace : public ABCD
 {
 public:
+	/// Constructor
 	FreeSpace(double width, double position, std::string name = "")
 		: ABCD(FreeSpaceType, position, name) { setWidth(width); }
-	FreeSpace* clone() const { return new FreeSpace(*this); }
+	virtual FreeSpace* clone() const { return new FreeSpace(*this); }
 
 public:
 	virtual double B() const { return width(); }
 };
 
-class Lens : public GenericLens
+/**
+* Thin lens optics, defined by its focal lens
+*/
+class Lens : public ABCD
 {
 public:
+	/// Constructor
 	Lens(double focal, double position, std::string name = "")
-		: GenericLens(LensType, focal, position, name) {}
-	Lens* clone() const { return new Lens(*this); }
+		: ABCD(LensType, position, name) , m_focal(focal) {}
+	virtual Lens* clone() const { return new Lens(*this); }
+
+public:
+	virtual double C() const { return -1./focal(); }
+
+public:
+	/// @return the lens focal length
+	double focal() const { return m_focal; }
+	/// Set the lens focal
+	void setFocal(double focal);
+
+private:
+	double m_focal;
 };
 
-/// @todo finish this
-class ThickLens : public GenericLens, public Dielectric
+/**
+* Thick lens class.
+* @warning This class is not finished yet
+* @todo finish this class
+*/
+class ThickLens : public Lens, public Dielectric
 {
 public:
+	/// Constructor
 	ThickLens(double focal, double indexRatio, double position, std::string name = "")
-		: GenericLens(ThickLensType, focal, position, name), Dielectric(indexRatio) {}
-	ThickLens* clone() const { return new ThickLens(*this); }
+		: Lens(focal, position, name), Dielectric(indexRatio) { setType(ThickLensType); }
+	virtual ThickLens* clone() const { return new ThickLens(*this); }
 
 public:
 	virtual double A() const { return -1./focal(); }
@@ -285,83 +337,117 @@ public:
 	virtual double D() const { return -1./focal(); }
 };
 
+/**
+* Flat mirror optics. With repsect to beam propagation, this optics
+* is the indentiy, either for beams or ABCD matrices.
+* This class is used for cavity, for instance to bound a cavity
+*/
 class FlatMirror : public ABCD
 {
 public:
+	/// Constructor
 	FlatMirror(double position, std::string name = "")
 		: ABCD(FlatMirrorType, position, name) {}
-	FlatMirror* clone() const { return new FlatMirror(*this); }
+	virtual FlatMirror* clone() const { return new FlatMirror(*this); }
 };
 
+/**
+* Implements a curved mirror. This is equivalent to a lens of focal curvatureRadius()/2
+*/
 class CurvedMirror : public ABCD
 {
 public:
+	/// Constructor
 	CurvedMirror(double curvatureRadius, double position, std::string name = "")
 		: ABCD(CurvedMirrorType, position, name), m_curvatureRadius(curvatureRadius) {}
-	CurvedMirror* clone() const { return new CurvedMirror(*this); }
+	virtual CurvedMirror* clone() const { return new CurvedMirror(*this); }
 
 public:
  	virtual double C() const { return -2./curvatureRadius(); }
 
 public:
+	/// @return the mirror curvature radius
 	double curvatureRadius() const { return m_curvatureRadius; }
+	/// Set the mirror curvature radius
 	void setCurvatureRadius(double curvatureRadius);
 
-protected:
+private:
 	double m_curvatureRadius;
 };
 
+/**
+* Flat interface between to medium of different refraction index
+*/
 class FlatInterface : public Interface
 {
 public:
+	/// Constructor
 	FlatInterface(double indexRatio, double position, std::string name = "")
 		: Interface(FlatInterfaceType, indexRatio, position, name) {}
-	FlatInterface* clone() const { return new FlatInterface(*this); }
+	virtual FlatInterface* clone() const { return new FlatInterface(*this); }
 };
 
+/**
+* Curved interface between to medium of different refraction index
+*/
 class CurvedInterface : public Interface
 {
 public:
+	/// Constructor
 	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "")
 		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) {}
-	CurvedInterface* clone() const { return new CurvedInterface(*this); }
+	virtual CurvedInterface* clone() const { return new CurvedInterface(*this); }
 
 public:
 	virtual double C() const { return (1./indexRatio()-1.)/surfaceRadius(); }
 
 public:
+	/// @return the surface curvature radius
 	double surfaceRadius() const { return m_surfaceRadius; }
+	/// set the surface curvature radius
 	void setSurfaceRadius(double surfaceRadius);
 
-protected:
+private:
 	double m_surfaceRadius;
 };
 
+/**
+* Finite extension in space of a dielectric medium, defined by its index jum
+* and its width
+*/
 class DielectricSlab : public ABCD, public Dielectric
 {
 public:
+	/// Constructor
 	DielectricSlab(double indexRatio, double width, double position, std::string name = "")
 		: ABCD(DielectricSlabType, position, name), Dielectric(indexRatio) { setWidth(width); }
-	DielectricSlab* clone() const { return new DielectricSlab(*this); }
+	virtual DielectricSlab* clone() const { return new DielectricSlab(*this); }
 
 public:
 	virtual double B() const { return width()/indexRatio(); }
 };
 
+/**
+* User defined ABCD transformation
+*/
 class GenericABCD : public ABCD
 {
 public:
+	/// Default constructor. Build an identity matrix
 	GenericABCD()
 		: ABCD(GenericABCDType, 0.)
 		, m_A(1.), m_B(0.), m_C(0.), m_D(1.) {}
+	/// Copy constructor
 	GenericABCD(const ABCD& abcd)
 		: ABCD(abcd)
 		, m_A(abcd.A()), m_B(abcd.B()), m_C(abcd.C()), m_D(abcd.D())
 		{ setType(GenericABCDType); }
+	/// Constructor
 	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "")
 		: ABCD(GenericABCDType, position, name)
 		, m_A(A), m_B(B), m_C(C), m_D(D) { setWidth(width); }
-	GenericABCD* clone() const { return new GenericABCD(*this); }
+	virtual GenericABCD* clone() const { return new GenericABCD(*this); }
+	/// Compose ABCD matrices
 	GenericABCD& operator*=(const ABCD& abcd1);
 
 public:
@@ -372,12 +458,16 @@ public:
 
 /// @todo check if the given ABCD matrix is valid
 public:
+	/// Set the matrix coefficient A
 	void setA(double A) { m_A = A; }
+	/// Set the matrix coefficient B
 	void setB(double B) { m_B = B; }
+	/// Set the matrix coefficient C
 	void setC(double C) { m_C = C; }
+	/// Set the matrix coefficient D
 	void setD(double D) { m_D = D; }
 
-protected:
+private:
 	double m_A, m_B, m_C, m_D;
 };
 

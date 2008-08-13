@@ -186,9 +186,9 @@ void CreateBeam::setBeam(const Beam& beam)
 
 
 /////////////////////////////////////////////////
-// GenericLens class
+// Lens class
 
-void GenericLens::setFocal(double focal)
+void Lens::setFocal(double focal)
 {
 	if (focal != 0.)
 		m_focal = focal;

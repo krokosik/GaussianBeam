@@ -40,7 +40,6 @@ OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
 // OpticsBench
 
 OpticsBench::OpticsBench()
-	: m_cavity(*this)
 {
 	m_opticsPrefix[LensType]            = "L";
 	m_opticsPrefix[FlatMirrorType]      = "M";
@@ -357,7 +356,6 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	function.setCheckLock(false);
 
 	m_sensitivity = function.curvature(function.currentPosition())/2.;
-	m_cavity.computeBeam();
 
 	emitChange(changedIndex, nOptics()-1);
 }

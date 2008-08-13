@@ -23,6 +23,9 @@
 
 #include <vector>
 
+/**
+* Type of data measured by the user for beam fitting
+*/
 enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 
 /**
@@ -33,25 +36,43 @@ enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 class Fit
 {
 public:
+	/// Constructor
 	Fit(int nData = 0, std::string name = "");
 
 public:
+	/// @return the number of points in the fit
 	int size() const { return m_positions.size(); }
+	/// @return the number of points with non zero measured value in the fit
 	int nonZeroSize() const;
+	/// @return the user name given to the fit
 	std::string name() const { return m_name; }
+	/// Set the user name of the fit
 	void setName(std::string name) { m_name = name; }
+	/// @return the type of measured data
 	FitDataType dataType() const { return m_dataType; }
+	/// Set the type of mesured data
 	void setDataType(FitDataType dataType) { m_dataType = dataType; }
+	/// @return the RGB color associated to the fit
 	unsigned int color() const { return m_color; }
+	/// Set the RGB color accociated to the fit
 	void setColor(unsigned int color) { m_color = color; }
+	/// @return the position of date number @p index
 	double position(unsigned int index) const { return m_positions[index]; }
+	/// @return the measured value number @p index
 	double value(unsigned int index) const { return m_values[index]; }
+	/// @return the measured beam radius at 1/e² computed from the measured data
 	double radius(unsigned int index) const;
+	/// Add a data point @p value , measured at position @p position to the fit
 	void addData(double position, double value);
+	/// Set data point number @p index to @p value at position @p position
 	void setData(unsigned int index, double position, double value);
+	/// Remove data point number @p index
 	void removeData(unsigned int index);
+	/// Remove all data in the fit
 	void clear();
+	/// @return the best beam adjusted to the data points
 	const Beam& beam(double wavelength) const;
+	/// @return the correlation coefficient of the fit
 	double rho2(double wavelength) const;
 
 private:

@@ -30,6 +30,9 @@
 
 class OpticsBench;
 
+/**
+* OpticsBenchNotify
+*/
 class OpticsBenchNotify
 {
 public:
@@ -48,6 +51,9 @@ protected:
 	OpticsBench& m_bench;
 };
 
+/**
+* OpticsBench
+*/
 class OpticsBench
 {
 public:

@@ -27,6 +27,10 @@ using namespace std;
 /////////////////////////////////////////////////
 // Function class
 
+Function::Function()
+{
+}
+
 vector<double> Function::gradient(const vector<double>& x) const
 {
 	double epsilon = 1e-6;
@@ -79,12 +83,6 @@ double Function::lineValue(double x) const
 	double sign = m_min ? 1. : -1.;
 	return sign*value(lineParametric(x));
 }
-
-struct brent_state_t
-{
-	double d, e, v, w;
-	double f_v, f_w;
-};
 
 vector<double> Function::lineExtremum(const vector<double>& x, const vector<double>& u, bool min) const
 {

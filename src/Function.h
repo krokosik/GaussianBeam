@@ -28,10 +28,10 @@ class Function
 {
 public:
 	/// Constructor
-	Function() {}
+	Function();
 
 public:
-	/// Function evaluation at point @p x
+	/// Evaluate the function point @p x
 	virtual double value(const std::vector<double>& x) const = 0;
 	/// Compute the function gradient at point @p x
 	std::vector<double> gradient(const std::vector<double>& x) const;
@@ -53,15 +53,15 @@ public:
 	bool optimizationSuccess() { return m_success; }
 
 private:
-	/// Set search extremum type
+	// Set search extremum type
 	void setExtremumType(bool min) const { m_min = min; }
-	/// Set line search parameters: start point and direction
+	// Set line search parameters: start point and direction
 	void setLine(const std::vector<double>& point, const std::vector<double>& direction) const;
-	/// Parametric representation of a line, given line parameters defined by setLine
+	// Parametric representation of a line, given line parameters defined by setLine
 	std::vector<double> lineParametric(double x) const;
-	/// Value of the function along along a line this value is signed according to the type of extremum searched
+	// Value of the function along along a line this value is signed according to the type of extremum searched
 	double lineValue(double x) const;
-	/// Line search algorithm
+	// Line search algorithms
 	std::vector<double> bracketMinimum(double start, double stop) const;
 	double brent(const std::vector<double>& bracket) const;
 

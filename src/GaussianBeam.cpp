@@ -24,11 +24,6 @@
 
 using namespace std;
 
-Beam::Beam()
-{
-	m_valid = false;
-}
-
 Beam::Beam(double waist, double waistPosition, double wavelength, double index, double M2)
 	: m_waist(waist)
 	, m_waistPosition(waistPosition)
@@ -36,7 +31,6 @@ Beam::Beam(double waist, double waistPosition, double wavelength, double index, 
 	, m_index(index)
 	, m_M2(M2)
 {
-	m_valid = true;
 }
 
 Beam::Beam(const complex<double>& q, double z, double wavelength, double index, double M2)
@@ -47,7 +41,6 @@ Beam::Beam(const complex<double>& q, double z, double wavelength, double index, 
 	const double z0 = q.imag();
 	m_waist = sqrt(z0*wavelength*m_M2/(m_index*M_PI));
 	m_waistPosition = z - q.real();
-	m_valid = true;
 }
 
 double Beam::divergence() const
@@ -106,46 +99,6 @@ double Beam::gouyPhase(double z) const
 complex<double> Beam::q(double z) const
 {
 	return complex<double>(z - waistPosition(), rayleigh());
-}
-
-const int nApprox = 11;
-const double xApprox[nApprox] = {0., 0.202, 0.417, 0.659, 0.95, 1.321, 1.827, 2.569, 3.756, 5.878, 10.33};
-const double gapApprox = 0.005;
-
-double Beam::approxNextPosition(double currentPosition, Approximation& approximation) const
-{
-	return currentPosition + (approximation.maxZ - approximation.minZ)/20.;
-
-	/// @todo activate this
-	/// @bug shift by waist center
-
-	double lowBound, highBound;
-
-	if (currentPosition < -xApprox[nApprox-1])
-		return -xApprox[nApprox-1];
-	if (currentPosition >= xApprox[nApprox-1])
-		return xApprox[nApprox-1];
-
-	int i;
-	for (i = nApprox - 1; i >= 0; i--)
-		if (fabs(currentPosition) > xApprox[i])
-			break;
-
-	if (i == nApprox - 1)
-		cerr << "UNEXPECTED INTERVAL " << currentPosition << endl;
-
-	if (currentPosition < 0.)
-	{
-		highBound = -xApprox[i];
-		lowBound = -xApprox[i+1];
-	}
-	else
-	{
-		highBound = xApprox[i+1];
-		lowBound = -xApprox[i];
-	}
-
-	return currentPosition + (highBound - lowBound)/(gapApprox*waist()/approximation.resolution);
 }
 
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)

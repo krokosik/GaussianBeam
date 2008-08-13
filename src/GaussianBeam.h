@@ -29,56 +29,71 @@ enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyP
             OpticsLock, OpticsSensitivity};
 }
 
-struct Approximation
-{
-	double minZ, maxZ;
-	double resolution;
-
-//	int currentInterval;
-//	double currentValue;
-};
-
+/**
+* This class represents a Gaussian beam, defined by its waist and position
+*/
 class Beam
 {
 public:
-	Beam();
+	/// Default constructor. Produced an invalid Beam. @todo this should disappear
+	Beam() {}
+	/// Constructor
 	Beam(double waist, double waistPosition, double wavelength, double index, double M2);
+	/// Construct a Gaussian beam from a given complex beam parapeter @p q at position @p z
 	Beam(const std::complex<double>& q, double z, double wavelength, double index, double M2);
 
 public:
-	bool isValid() const { return m_valid; }
 
-	// get/set properties
+	/// @return the waist position
 	double waistPosition() const { return m_waistPosition; }
+	/// Set the waist position to @p waistPosition
 	void setWaistPosition(double waistPosition) { m_waistPosition = waistPosition; }
+	/// @return the waist radius at 1/e²
 	double waist() const { return m_waist; }
+	/// Set the waist radius at 1/e² to @p waist
 	void setWaist(double waist) { m_waist = waist; }
+	/// @return the beam divergence (half angle)
 	double divergence() const;
+	/// Set the beam divergence to @p divergence
 	void setDivergence(double divergence);
+	/// @return the Rayleigh range
 	double rayleigh() const;
+	/// Set the rayleigh range to @p rayleigh
 	void setRayleigh(double rayleigh);
+	/// @return the beam wavelength
 	double wavelength() const { return m_wavelength; }
+	/// Set the beam wavelength to @p wavelength
 	void setWavelength(double wavelength) { m_wavelength = wavelength; }
+	/// @return the index of the medium in which the beam propagates
 	double index() const { return m_index; }
+	/// Set the index of the medium in which the beam propagates to @p index
 	void setIndex(double index) { m_index = index; }
+	/// @return the beam quality factor M²
 	double M2() const { return m_M2; }
+	/// Set the beam quality factor M² to @p M2
 	void setM2(double M2) { m_M2 = M2; }
 
 	// Position dependent properties
+	/// @return the beam radius at 1/e² at position @p z
 	double radius(double z) const;
+	/// @return the derivative of the beam radius at 1/e² at position @p z
 	double radiusDerivative(double z) const;
+	/// @return the second derivative of the beam radius at 1/e² at position @p z
 	double radiusSecondDerivative(double z) const;
+	/// @return the curvature radius of the beam at position @p z
 	double curvature(double z) const;
+	/// @return the Gouy phase at position @p z
 	double gouyPhase(double z) const;
+	/// @return the beam complex parameter \f$ q = (z-z_w) + iz_0 \f$ at position @p z
 	std::complex<double> q(double z) const;
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
 	* This overlap does not depend on @p z if both beams have the same wavelength,
 	* hence the default value for z
+	* @todo this is only implented for beams of identical wavelength
 	*/
 	static double overlap(const Beam& beam1, const Beam& beam2, double z = 0.);
-	double approxNextPosition(double currentPosition, Approximation& approximation) const;
 
 private:
 	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }
@@ -89,9 +104,11 @@ private:
 	double m_wavelength;
 	double m_index;
 	double m_M2;
-	bool m_valid;
 };
 
+/**
+* Target beam
+*/
 class TargetBeam : public Beam
 {
 public:
@@ -114,7 +131,7 @@ public:
 	void setPositionTolerance(double positionTolerance) { m_positionTolerance = positionTolerance; }
 
 private:
-	/// True for tolerance on overlap, false for tolerance on waist and position
+	// True for tolerance on overlap, false for tolerance on waist and position
 	bool m_overlapCriterion;
 	double m_minOverlap;
 	double m_waistTolerance;

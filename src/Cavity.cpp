@@ -23,8 +23,7 @@
 
 using namespace std;
 
-Cavity::Cavity(OpticsBench& bench)
-	: m_bench(bench)
+Cavity::Cavity()
 {
 	m_ringCavity = true;
 }
@@ -100,8 +99,11 @@ bool Cavity::isStable() const
 	return false;
 }
 
-const Beam Cavity::eigenBeam(int index) const
+const Beam Cavity::eigenBeam(double wavelength, int index) const
 {
+	/// @todo chache compute beam ?
+//	computeBeam();
+
 	/// @todo reimplement checks
 /*	if (!isStable() ||
 	   (index < m_firstCavityIndex) ||
@@ -109,7 +111,7 @@ const Beam Cavity::eigenBeam(int index) const
 	   (!m_ringCavity && (index > m_lastCavityIndex)))
 		return Beam();
 */
-	Beam beam = m_matrix.eigenMode(m_bench.wavelength());
+	Beam beam = m_matrix.eigenMode(wavelength);
 
 //	for (int i = m_firstCavityIndex; i <= index; i++)
 //		beam = m_bench.optics(i)->image(beam);
