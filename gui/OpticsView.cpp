@@ -21,6 +21,7 @@
 #include "gui/GaussianBeamModel.h"
 #include "gui/Unit.h"
 #include "src/GaussianBeam.h"
+#include "src/Utils.h"
 
 #include <QtGui>
 #include <QtDebug>
@@ -533,6 +534,26 @@ QRectF BeamItem::boundingRect() const
 	return result;
 }
 
+void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
+{
+	if (start < m_leftBound)
+		start = m_leftBound;
+
+	if (stop > m_rightBound)
+		stop = m_rightBound;
+
+	if (start >= stop)
+		return;
+
+	// "pixel" is added to avoid overlong iterations due to very small steps caused by rounding errors
+	double step = (stop - start)/double(nStep) + pixel;
+	if (step < pixel)
+		step = pixel;
+
+	for (double z = start; z <= stop; z += step)
+		polygon.append(QPointF(z, m_beam->radius(z)));
+}
+
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
 	Q_UNUSED(widget);
@@ -548,43 +569,43 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 
 	QPen textPen(Qt::black);
 
-	double waistPosition = m_beam->waistPosition();
-	double rayleigh = m_beam->rayleigh();
+	const double waist = m_beam->waist();
+	const double waistPosition = m_beam->waistPosition();
+	const double rayleigh = m_beam->rayleigh();
 
 	double horizontalScale = 1./option->matrix.m11(); // m/Pixels
 	double verticalScale   = 1./option->matrix.m22(); // m/Pixels
 
-	double minZ = m_leftBound;
-	double maxZ = m_rightBound;
-	// horizontalScale is added to avoid overlong iterations due to very small steps caused by rounding errors
-	double step = (maxZ - minZ)/20. + horizontalScale;
-	double currentPosition = minZ;
-	double nextPosition = maxZ;
-
-	QPolygonF beamPolygonUp, beamPolygonDown;
-	// From -infinity to waist - 5*rayleigh : straight line
-//	if (maxZ < waistPosition - 5.*rayleigh)
-//		nextPosition
-
-	for (double z = minZ; z <= maxZ; z += step)
+	// The waist is pixel reoslved
+	if (waist/verticalScale > 1.)
 	{
-		beamPolygonUp.append(QPointF(z, m_beam->radius(z)));
-		beamPolygonDown.prepend(QPointF(z, -m_beam->radius(z)));
-		if (z == maxZ)
-			break;
+		QPolygonF beamPolygonUp, beamPolygonDown;
+
+		// Construct the upper part of the beam
+		double nextLeft, left = m_leftBound;
+		drawSegment(left, nextLeft = waistPosition - 5.*rayleigh, horizontalScale, 1,  beamPolygonUp); left = nextLeft;
+		drawSegment(left, nextLeft = waistPosition - rayleigh,    horizontalScale, 10, beamPolygonUp); left = nextLeft;
+		drawSegment(left, nextLeft = waistPosition + rayleigh,    horizontalScale, 20, beamPolygonUp); left = nextLeft;
+		drawSegment(left, nextLeft = waistPosition + 5.*rayleigh, horizontalScale, 10, beamPolygonUp); left = nextLeft;
+		drawSegment(left, nextLeft = m_rightBound,                horizontalScale, 1,  beamPolygonUp); left = nextLeft;
+		beamPolygonUp.append(QPointF(m_rightBound, m_beam->radius(m_rightBound)));
+
+		// Mirror the upper part to make the lower part
+		for (int i = beamPolygonUp.size() - 1; i >= 0; i--)
+			beamPolygonDown.append(QPointF(beamPolygonUp[i].x(), -beamPolygonUp[i].y()));
+
+		// Draw the beam
+		QPainterPath path;
+		path.moveTo(beamPolygonUp[0]);
+		path.addPolygon(beamPolygonUp);
+		path.lineTo(beamPolygonDown[0]);
+		path.addPolygon(beamPolygonDown);
+		path.lineTo(beamPolygonUp[0]);
+		painter->drawPath(path);
 	}
-	beamPolygonUp.append(QPointF(maxZ, m_beam->radius(maxZ)));
-	beamPolygonDown.prepend(QPointF(maxZ, -m_beam->radius(maxZ)));
-	QPainterPath path;
-	path.moveTo(beamPolygonUp[0]);
-	path.addPolygon(beamPolygonUp);
-	path.lineTo(beamPolygonDown[0]);
-	path.addPolygon(beamPolygonDown);
-	path.lineTo(beamPolygonUp[0]);
-
-	painter->drawPath(path);
-
-/*	{
+	// The waist is not pixel resolved
+	else
+	{
 		double sgn = sign((m_rightBound - waistPosition)*(m_leftBound - waistPosition));
 		double rightRadius = m_beam->radius(m_rightBound);
 		double leftRadius = m_beam->radius(m_leftBound);
@@ -596,7 +617,7 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 			<< QPointF(m_leftBound, -leftRadius);
 		painter->drawConvexPolygon(ray);
 	}
-*/
+
 
 	// Waist label
 	/// @todo check if in view

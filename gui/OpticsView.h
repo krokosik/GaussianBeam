@@ -156,6 +156,9 @@ public:
 	void setAuxiliary(bool auxiliary) { m_auxiliary = auxiliary; }
 
 private:
+	void drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const;
+
+private:
 	const Beam* m_beam;
 	double m_leftBound;
 	double m_rightBound;
