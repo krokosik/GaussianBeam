@@ -109,7 +109,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	splitter->addWidget(m_table);
 	splitter->addWidget(m_opticsView);
 	QList<int> sizes;
-	sizes << 10. << 10.;
+	sizes << 10 << 10;
 	splitter->setSizes(sizes);
 	QDockWidget* dock = new QDockWidget(this);
 	dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);

@@ -34,6 +34,7 @@ class OpticsFunction : public Function
 {
 public:
 	OpticsFunction(const std::vector<Optics*>& optics, double wavelength);
+	virtual ~OpticsFunction() {}
 
 public:
 	virtual double value(const std::vector<double>& x) const;

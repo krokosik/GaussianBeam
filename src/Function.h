@@ -29,6 +29,7 @@ class Function
 public:
 	/// Constructor
 	Function();
+	virtual ~Function() {}
 
 public:
 	/// Evaluate the function point @p x

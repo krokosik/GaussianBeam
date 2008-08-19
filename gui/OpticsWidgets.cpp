@@ -73,9 +73,9 @@ void RullerSlider::wheelEvent(QWheelEvent* event)
 void RullerSlider::drawGraduation(QPainter& painter, double position, double fractionalLength)
 {
 	if (orientation() == Qt::Horizontal)
-		painter.drawLine(position, 0., position, height()*fractionalLength);
+		painter.drawLine(QPointF(position, 0.), QPointF(position, height()*fractionalLength));
 	else
-		painter.drawLine(0., position, width()*fractionalLength, position);
+		painter.drawLine(QPointF(0., position), QPointF(width()*fractionalLength, position));
 }
 
 void RullerSlider::paintEvent(QPaintEvent* event)

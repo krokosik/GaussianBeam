@@ -287,7 +287,7 @@ void OpticsView::setOrigin(double origin)
 	if (origin > sceneRect().right() - m_horizontalRange)
 		origin = sceneRect().right() - m_horizontalRange;
 
-	double value = origin*m_horizontalRuller->rullerScale();
+	int value = int(origin*m_horizontalRuller->rullerScale());
 	horizontalScrollBar()->setValue(value);
 	m_opticsViewProperties->setViewOrigin(origin);
 }
