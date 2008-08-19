@@ -87,7 +87,7 @@ public:
 	/// @return the unique ID of the optics
 	int id() const { return m_id; }
 	/// set the optics id. This function is reserved to loading functions. Do not use
-	void setId(double id) { m_id = id; }
+	void setId(int id) { m_id = id; }
 	/// Query absolute lock. @return true if the lock is absolute, false otherwise
 	bool absoluteLock() const { return m_absoluteLock; }
 	/**
@@ -203,7 +203,7 @@ public:
 public:
 	/**
 	* @return the refractive index jump characterizing the dielectric.
-	* This index jump is the ratio between the index on the 
+	* This index jump is the ratio between the index on the
 	* right hand side of the optics (i.e. output index) and the
 	* index on the left hand side of the optics (i.e. input index)
 	*/
