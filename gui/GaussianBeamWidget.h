@@ -44,7 +44,8 @@ public:
 	~GaussianBeamWidget();
 
 public:
-	void displayOverlap();
+	/// @todo transfer this logic to view properties
+	void displayShowTargetBeam(bool show);
 
 // UI slots
 protected slots:
@@ -87,6 +88,7 @@ private slots:
 	void fitModelChanged(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
 
 private:
+	void displayOverlap();
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
 	void updateCavityInformation();

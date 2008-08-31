@@ -143,6 +143,8 @@ private slots:
 */
 class StatusPropertySelector : public PropertySelector
 {
+	Q_OBJECT
+
 public:
 	StatusPropertySelector(QWidget* parent = 0);
 };
@@ -152,6 +154,8 @@ public:
 */
 class TablePropertySelector : public PropertySelector
 {
+	Q_OBJECT
+
 public:
 	TablePropertySelector(QWidget* parent = 0);
 };

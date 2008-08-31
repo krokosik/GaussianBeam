@@ -247,6 +247,5 @@ void GaussianBeamWindow::setCurrentFile(const QString& path)
 
 void GaussianBeamWindow::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)
 {
-	m_widget->displayOverlap();
 	m_table->resizeRowsToContents();
 }

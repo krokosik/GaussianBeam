@@ -92,16 +92,16 @@ void initNames(QApplication* app)
 	Property::unit.insert(Property::OpticsName,             UnitLess);
 	Property::unit.insert(Property::OpticsLock,             UnitLess);
 
-	OpticsName::fullName.insert(CreateBeamType,      app->translate("Name", "Input beam"));
-	OpticsName::fullName.insert(LensType,            app->translate("Name", "Lens"));
-	OpticsName::fullName.insert(ThickLensType,       app->translate("Name", "Thick lens"));
-	OpticsName::fullName.insert(FlatMirrorType,      app->translate("Name", "Flat mirror"));
-	OpticsName::fullName.insert(CurvedMirrorType,    app->translate("Name", "Curved mirror"));
-	OpticsName::fullName.insert(FlatInterfaceType,   app->translate("Name", "Flat interface"));
-	OpticsName::fullName.insert(CurvedInterfaceType, app->translate("Name", "Curved interface"));
-	OpticsName::fullName.insert(DielectricSlabType,  app->translate("Name", "Dielectric slab"));
-	OpticsName::fullName.insert(ThermalLensType,     app->translate("Name", "Thermal lens"));
-	OpticsName::fullName.insert(GenericABCDType,     app->translate("Name", "Generic ABCD"));
+	OpticsName::fullName.insert(CreateBeamType,      app->translate("Names", "Input beam"));
+	OpticsName::fullName.insert(LensType,            app->translate("Names", "Lens"));
+	OpticsName::fullName.insert(ThickLensType,       app->translate("Names", "Thick lens"));
+	OpticsName::fullName.insert(FlatMirrorType,      app->translate("Names", "Flat mirror"));
+	OpticsName::fullName.insert(CurvedMirrorType,    app->translate("Names", "Curved mirror"));
+	OpticsName::fullName.insert(FlatInterfaceType,   app->translate("Names", "Flat interface"));
+	OpticsName::fullName.insert(CurvedInterfaceType, app->translate("Names", "Curved interface"));
+	OpticsName::fullName.insert(DielectricSlabType,  app->translate("Names", "Dielectric slab"));
+	OpticsName::fullName.insert(ThermalLensType,     app->translate("Names", "Thermal lens"));
+	OpticsName::fullName.insert(GenericABCDType,     app->translate("Names", "Generic ABCD"));
 }
 
 QString breakString(QString string)

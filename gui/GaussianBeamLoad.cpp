@@ -311,7 +311,12 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 		else if (child.tagName() == "origin")
 			m_opticsView->setOrigin(child.text().toDouble());
 		else if (child.tagName() == "showTargetBeam")
-			m_opticsScene->showTargetBeam(child.text().toInt());
+		{
+			bool value = child.text().toInt();
+			m_opticsScene->showTargetBeam(value);
+			/// @todo incorporate in OpticsView
+			m_widget->displayShowTargetBeam(value);
+		}
 		else
 			qDebug() << " -> Unknown tag: " << element.tagName();
 

@@ -452,16 +452,29 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 {
-	m_bench.setInputBeam(m_bench.fit(0).beam(m_bench.wavelength()));
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
+	m_bench.setInputBeam(m_bench.fit(index).beam(m_bench.wavelength()));
 }
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 {
+	int index = comboBox_Fit->currentIndex();
+	if (index < 0)
+		return;
+
 	TargetBeam targetBeam = *m_bench.targetBeam();
-	Beam fitBeam = m_bench.fit(0).beam(m_bench.wavelength());
+	Beam fitBeam = m_bench.fit(index).beam(m_bench.wavelength());
 	targetBeam.setWaist(fitBeam.waist());
 	targetBeam.setWaistPosition(fitBeam.waistPosition());
 	m_bench.setTargetBeam(targetBeam);
+}
+
+void GaussianBeamWidget::displayShowTargetBeam(bool show)
+{
+	checkBox_ShowTargetBeam->setCheckState(show ? Qt::Checked : Qt::Unchecked);
 }
 
 // OpticsBench callbacks
@@ -474,7 +487,7 @@ void GaussianBeamWidget::OpticsBenchFitAdded(int index)
 
 void GaussianBeamWidget::OpticsBenchFitsRemoved(int index, int count)
 {
-	for (int i = index; i < index + count; i++)
+	for (int i = index + count - 1; i >= 0; i--)
 		comboBox_Fit->removeItem(i);
 }
 

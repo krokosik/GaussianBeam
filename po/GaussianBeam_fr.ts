@@ -19,90 +19,12 @@
 <context>
     <name>GaussianBeamModel</name>
     <message>
-        <source>Optics</source>
-        <translation>Optique</translation>
-    </message>
-    <message>
-        <source>Relative
-position</source>
-        <translation>Position
-relative</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation>Nom</translation>
-    </message>
-    <message>
-        <source>Lock</source>
-        <translation>Vérouillage</translation>
-    </message>
-    <message>
-        <source>Input beam</source>
-        <translation>Faisceau incident</translation>
-    </message>
-    <message>
-        <source>Lens</source>
-        <translation>Lentille</translation>
-    </message>
-    <message>
-        <source>Flat interface</source>
-        <translation>Interface plane</translation>
-    </message>
-    <message>
-        <source>Curved interface</source>
-        <translation>Interface courbe</translation>
-    </message>
-    <message>
-        <source>Properties</source>
-        <translation>Propriétés</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>Position</translation>
-    </message>
-    <message>
-        <source>Waist</source>
-        <translation>Waist</translation>
-    </message>
-    <message>
-        <source>Waist
-Position</source>
-        <translation>Position du
-waist</translation>
-    </message>
-    <message>
-        <source>Rayleigh
-length</source>
-        <translation>Longueur de
-Rayleigh</translation>
-    </message>
-    <message>
-        <source>Divergence</source>
-        <translation>Divergence</translation>
-    </message>
-    <message>
-        <source>Flat Mirror</source>
-        <translation>Miroir plan</translation>
-    </message>
-    <message>
-        <source>Curved Mirror</source>
-        <translation>Miroir courbe</translation>
-    </message>
-    <message>
-        <source>Generic ABCD</source>
-        <translation>ABCD générique</translation>
-    </message>
-    <message>
         <source>absolute</source>
         <translation>absolu</translation>
     </message>
     <message>
         <source>none</source>
         <translation>aucun</translation>
-    </message>
-    <message>
-        <source>Sensitivity</source>
-        <translation>Sensibilité</translation>
     </message>
     <message>
         <source>M&#xc2;&#xb2;</source>
@@ -115,18 +37,6 @@ Rayleigh</translation>
     <message>
         <source>&#xc2;&#xb2;</source>
         <translation>²</translation>
-    </message>
-    <message>
-        <source>Thick lens</source>
-        <translation>Lentille épaisse</translation>
-    </message>
-    <message>
-        <source>Dielectric slab</source>
-        <translation>Barreau diélectrique</translation>
-    </message>
-    <message>
-        <source>Thermal lens</source>
-        <translation>Lentille thermique</translation>
     </message>
 </context>
 <context>
@@ -364,7 +274,7 @@ Rayleigh</translation>
     </message>
     <message>
         <source>&amp;Dielectric slab</source>
-        <translation>Barreau diélectrique</translation>
+        <translation>&amp;Barreau diélectrique</translation>
     </message>
     <message>
         <source>Wavelength</source>
@@ -421,10 +331,6 @@ Rayleigh</translation>
 %3</translation>
     </message>
     <message>
-        <source>The file is not an Gaussian Beam file.</source>
-        <translation>Ce fichier n&apos;est pas valide.</translation>
-    </message>
-    <message>
         <source>This file does not contain any version information.</source>
         <translation>Ce fichier ne contient pas d&apos;indication de version</translation>
     </message>
@@ -433,31 +339,187 @@ Rayleigh</translation>
         <translation>Format de fichier non valide. Votre fichier est corrompu</translation>
     </message>
     <message>
-        <source>Your version of Gaussian Beam is too old.</source>
-        <translation>Votre version de Gaussian Beam est trop ancienne.</translation>
+        <source>The file is not an GaussianBeam file.</source>
+        <translation>Ce fichier n&apos;est pas un fichier GaussianBeam</translation>
+    </message>
+    <message>
+        <source>Your version of GaussianBeam is too old.</source>
+        <translation>Votre version de GaussianBeam est trop ancienne</translation>
     </message>
 </context>
 <context>
-    <name>OpticsItemView</name>
+    <name>Names</name>
     <message>
-        <source>Position: </source>
-        <translation>Position : </translation>
+        <source>Position</source>
+        <translation>Position</translation>
     </message>
     <message>
-        <source>mm</source>
-        <translation>mm</translation>
+        <source>Beam radius</source>
+        <translation>Rayon</translation>
     </message>
     <message>
-        <source>Beam radius: </source>
-        <translation>Rayon : </translation>
+        <source>Beam diameter</source>
+        <translation>Diamètre</translation>
     </message>
     <message>
-        <source>&#xc2;&#xb5;m</source>
-        <translation>µm</translation>
+        <source>Beam curvature</source>
+        <translation>Courbure</translation>
     </message>
     <message>
-        <source>Beam curvature: </source>
-        <translation>Courbure : </translation>
+        <source>Gouy phase</source>
+        <translation>Phase de Gouy</translation>
+    </message>
+    <message>
+        <source>Distance to waist</source>
+        <translation>Distance au waist</translation>
+    </message>
+    <message>
+        <source>Beam parameter</source>
+        <translation>Paramètre du faisceau</translation>
+    </message>
+    <message>
+        <source>Index</source>
+        <translation>Index</translation>
+    </message>
+    <message>
+        <source>Optics</source>
+        <translation>Optique</translation>
+    </message>
+    <message>
+        <source>Relative position</source>
+        <translation>Position relative</translation>
+    </message>
+    <message>
+        <source>Properties</source>
+        <translation>Propriétés</translation>
+    </message>
+    <message>
+        <source>Waist</source>
+        <translation>Waist</translation>
+    </message>
+    <message>
+        <source>Waist position</source>
+        <translation>Position du waist</translation>
+    </message>
+    <message>
+        <source>Rayleigh range</source>
+        <translation>Longueur de Rayleigh</translation>
+    </message>
+    <message>
+        <source>Divergence</source>
+        <translation>Divergence</translation>
+    </message>
+    <message>
+        <source>Sensitivity</source>
+        <translation>Sensibilité</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nom</translation>
+    </message>
+    <message>
+        <source>Lock</source>
+        <translation>Vérouillage</translation>
+    </message>
+    <message>
+        <source>z</source>
+        <translation>z</translation>
+    </message>
+    <message>
+        <source>w</source>
+        <translation>w</translation>
+    </message>
+    <message>
+        <source>2w</source>
+        <translation>2w</translation>
+    </message>
+    <message>
+        <source>R</source>
+        <translation>R</translation>
+    </message>
+    <message>
+        <source>&#xce;&#xb6;</source>
+        <translation>ζ</translation>
+    </message>
+    <message>
+        <source>z-zw</source>
+        <translation>z-zw</translation>
+    </message>
+    <message>
+        <source>q</source>
+        <translation>q</translation>
+    </message>
+    <message>
+        <source>n</source>
+        <translation>n</translation>
+    </message>
+    <message>
+        <source>zr</source>
+        <translation>zr</translation>
+    </message>
+    <message>
+        <source>Prop.</source>
+        <translation>Prop.</translation>
+    </message>
+    <message>
+        <source>w&#xe2;&#x82;&#x80;</source>
+        <translation>w₀</translation>
+    </message>
+    <message>
+        <source>zw</source>
+        <translation>zw</translation>
+    </message>
+    <message>
+        <source>z&#xe2;&#x82;&#x80;</source>
+        <translation>z₀</translation>
+    </message>
+    <message>
+        <source>&#xce;&#x98;&#xe2;&#x82;&#x80;</source>
+        <translation>Θ₀</translation>
+    </message>
+    <message>
+        <source>Sens.</source>
+        <translation>Sens.</translation>
+    </message>
+    <message>
+        <source>Input beam</source>
+        <translation>Faisceau incident</translation>
+    </message>
+    <message>
+        <source>Lens</source>
+        <translation>Lentille</translation>
+    </message>
+    <message>
+        <source>Thick lens</source>
+        <translation>Lentille épaisse</translation>
+    </message>
+    <message>
+        <source>Flat mirror</source>
+        <translation>Miroir plan</translation>
+    </message>
+    <message>
+        <source>Curved mirror</source>
+        <translation>Miroir courve</translation>
+    </message>
+    <message>
+        <source>Flat interface</source>
+        <translation>Interface plane</translation>
+    </message>
+    <message>
+        <source>Curved interface</source>
+        <translation>Interface courbe</translation>
+    </message>
+    <message>
+        <source>Dielectric slab</source>
+        <translation>Barreau diélectrique</translation>
+    </message>
+    <message>
+        <source>Thermal lens</source>
+        <translation>Lentille thermique</translation>
+    </message>
+    <message>
+        <source>Generic ABCD</source>
+        <translation>ABCD générique</translation>
     </message>
 </context>
 <context>
@@ -488,74 +550,10 @@ Rayleigh</translation>
     </message>
 </context>
 <context>
-    <name>StatusConfigWidget</name>
+    <name>StatusPropertySelector</name>
     <message>
         <source>Configure status bar</source>
         <translation>Configurer la barre d&apos;état</translation>
-    </message>
-    <message>
-        <source>Position</source>
-        <translation>Position</translation>
-    </message>
-    <message>
-        <source>z</source>
-        <translation>z</translation>
-    </message>
-    <message>
-        <source>Beam radius</source>
-        <translation>Rayon</translation>
-    </message>
-    <message>
-        <source>w</source>
-        <translation>w</translation>
-    </message>
-    <message>
-        <source>Beam diameter</source>
-        <translation>Diamètre</translation>
-    </message>
-    <message>
-        <source>2w</source>
-        <translation>2w</translation>
-    </message>
-    <message>
-        <source>Beam curvature</source>
-        <translation>Courbure</translation>
-    </message>
-    <message>
-        <source>R</source>
-        <translation>R</translation>
-    </message>
-    <message>
-        <source>Gouy phase</source>
-        <translation>Phase de Gouy</translation>
-    </message>
-    <message>
-        <source>&#xce;&#xb6;</source>
-        <translation>ζ</translation>
-    </message>
-    <message>
-        <source>Distance to waist</source>
-        <translation>Distance au waist</translation>
-    </message>
-    <message>
-        <source>z-zw</source>
-        <translation>z-zw</translation>
-    </message>
-    <message>
-        <source>Beam parameter</source>
-        <translation>Paramètre du faisceau</translation>
-    </message>
-    <message>
-        <source>q</source>
-        <translation>q</translation>
-    </message>
-    <message>
-        <source>Index</source>
-        <translation>Index</translation>
-    </message>
-    <message>
-        <source>n</source>
-        <translation>n</translation>
     </message>
 </context>
 <context>
@@ -567,6 +565,13 @@ Rayleigh</translation>
     <message>
         <source> = </source>
         <translation> = </translation>
+    </message>
+</context>
+<context>
+    <name>TablePropertySelector</name>
+    <message>
+        <source>Configure table columns</source>
+        <translation>Configurer les colonnes</translation>
     </message>
 </context>
 </TS>
