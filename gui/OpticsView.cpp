@@ -123,12 +123,14 @@ void OpticsScene::OpticsBenchTargetBeamChanged()
 
 void OpticsScene::OpticsBenchBoundariesChanged()
 {
+	qDebug() << "OpticsScene::OpticsBenchBoundariesChanged" << m_bench.nOptics();
+
 	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
 
 	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
 	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
 
-	if (m_beamItems.size() == m_bench.nOptics())
+	if ((m_beamItems.size() != 0) && (m_beamItems.size() == m_bench.nOptics()))
 	{
 		m_beamItems[0]->setLeftBound(m_bench.leftBoundary());
 		m_beamItems[m_bench.nOptics()-1]->setRightBound(m_bench.rightBoundary());
