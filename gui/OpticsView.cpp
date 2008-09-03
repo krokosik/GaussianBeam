@@ -32,26 +32,39 @@ QColor wavelengthColor(double wavelength)
 {
 	wavelength *= 1e9;
 
-	if (wavelength < 380.)
-		return QColor::fromRgbF(0., 0., 1.);
-	if ((wavelength >= 380.) && (wavelength < 440.))
-		return QColor::fromRgbF(0., 0., 1.);
-	if ((wavelength >= 440.) && (wavelength < 490.))
-		return QColor::fromRgbF(0., (wavelength-440.)/50., 1.);
-	if ((wavelength >= 490.) && (wavelength < 510.))
-		return QColor::fromRgbF(0., 1. , (510.-wavelength)/40.);
-	if ((wavelength >= 510.) && (wavelength < 580.))
-		return QColor::fromRgbF((wavelength-510.)/70., 1., 0.);
-	if ((wavelength >= 580.) && (wavelength < 645.))
-		return QColor::fromRgbF(1., (645.-wavelength)/85., 0.);
-	if ((wavelength >= 645.) && (wavelength < 780.))
-		return QColor::fromRgbF(1., 0., 0.);
-	if ((wavelength >= 780.) && (wavelength < 800.))
-		return QColor::fromRgbF((900.-wavelength)/120., 0., 0.);
-	if (wavelength >= 800.)
-		return QColor::fromRgbF(.833, 0., 0.);
+	QColor color = Qt::black;
 
-	return Qt::black;
+	// Wavelength to rgb conversion
+	if (wavelength < 380.)
+		color = QColor::fromRgbF(1., 0., 1.);
+	else if (wavelength < 440.)
+		color = QColor::fromRgbF((440.-wavelength)/60., 0., 1.);
+	else if (wavelength < 490.)
+		color = QColor::fromRgbF(0., (wavelength-440.)/50., 1.);
+	else if (wavelength < 510.)
+		color = QColor::fromRgbF(0., 1. , (510.-wavelength)/40.);
+	else if (wavelength < 580.)
+		color = QColor::fromRgbF((wavelength-510.)/70., 1., 0.);
+	else if (wavelength < 645.)
+		color = QColor::fromRgbF(1., (645.-wavelength)/85., 0.);
+	else
+		color = QColor::fromRgbF(1., 0., 0.);
+
+	// Attenuation
+	double attenuation = 1.;
+	double minAttenuation = 0.37;
+	if (wavelength > 700.)
+		attenuation = qMax(minAttenuation, .3 + .7*(780.-wavelength)/80.);
+	else if (wavelength < 420.)
+		attenuation = qMax(minAttenuation, .3 + .7*(wavelength-380.)/40.);
+
+	// Gamma
+	double gamma = 0.8;
+	color.setRedF  (pow(color.redF  ()*attenuation, gamma));
+	color.setGreenF(pow(color.greenF()*attenuation, gamma));
+	color.setBlueF (pow(color.blueF ()*attenuation, gamma));
+
+	return color;
 }
 
 /////////////////////////////////////////////////

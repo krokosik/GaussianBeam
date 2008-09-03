@@ -6,7 +6,6 @@ WISHLIST:
 	Lens movement magnification -> multiple views
 	Telescope lens lock
 	Print
-	Better Wavelength to RGB function
 	Forbidden area
 	Diaphragme
 	Relative distances on graph
@@ -28,7 +27,7 @@ WISHLIST:
 	TEMmn modes
 
 BUGS:
-	Check that the waist translation by a dielectric slab is right
+	Problem in redraw when deleting an optics with non zero width
 	implement ruller scale & vertical labels
 
 CONSTANT VIGILENCE:
