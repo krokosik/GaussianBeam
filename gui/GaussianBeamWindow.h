@@ -29,8 +29,8 @@
 #include "src/GaussianFit.h"
 
 #include <QMainWindow>
+#include <QXmlStreamWriter>
 
-class QXmlStreamWriter;
 class CornerWidget;
 class TablePropertySelector;
 
