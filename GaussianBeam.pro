@@ -13,6 +13,7 @@ CONFIG += qt
 QT += xml
 QMAKE_CXXFLAGS += -pedantic -Wno-sign-compare -Wno-long-long
 
+
 plot {
 	LIBS += -lqwt-qt4
 	DEFINES += GBPLOT
@@ -39,3 +40,8 @@ FORMS    = gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui gui/OpticsViewPro
 RESOURCES = gui/GaussianBeamRessource.qrc
 
 TRANSLATIONS = po/GaussianBeam_fr.ts
+
+# Generate Universal Binary for Mac OS X
+macx {
+	CONFIG += x86 ppc
+}
