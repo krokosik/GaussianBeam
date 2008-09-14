@@ -29,6 +29,7 @@ WISHLIST:
 BUGS:
 	Problem with n > 1 and target beam
 	Problem in redraw when deleting an optics with non zero width
+	Probelm with vertical origin when opening a file with the command line
 	implement ruller scale & vertical labels
 
 CONSTANT VIGILENCE:
