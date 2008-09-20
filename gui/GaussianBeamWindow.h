@@ -57,7 +57,7 @@ protected slots:
 	void on_action_AddCurvedInterface_triggered() { insertOptics(CurvedInterfaceType); }
 	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
 	void on_action_AddDielectricSlab_triggered()  { insertOptics(DielectricSlabType);  }
-	void on_WavelengthSpinBox_valueChanged(double wavelength);
+	void wavelengthSpinBox_valueChanged(double wavelength);
 
 protected:
 	virtual void closeEvent(QCloseEvent* event);

@@ -61,9 +61,6 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_table->setCornerWidget(m_tableCornerWidget);
 	connect(m_model, SIGNAL(modelReset()), m_table, SLOT(resizeColumnsToContents()));
 
-	for (int i = 0; i < 2; i++)
-		m_bench.addOptics(LensType, m_bench.nOptics());
-
 	// View
 	m_opticsScene = new OpticsScene(m_bench, this);
 	m_opticsView = new OpticsView(m_opticsScene);
@@ -86,7 +83,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	wavelengthLayout->addWidget(wavelengthSpinBox);
 	wavelengthLayout->addWidget(wavelengthLabel);
 	wavelengthWidget->setLayout(wavelengthLayout);
-	connect(wavelengthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(on_WavelengthSpinBox_valueChanged(double)));
+	connect(wavelengthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(wavelengthSpinBox_valueChanged(double)));
 
 	// Bars
 	m_fileToolBar = addToolBar(tr("File"));
@@ -124,10 +121,14 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	m_bench.registerNotify(this);
 
+	readSettings();
+
+	for (int i = 0; i < 2; i++)
+		m_bench.addOptics(LensType, m_bench.nOptics());
+
+	// NOTE: this has to be the last part of the constructor
 	if (!fileName.isEmpty())
 		openFile(fileName);
-
-	readSettings();
 }
 
 void GaussianBeamWindow::closeEvent(QCloseEvent* event)
@@ -175,7 +176,7 @@ void GaussianBeamWindow::on_action_RemoveOptics_triggered()
 			m_bench.removeOptics(row);
 }
 
-void GaussianBeamWindow::on_WavelengthSpinBox_valueChanged(double wavelength)
+void GaussianBeamWindow::wavelengthSpinBox_valueChanged(double wavelength)
 {
 	m_bench.setWavelength(wavelength*Units::getUnit(UnitWavelength).multiplier());
 }

@@ -136,8 +136,6 @@ void OpticsScene::OpticsBenchTargetBeamChanged()
 
 void OpticsScene::OpticsBenchBoundariesChanged()
 {
-	qDebug() << "OpticsScene::OpticsBenchBoundariesChanged" << m_bench.nOptics();
-
 	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
 
 	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
@@ -245,7 +243,6 @@ OpticsView::OpticsView(QGraphicsScene* scene)
 	setCornerWidget(cornerWidget);
 
 	setResizeAnchor(QGraphicsView::AnchorViewCenter);
-	centerOn(0., 0.);
 
 	connect(m_horizontalRuller, SIGNAL(valueChanged(int)), this, SLOT(scrollUpdated(int)));
 }
@@ -268,6 +265,7 @@ void OpticsView::adjustRange()
 	m_opticsViewProperties->setViewWidth(m_horizontalRange);
 	m_opticsViewProperties->setViewHeight(m_verticalRange);
 	m_opticsViewProperties->setViewOrigin(origin());
+	verticalScrollBar()->setValue((verticalScrollBar()->maximum() + verticalScrollBar()->minimum())/2);
 }
 
 void OpticsView::showProperties(bool show)
@@ -310,12 +308,14 @@ void OpticsView::setOrigin(double origin)
 void OpticsView::setHorizontalRange(double horizontalRange)
 {
 	m_horizontalRange = horizontalRange;
+	m_opticsViewProperties->setViewWidth(m_horizontalRange);
 	adjustRange();
 }
 
 void OpticsView::setVerticalRange(double verticalRange)
 {
 	m_verticalRange = verticalRange;
+	m_opticsViewProperties->setViewHeight(m_verticalRange);
 	adjustRange();
 }
 

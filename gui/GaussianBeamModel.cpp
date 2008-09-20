@@ -155,6 +155,7 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
 	if (role == Qt::DisplayRole)
+	{
 		if (orientation == Qt::Horizontal)
 		{
 			Property::Type type = m_columns[section];
@@ -168,6 +169,7 @@ QVariant GaussianBeamModel::headerData(int section, Qt::Orientation orientation,
 		}
 		else if (orientation == Qt::Vertical)
 			return section;
+	}
 
 	return QVariant();
 }
@@ -296,8 +298,8 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		(column == Property::BeamWaistPosition) ||
 		(column == Property::BeamRayleigh) ||
 		(column == Property::BeamDivergence) ||
-		(column == Property::OpticsProperties)
-		 && (m_bench.optics(row)->type() != FlatMirrorType))
+		((column == Property::OpticsProperties)
+		 && (m_bench.optics(row)->type() != FlatMirrorType)))
 			flags |= Qt::ItemIsEditable;
 
 	if (column == Property::OpticsPosition)

@@ -103,7 +103,6 @@ private:
 	StatusWidget* m_statusWidget;
 	double m_horizontalRange;
 	double m_verticalRange;
-	double m_origin;
 
 friend class OpticsScene;
 };

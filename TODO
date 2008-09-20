@@ -29,8 +29,9 @@ WISHLIST:
 BUGS:
 	Problem with n > 1 and target beam
 	Problem in redraw when deleting an optics with non zero width
-	Probelm with vertical origin when opening a file with the command line
-	implement ruller scale & vertical labels
+	Implement ruller scale & vertical labels
+	Update all data when chaing the delegate
+	Really find local optimum, not 100% local optimum
 
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength
