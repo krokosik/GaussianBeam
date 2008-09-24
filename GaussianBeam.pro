@@ -45,3 +45,8 @@ TRANSLATIONS = po/GaussianBeam_fr.ts
 macx {
 	CONFIG += x86 ppc
 }
+
+# Embed the application icon
+win32 {
+	RC_FILE = gui/GaussianBeam.rc
+}

@@ -36,9 +36,10 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	, OpticsBenchNotify(m_globalBench)
 {
 	m_currentFile = QString();
+	initSaveVariables();
 
 	setupUi(this);
-	initSaveVariables();
+	setWindowIcon(QIcon(":/images/icon16.png"));
 
 	// Table
 	m_tableConfigWidget = new TablePropertySelector(this);
