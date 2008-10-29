@@ -71,6 +71,17 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 }
 
+/////////////////////////////////////////////////
+// Cavity
+
+void OpticsBench::notifyCavityChange()
+{
+	cerr << m_cavity.eigenBeam(wavelength(), 1.);
+}
+
+/////////////////////////////////////////////////
+// Fit
+
 int OpticsBench::nFit() const
 {
 	return m_fits.size();
@@ -109,23 +120,15 @@ void OpticsBench::removeFits(unsigned int startIndex, int n)
 		(*it)->OpticsBenchFitsRemoved(startIndex, n);
 }
 
-int OpticsBench::opticsIndex(const Optics* optics) const
-{
-	/// @todo implement a lookup table
-	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		if (*it == optics)
-			return it - m_optics.begin();
-
-	cerr << "Error : looking for an optics that is no more in the optics list" << endl;
-	return -1;
-}
-
 void OpticsBench::notifyFitChange(unsigned int index)
 {
 	cerr << "OpticsBench::notifyFitChange" << endl;
 	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchFitDataChanged(index);
 }
+
+/////////////////////////////////////////////////
+// Register & notify
 
 void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 {
@@ -142,6 +145,9 @@ void OpticsBench::registerNotify(OpticsBenchNotify* notify)
 
 	///@todo call all the other notifications ?
 }
+
+/////////////////////////////////////////////////
+// Parameters
 
 void OpticsBench::setWavelength(double wavelength)
 {
@@ -170,6 +176,20 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 
 	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchBoundariesChanged();
+}
+
+/////////////////////////////////////////////////
+// Optics
+
+int OpticsBench::opticsIndex(const Optics* optics) const
+{
+	/// @todo implement a lookup table
+	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if (*it == optics)
+			return it - m_optics.begin();
+
+	cerr << "Error : looking for an optics that is no more in the optics list" << endl;
+	return -1;
 }
 
 void OpticsBench::addOptics(Optics* optics, int index)
@@ -298,6 +318,9 @@ void OpticsBench::opticsPropertyChanged(int /*index*/)
 	computeBeams();
 }
 
+/////////////////////////////////////////////////
+// Beams
+
 void OpticsBench::setInputBeam(const Beam& beam)
 {
 	if (m_optics.size() <= 0)
@@ -365,6 +388,9 @@ void OpticsBench::emitChange(int startOptics, int endOptics) const
 	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
 		(*it)->OpticsBenchDataChanged(startOptics, endOptics);
 }
+
+/////////////////////////////////////////////////
+// Magic waist
 
 bool OpticsBench::magicWaist()
 {

@@ -39,7 +39,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	initSaveVariables();
 
 	setupUi(this);
-	setWindowIcon(QIcon(":/images/icon16.png"));
+	setWindowIcon(QIcon(":/images/gaussianbeam16.png"));
 
 	// Table
 	m_tableConfigWidget = new TablePropertySelector(this);
@@ -126,6 +126,11 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	for (int i = 0; i < 2; i++)
 		m_bench.addOptics(LensType, m_bench.nOptics());
+
+	Cavity& cavity = m_bench.cavity();
+	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(1)));
+	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(2)));
+	m_bench.notifyCavityChange();
 
 	// NOTE: this has to be the last part of the constructor
 	if (!fileName.isEmpty())

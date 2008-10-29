@@ -82,6 +82,13 @@ OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
 	m_targetBeamItem->setPos(0., 0.);
 	addItem(m_targetBeamItem);
 
+	m_cavityBeamItem = new BeamItem(m_bench.cavity().eigenBeam(m_bench.wavelength(), 0));
+	m_cavityBeamItem->setPlainStyle(false);
+	m_cavityBeamItem->setAuxiliary(true);
+	m_cavityBeamItem->setPos(0., 0.);
+	m_cavityBeamItem->setVisible(false);
+	addItem(m_cavityBeamItem);
+
 	m_bench.registerNotify(this);
 }
 
@@ -140,6 +147,8 @@ void OpticsScene::OpticsBenchBoundariesChanged()
 
 	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
 	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
+	m_cavityBeamItem->setLeftBound(m_bench.leftBoundary());
+	m_cavityBeamItem->setRightBound(m_bench.rightBoundary());
 
 	if ((m_beamItems.size() != 0) && (m_beamItems.size() == m_bench.nOptics()))
 	{
@@ -148,9 +157,7 @@ void OpticsScene::OpticsBenchBoundariesChanged()
 	}
 
 	foreach (QGraphicsView* view, views())
-	{
 		dynamic_cast<OpticsView*>(view)->adjustRange();
-	}
 }
 
 void OpticsScene::OpticsBenchOpticsAdded(int index)

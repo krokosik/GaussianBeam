@@ -72,8 +72,12 @@ public:
 	void clear();
 	/// @return the best beam adjusted to the data points
 	const Beam& beam(double wavelength) const;
-	/// @return the correlation coefficient of the fit
+	/// @return the correlation coefficient of the linear fit
 	double rho2(double wavelength) const;
+	/// Fill @p fvec with the error on the fit with beam parameters @p par
+	void error(double* par, double* fvec) const;
+	/// @return the residue of the non-linear fit
+	double residue(double wavelength) const;
 
 private:
 	void fitBeam(double wavelength) const;
@@ -89,6 +93,7 @@ private:
 	mutable Beam m_beam;
 	mutable double m_rho2;
 	mutable double m_lastWavelength;
+	mutable double m_residue;
 
 	static int m_fitCount;
 };

@@ -28,57 +28,67 @@ Cavity::Cavity()
 	m_ringCavity = true;
 }
 
-void Cavity::computeBeam()
+void Cavity::addOptics(const ABCD* optics)
+{
+	m_opticsList.push_back(optics);
+}
+
+void Cavity::removeOptics(const ABCD* optics)
+{
+	m_opticsList.remove(optics);
+}
+
+void Cavity::computeMatrix() const
 {
 	if (m_opticsList.empty())
 		return;
 
 	// Compute cavity
 	m_matrix = *m_opticsList.front();
-	cerr << "Initial Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
-	list<const ABCD*>::iterator lastIt = m_opticsList.begin();
-	for (list<const ABCD*>::iterator it = lastIt; ++it != m_opticsList.end(); lastIt = it)
+	cerr << "Initial Cavity ABCD = " << m_matrix << endl;
+	list<const ABCD*>::const_iterator lastIt = m_opticsList.begin();
+	for (list<const ABCD*>::const_iterator it = lastIt; ++it != m_opticsList.end(); lastIt = it)
 	{
 		static FreeSpace freeSpace(0., 0.);
 		freeSpace.setWidth((*it)->position() - (*(lastIt))->endPosition());
 		freeSpace.setPosition((*it)->endPosition());
 		cerr << "freespace B = " << freeSpace.B() << endl;
 		m_matrix = m_matrix * freeSpace;
-		cerr << "freespace Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
+		cerr << "freespace Cavity ABCD = " << m_matrix << endl;
 		m_matrix *= *(*it);
-		cerr << "added Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
+		cerr << "added Cavity ABCD = " << m_matrix << endl;
 	}
 	/// @todo matrix.setWidth()
 
-//		cerr << "Backwards" << endl;
-/*
-		if (m_ringCavity)
+	cerr << "Backwards" << endl;
+
+	if (m_ringCavity)
+	{
+		list<const ABCD*>::const_iterator lastIt = m_opticsList.end();
+		m_matrix = *m_opticsList.back();
+		for (list<const ABCD*>::const_iterator it = lastIt; --it != m_opticsList.begin(); lastIt = it)
 		{
-			for (int i = m_lastCavityIndex - 1; i > m_firstCavityIndex; i--)
-			{
-				FreeSpace freeSpace(m_bench.optics(i)->endPosition() - m_bench.optics(i-1)->endPosition(), m_bench.optics(i-1)->endPosition());
-				m_matrix *= freeSpace;
-				cerr << "freespace Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
-				if (m_bench.optics(i)->isABCD())
-					m_matrix *= *dynamic_cast<const ABCD*>(m_bench.optics(i));
-				cerr << "added Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
-			}
-			FreeSpace freeSpace(optics(i+1)->position() - m_bench.optics(i)->endPosition(), m_bench.optics(i)->endPosition());
+			static FreeSpace freeSpace(0., 0.);
+			freeSpace.setWidth((*it)->endPosition() - (*(lastIt))->position());
+			freeSpace.setPosition((*it)->endPosition());
 			m_matrix *= freeSpace;
-			cerr << "freespace Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
+			m_matrix *= *(*it);
 		}
-		else
-		{
-			/// @todo add a user defined free space between the last and the first optics for linear cavities.
-		}
-*/
+		//FreeSpace freeSpace(optics(i+1)->position() - m_bench.optics(i)->endPosition(), m_bench.optics(i)->endPosition());
+		//m_matrix *= freeSpace;
+		cerr << "freespace Cavity ABCD = " << m_matrix << endl;
+	}
+	else
+	{
+		/// @todo add a user defined free space between the last and the first optics for linear cavities.
+	}
+
 /*	static FreeSpace freeSpace(0., 0.);
 	freeSpace.setWidth(m_bench.optics(m_lastCavityIndex)->position() - m_bench.optics(m_firstCavityIndex)->endPosition());
 	freeSpace.setPosition(m_bench.optics(m_firstCavityIndex)->endPosition());
 	m_matrix *= freeSpace;
 */
 //	cerr << "Final Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
-
 }
 
 bool Cavity::isStable() const
@@ -99,10 +109,11 @@ bool Cavity::isStable() const
 	return false;
 }
 
-const Beam Cavity::eigenBeam(double wavelength, int index) const
+const Beam* Cavity::eigenBeam(double wavelength, int index) const
 {
-	/// @todo chache compute beam ?
-//	computeBeam();
+	/// @todo cache compute beam ?
+	computeMatrix();
+	m_beam = m_matrix.eigenMode(wavelength);
 
 	/// @todo reimplement checks
 /*	if (!isStable() ||
@@ -111,10 +122,9 @@ const Beam Cavity::eigenBeam(double wavelength, int index) const
 	   (!m_ringCavity && (index > m_lastCavityIndex)))
 		return Beam();
 */
-	Beam beam = m_matrix.eigenMode(wavelength);
 
 //	for (int i = m_firstCavityIndex; i <= index; i++)
 //		beam = m_bench.optics(i)->image(beam);
 
-	return beam;
+	return &m_beam;
 }

@@ -338,7 +338,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 		Beam fitBeam = fit.beam(m_bench.wavelength());
 		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
 					tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n" +
-					tr("R²") + " = " + QString::number(fit.rho2(m_bench.wavelength()));
+					tr("Residue") + " = " + QString::number(fit.residue(m_bench.wavelength()));
 		label_FitResult->setText(text);
 		pushButton_SetInputBeam->setEnabled(true);
 		pushButton_SetTargetBeam->setEnabled(true);

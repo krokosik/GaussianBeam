@@ -43,3 +43,4 @@ CONSTANT VIGILENCE:
 	API documentation
 	check that .c_str() stl strings are enclosed in a QString::fromUtf8
 	check const functions
+	check that the program starts without settings

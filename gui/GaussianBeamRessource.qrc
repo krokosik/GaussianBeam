@@ -9,6 +9,6 @@
         <file>images/edit-delete.png</file>
         <file>images/zoom-best-fit.png</file>
         <file>images/preferences-system.png</file>
-        <file>images/icon16.png</file>
+        <file>images/gaussianbeam16.png</file>
     </qresource>
 </RCC>

@@ -279,3 +279,9 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 	r *= abcd2;
 	return r;
 }
+
+ostream& operator<<(ostream& out, const ABCD& abcd)
+{
+	out << "A = " << abcd.A() << " B = " << abcd.B() << " C = " << abcd.C() << " D = " << abcd.D();
+	return out;
+}

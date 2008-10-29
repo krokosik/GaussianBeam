@@ -106,6 +106,8 @@ private:
 	double m_M2;
 };
 
+std::ostream& operator<<(std::ostream& out, const Beam& beam);
+
 /**
 * Target beam
 */

@@ -7,12 +7,19 @@
 
 
 TEMPLATE = app
-TARGET =
+TARGET = gaussianbeam
 DEPENDPATH += .
-CONFIG += qt
 QT += xml
-QMAKE_CXXFLAGS += -pedantic -Wno-sign-compare -Wno-long-long
+QMAKE_CXXFLAGS += -pedantic -Wno-long-long -g
+CONFIG += release warn_on stl qt
+macx:CONFIG += x86 ppc                # Generate Universal Binary for Mac OS X
+win32:RC_FILE = gui/GaussianBeam.rc   # Embed the application icon
+CODECFORTR     = UTF-8
+CODECFORSRC    = UTF-8
 
+# Destinations
+BIN_DIR  = $(CUSTOM_DESTDIR)/usr/bin
+DATA_DIR = $(CUSTOM_DESTDIR)/usr/share/gaussianbeam
 
 plot {
 	LIBS += -lqwt-qt4
@@ -21,15 +28,19 @@ plot {
 	SOURCES += gui/GaussianBeamPlot.cpp
 }
 
-CODECFORTR     = UTF-8
-CODECFORSRC    = UTF-8
+# Files to install
+target.path = $$BIN_DIR
+INSTALLS += target
+images.path = $$DATA_DIR/images
+images.files = gui/images/gaussianbeam*.png
+INSTALLS += images
 
 # Input
 # src
 HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h src/GaussianFit.h \
-           src/Function.h src/OpticsFunction.h src/Cavity.h src/Utils.h
+           src/Function.h src/OpticsFunction.h src/Cavity.h src/Utils.h src/lmmin.h
 SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp src/GaussianFit.cpp \
-           src/Function.cpp src/OpticsFunction.cpp src/Cavity.cpp src/Utils.cpp
+           src/Function.cpp src/OpticsFunction.cpp src/Cavity.cpp src/Utils.cpp src/lmmin.c
 # gui
 HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/OpticsWidgets.h gui/GaussianBeamDelegate.h \
            gui/GaussianBeamModel.h gui/GaussianBeamWindow.h gui/Unit.h gui/Names.h
@@ -40,13 +51,3 @@ FORMS    = gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui gui/OpticsViewPro
 RESOURCES = gui/GaussianBeamRessource.qrc
 
 TRANSLATIONS = po/GaussianBeam_fr.ts
-
-# Generate Universal Binary for Mac OS X
-macx {
-	CONFIG += x86 ppc
-}
-
-# Embed the application icon
-win32 {
-	RC_FILE = gui/GaussianBeam.rc
-}

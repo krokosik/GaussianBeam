@@ -123,3 +123,9 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
 
 	return eta;
 }
+
+ostream& operator<<(ostream& out, const Beam& beam)
+{
+	out << "Waist = " << beam.waist() << " Waist position = " << beam.waistPosition();
+	return out;
+}

@@ -62,6 +62,7 @@ private:
 private:
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
+	BeamItem* m_cavityBeamItem;
 	QList<QGraphicsEllipseItem*> m_fitItems;
 };
 
@@ -166,80 +167,4 @@ private:
 	bool m_auxiliary;
 };
 
-/*
-#include <QAbstractItemView>
-
-class OpticsItemView : public QAbstractItemView
-{
-	Q_OBJECT
-
-public:
-	OpticsItemView(OpticsBench& bench, QWidget* parent = 0);
-
-	QRect visualRect(const QModelIndex &index) const;
-	void scrollTo(const QModelIndex &index, ScrollHint hint = EnsureVisible);
-	QModelIndex indexAt(const QPoint &point) const;
-
-	void setHRange(double hRange);
-	void setVRange(double vRange);
-	void setHOffset(double hOffset);
-	void setStatusBar(QStatusBar* statusBar) { m_statusBar = statusBar; }
-	void setFitModel(QAbstractItemModel* fitModel) { m_fitModel = fitModel; }
-	void setMeasureCombo(QComboBox* measureCombo) { m_measureCombo = measureCombo; }
-	void setShowTargetBeam(bool showTargetBeam);
-
-protected slots:
-	void dataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight);
-//	void rowsInserted(const QModelIndex& parent, int start, int end);
-//	void rowsAboutToBeRemoved(const QModelIndex& parent, int start, int end);
-
-protected:
-	QModelIndex moveCursor(QAbstractItemView::CursorAction cursorAction,
-							Qt::KeyboardModifiers modifiers);
-	int horizontalOffset() const;
-	int verticalOffset() const;
-	bool isIndexHidden(const QModelIndex& index) const;
-	void setSelection(const QRect&, QItemSelectionModel::SelectionFlags command);
-	QRegion visualRegionForSelection(const QItemSelection &selection) const;
-
-	void mousePressEvent(QMouseEvent* event);
-	void paintEvent(QPaintEvent* event);
-	void mouseMoveEvent(QMouseEvent* event);
-	void mouseReleaseEvent(QMouseEvent* event);
-	void resizeEvent(QResizeEvent* event);
-
-private:
-	void computeTranformMatrix();
-	void computePaths();
-	double vScale() const;
-	double hScale() const;
-
-	QRectF objectRect() const;
-
-	void drawBeam(QPainter& painter, const Beam& beam, const QRectF& abs_beamRange, bool drawText = false);
-
-private:
-	QStatusBar* m_statusBar;
-	/// @todo this should remove
-	QAbstractItemModel* m_fitModel;
-	QComboBox* m_measureCombo;
-	OpticsBench& m_bench;
-
-	QPainterPath m_convexLensPath;
-	QPainterPath m_concaveLensPath;
-	QPainterPath m_flatInterfacePath;
-	QPainterPath m_convexInterfacePath;
-	QPainterPath m_concaveInterfacePath;
-
-	bool m_showTargetBeam;
-	double m_hRange;
-	double m_vRange;
-	double m_hOffset;
-	QMatrix m_abs2view;
-	QMatrix m_view2abs;
-
-	int m_active_object;
-	double m_active_object_offset;
-};
-*/
 #endif
