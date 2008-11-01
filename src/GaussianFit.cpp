@@ -41,6 +41,7 @@ Fit::Fit(int nData, string name)
 	m_name = name;
 	m_dirty = true;
 	m_lastWavelength = 0.;
+	/// @todo change this default to Radius_e2
 	m_dataType = Diameter_e2;
 	m_color = 0;
 
@@ -114,12 +115,6 @@ const Beam& Fit::beam(double wavelength) const
 	return m_beam;
 }
 
-double Fit::rho2(double wavelength) const
-{
-	fitBeam(wavelength);
-	return m_rho2;
-}
-
 double Fit::residue(double wavelength) const
 {
 	fitBeam(wavelength);
@@ -127,7 +122,7 @@ double Fit::residue(double wavelength) const
 }
 
 /////////////////////////////////////////////////
-// Actually do the fit
+// Non linear fit functions
 
 void Fit::error(double* par, double* fvec) const
 {
@@ -135,11 +130,9 @@ void Fit::error(double* par, double* fvec) const
 	/// @todo index = 1., M2 = 1. ?
 	Beam beam(par[0], par[1], m_lastWavelength, 1., 1.);
 
-	cerr << beam << endl;
-
 	for (int i = 0; i < size(); i++)
 		if (radius(i) > epsilon)
-			cerr << (fvec[j++] = radius(i) - beam.radius(position(i)))<< endl;
+			fvec[j++] = radius(i) - beam.radius(position(i));
 }
 
 /**
@@ -149,7 +142,7 @@ void Fit::error(double* par, double* fvec) const
 * @p data  user data. Here null
 * @p info  integer output variable. If set to a negative value, the minimization procedure will stop.
 */
-void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info)
+void Fit::lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info)
 {
 	const Fit* fit = static_cast<const Fit*>(data);
 	fit->error(par, fvec);
@@ -163,7 +156,7 @@ void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *inf
 * @p iter  outer loop counter
 * @p nfev  number of calls to evaluate
 */
-void lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, int iflag, int iter, int nfev)
+void Fit::lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, int iflag, int iter, int nfev)
 {
 	return;
 
@@ -182,26 +175,28 @@ void lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, 
 	printf(" => norm: %12g\n", lm_enorm(m_dat, fvec));
 }
 
-void Fit::fitBeam(double wavelength) const
+Beam Fit::nonLinearFit(const Beam& guessBeam, double* residue) const
 {
-	if ((!m_dirty && (wavelength == m_lastWavelength)) || m_positions.empty())
-		return;
+	const int nPar = 2;
+	double par[nPar] = {guessBeam.waist(), guessBeam.waistPosition()};
 
-	m_lastWavelength = wavelength;
+	lm_control_type control;
+	lm_initialize_control(&control);
+	lm_minimize(nonZeroSize(), nPar, par, Fit::lm_evaluate_beam, NULL, (void*)(this), &control);
 
-	////////////////////////////////////
-	// 1st part of the fit : linear fit
+	Beam result = guessBeam;
+	result.setWaist(par[0]);
+	result.setWaistPosition(par[1]);
+	*residue = control.fnorm;
 
-	vector<double> positions, radii;
-	for (int i = 0; i < size(); i++)
-		if (radius(i) > epsilon)
-		{
-			positions.push_back(position(i));
-			radii.push_back(radius(i));
-		}
+	return result;
+}
 
-	int nData = positions.size();
+/////////////////////////////////////////////////
+// Linear fit functions
 
+Beam Fit::linearFit(const vector<double>& positions, const vector<double>& radii, double wavelength) const
+{
 	Statistics stats(positions, radii);
 
 	// Some point whithin the fit
@@ -213,34 +208,74 @@ void Fit::fitBeam(double wavelength) const
 	// (z - zw)/z0  (zw : position of the waist, z0 : Rayleigh range)
 	const double alpha = M_PI*fz*fpz/wavelength;
 	/// @todo index = 1., M2 = 1. ?
-	m_beam = Beam(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1., 1.);
-	m_beam.setWaistPosition(z - m_beam.rayleigh()*alpha);
-	m_rho2 = stats.rho2;
+	Beam result(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1., 1.);
+	result.setWaistPosition(z - result.rayleigh()*alpha);
 
-	/////////////////////////////
-	// 2nd part : non linear fit
-	const int nPar = 2;
-	double par[nPar] = {m_beam.waist(), m_beam.waistPosition()};
+	return result;
+}
 
-	// Try to make bad situations better
+/////////////////////////////////////////////////
+// Actually do the fit
+
+void Fit::fitBeam(double wavelength) const
+{
+	if ((!m_dirty && (wavelength == m_lastWavelength)) || (nonZeroSize() < 2))
+		return;
+
+	m_lastWavelength = wavelength;
+
+	// Gather all non zero data
+	vector<double> positions, radii;
 	for (int i = 0; i < size(); i++)
-		if ((radius(i) > epsilon) && (radius(i) < par[0]))
+		if (radius(i) > epsilon)
 		{
-			par[0] = radius(i);
-			par[1] = position(i);
+			positions.push_back(position(i));
+			radii.push_back(radius(i));
 		}
 
-	lm_control_type control;
-	lm_initialize_control(&control);
-	lm_minimize(nData, nPar, par, lm_evaluate_beam, lm_print_beam, (void*)(this), &control);
-	printf("status: %s after %d evaluations\n", lm_shortmsg[control.info], control.nfev);
+	double residue, tmpResidue;
+	Beam tmpBeam;
 
-	m_beam.setWaist(par[0]);
-	m_beam.setWaistPosition(par[1]);
-	m_residue = control.fnorm;
+	// 1/ linear fit with all data
+	m_beam = linearFit(positions, radii, wavelength);
+	// 2/ non linear fit with the linear fit result as initial guess
+	m_beam = nonLinearFit(m_beam, &residue);
+	// 3/ Try a linear fit with the first two points + non linear fit on all points
+	positions.clear();
+	radii.clear();
+	for (int i = 0; (i < size()) && (positions.size() < 2); i++)
+		if (radius(i) > epsilon)
+		{
+			positions.push_back(position(i));
+			radii.push_back(radius(i));
+		}
+	tmpBeam = linearFit(positions, radii, wavelength);
+	tmpBeam = nonLinearFit(tmpBeam, &tmpResidue);
+	if (tmpResidue < residue)
+	{
+		residue = tmpResidue;
+		m_beam = tmpBeam;
+	}
+	// 4/ Try a linear fit with the last two points + non linear fit on all points
+	positions.clear();
+	radii.clear();
+	for (int i = size()-1; (i >= 0) && (positions.size() < 2); i--)
+		if (radius(i) > epsilon)
+		{
+			positions.push_back(position(i));
+			radii.push_back(radius(i));
+		}
+	tmpBeam = linearFit(positions, radii, wavelength);
+	tmpBeam = nonLinearFit(tmpBeam, &tmpResidue);
+	if (tmpResidue < residue)
+	{
+		residue = tmpResidue;
+		m_beam = tmpBeam;
+	}
 
 	///////////////
 	// Terminaison
 
+	m_residue = residue;
 	m_dirty = false;
 }

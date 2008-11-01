@@ -38,9 +38,9 @@ public:
 	/// Default constructor. Produced an invalid Beam. @todo this should disappear
 	Beam() {}
 	/// Constructor
-	Beam(double waist, double waistPosition, double wavelength, double index, double M2);
+	Beam(double waist, double waistPosition, double wavelength, double index = 1., double M2 = 1.);
 	/// Construct a Gaussian beam from a given complex beam parapeter @p q at position @p z
-	Beam(const std::complex<double>& q, double z, double wavelength, double index, double M2);
+	Beam(const std::complex<double>& q, double z, double wavelength, double index = 1., double M2 = 1.);
 
 public:
 

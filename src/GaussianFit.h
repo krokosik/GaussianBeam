@@ -72,15 +72,20 @@ public:
 	void clear();
 	/// @return the best beam adjusted to the data points
 	const Beam& beam(double wavelength) const;
-	/// @return the correlation coefficient of the linear fit
-	double rho2(double wavelength) const;
-	/// Fill @p fvec with the error on the fit with beam parameters @p par
-	void error(double* par, double* fvec) const;
 	/// @return the residue of the non-linear fit
 	double residue(double wavelength) const;
 
 private:
+	/// Actually o the fit
 	void fitBeam(double wavelength) const;
+	/// Non linear fit functions
+	Beam nonLinearFit(const Beam& guessBeam, double* residue) const;
+	static void lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, int iflag, int iter, int nfev);
+	static void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info);
+	void error(double* par, double* fvec) const;
+	/// Linear fit functions
+	Beam linearFit(const std::vector<double>& positions, const std::vector<double>& radii, double wavelength) const;
+
 
 private:
 	std::string m_name;
@@ -91,7 +96,6 @@ private:
 
 	mutable bool m_dirty;
 	mutable Beam m_beam;
-	mutable double m_rho2;
 	mutable double m_lastWavelength;
 	mutable double m_residue;
 
