@@ -307,12 +307,11 @@ void GaussianBeamWidget::updateFitInformation(int index)
 	pushButton_FitColor->setPalette(QPalette(QColor(fit.color())));
 	comboBox_FitData->setCurrentIndex(int(fit.dataType()));
 
-	if (fit.size() > fitModel->rowCount())
-		for (int i = 0; i < fit.size() - fitModel->rowCount(); i++)
-			fitModel->insertRow(0);
-	else if (fit.size() < fitModel->rowCount())
-		for (int i = 0; i < fitModel->rowCount() - fit.size(); i++)
-			fitModel->removeRow(0);
+	// Resize rows to match the number of elements in the fit
+	for (; fit.size() > fitModel->rowCount();)
+		fitModel->insertRow(0);
+	for (; fitModel->rowCount() > fit.size();)
+		fitModel->removeRow(0);
 
 	for (int i = 0; i < fit.size(); i++)
 	{
