@@ -48,7 +48,7 @@ protected slots:
 	void on_action_Open_triggered()               { openFile();                        }
 	void on_action_Save_triggered()               { saveFile(m_currentFile);           }
 	void on_action_SaveAs_triggered()             { saveFile();                        }
-	void on_action_AddOptics_triggered();
+	void on_action_AddOptics_triggered()          { insertOptics(LensType);            }
 	void on_action_RemoveOptics_triggered();
 	void on_action_AddLens_triggered()            { insertOptics(LensType);            }
 	void on_action_AddFlatMirror_triggered()      { insertOptics(FlatMirrorType);      }
@@ -69,7 +69,7 @@ private:
 private:
 	void openFile(const QString& path = QString());
 	void saveFile(const QString& path = QString());
-	void setCurrentFile(const QString& path);
+	void setCurrentFile(const QString& fileName);
 	void insertOptics(OpticsType opticsType);
 	void readSettings();
 	void writeSettings();
@@ -94,9 +94,10 @@ private:
 
 private:
 	QToolBar* m_fileToolBar;
-
+	QMenu*    m_addOpticsMenu;
+	QMenu*    m_recentFilesMenu;
 	OpticsBench m_globalBench;
-	QDoubleSpinBox* wavelengthSpinBox;
+	QDoubleSpinBox* m_wavelengthSpinBox;
 	GaussianBeamWidget* m_widget;
 	GaussianBeamModel* m_model;
 	QItemSelectionModel* m_selectionModel;

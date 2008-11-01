@@ -75,16 +75,16 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	QWidget* wavelengthWidget = new QWidget(this);
 	QVBoxLayout* wavelengthLayout = new QVBoxLayout(wavelengthWidget);
 	QLabel* wavelengthLabel = new QLabel(tr("Wavelength"), wavelengthWidget);
-	wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
-	wavelengthSpinBox->setDecimals(0);
-	wavelengthSpinBox->setSuffix(" nm");
-	wavelengthSpinBox->setRange(1., 9999.);
-	wavelengthSpinBox->setValue(532.);
-	wavelengthSpinBox->setSingleStep(10.);
-	wavelengthLayout->addWidget(wavelengthSpinBox);
+	m_wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
+	m_wavelengthSpinBox->setDecimals(0);
+	m_wavelengthSpinBox->setSuffix(" nm");
+	m_wavelengthSpinBox->setRange(1., 9999.);
+	m_wavelengthSpinBox->setValue(532.);
+	m_wavelengthSpinBox->setSingleStep(10.);
+	wavelengthLayout->addWidget(m_wavelengthSpinBox);
 	wavelengthLayout->addWidget(wavelengthLabel);
 	wavelengthWidget->setLayout(wavelengthLayout);
-	connect(wavelengthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(wavelengthSpinBox_valueChanged(double)));
+	connect(m_wavelengthSpinBox, SIGNAL(valueChanged(double)), this, SLOT(wavelengthSpinBox_valueChanged(double)));
 
 	// Bars
 	m_fileToolBar = addToolBar(tr("File"));
@@ -93,6 +93,16 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_fileToolBar->addAction(action_Save);
 	m_fileToolBar->addAction(action_SaveAs);
 	m_fileToolBar->addSeparator();
+	m_addOpticsMenu = new QMenu(this);
+	m_addOpticsMenu->setDefaultAction(action_AddLens);
+	m_addOpticsMenu->addAction(action_AddLens);
+	m_addOpticsMenu->addAction(action_AddFlatMirror);
+	m_addOpticsMenu->addAction(action_AddCurvedMirror);
+	m_addOpticsMenu->addAction(action_AddFlatInterface);
+	m_addOpticsMenu->addAction(action_AddCurvedInterface);
+	m_addOpticsMenu->addAction(action_AddDielectricSlab);
+	m_addOpticsMenu->addAction(action_AddGenericABCD);
+	action_AddOptics->setMenu(m_addOpticsMenu);
 	m_fileToolBar->addAction(action_AddOptics);
 	m_fileToolBar->addAction(action_RemoveOptics);
 	m_fileToolBar->addSeparator();
@@ -159,21 +169,6 @@ void GaussianBeamWindow::readSettings()
 	m_bench.setWavelength(settings.value("GaussianBeamWindow/wavelength", 461e-9).toDouble());
 }
 
-void GaussianBeamWindow::on_action_AddOptics_triggered()
-{
-	QWidget* button = m_fileToolBar->widgetForAction(action_AddOptics);
-
-	QMenu menu(this);
-	menu.addAction(action_AddLens);
-	menu.addAction(action_AddFlatMirror);
-	menu.addAction(action_AddCurvedMirror);
-	menu.addAction(action_AddFlatInterface);
-	menu.addAction(action_AddCurvedInterface);
-	menu.addAction(action_AddDielectricSlab);
-	menu.addAction(action_AddGenericABCD);
-	menu.exec(button->mapToGlobal(QPoint(0, button->height())));
-}
-
 void GaussianBeamWindow::on_action_RemoveOptics_triggered()
 {
 	for (int row = m_model->rowCount() - 1; row >= 0; row--)
@@ -189,7 +184,7 @@ void GaussianBeamWindow::wavelengthSpinBox_valueChanged(double wavelength)
 
 void GaussianBeamWindow::OpticsBenchWavelengthChanged()
 {
-	wavelengthSpinBox->setValue(m_bench.wavelength()*Units::getUnit(UnitWavelength).divider());
+	m_wavelengthSpinBox->setValue(m_bench.wavelength()*Units::getUnit(UnitWavelength).divider());
 }
 
 void GaussianBeamWindow::insertOptics(OpticsType opticsType)
@@ -243,9 +238,9 @@ void GaussianBeamWindow::saveFile(const QString& path)
 	}
 }
 
-void GaussianBeamWindow::setCurrentFile(const QString& path)
+void GaussianBeamWindow::setCurrentFile(const QString& fileName)
 {
-	m_currentFile = path;
+	m_currentFile = fileName;
 	if (!m_currentFile.isEmpty())
 		setWindowTitle(QFileInfo(m_currentFile).fileName() + " - GaussianBeam");
 	else

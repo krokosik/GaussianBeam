@@ -16,7 +16,8 @@
   <widget class="QStatusBar" name="statusbar" />
   <action name="action_Save" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/document-save.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/document-save.png</normaloff>:/images/document-save.png</iconset>
    </property>
    <property name="text" >
     <string>Save</string>
@@ -24,7 +25,8 @@
   </action>
   <action name="action_SaveAs" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/document-save-as.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/document-save-as.png</normaloff>:/images/document-save-as.png</iconset>
    </property>
    <property name="text" >
     <string>Save as</string>
@@ -32,7 +34,8 @@
   </action>
   <action name="action_Print" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/document-print.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/document-print.png</normaloff>:/images/document-print.png</iconset>
    </property>
    <property name="text" >
     <string>Print</string>
@@ -40,7 +43,8 @@
   </action>
   <action name="action_Open" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/document-open.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/document-open.png</normaloff>:/images/document-open.png</iconset>
    </property>
    <property name="text" >
     <string>Open</string>
@@ -78,7 +82,8 @@
   </action>
   <action name="action_AddOptics" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-add.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/edit-add.png</normaloff>:/images/edit-add.png</iconset>
    </property>
    <property name="text" >
     <string>Add optics</string>
@@ -86,7 +91,8 @@
   </action>
   <action name="action_RemoveOptics" >
    <property name="icon" >
-    <iconset resource="GaussianBeamRessource.qrc" >:/images/edit-delete.png</iconset>
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/edit-delete.png</normaloff>:/images/edit-delete.png</iconset>
    </property>
    <property name="text" >
     <string>Remove</string>
