@@ -89,6 +89,16 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	// Bars
 	m_fileToolBar = addToolBar(tr("File"));
 	m_fileToolBar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+	m_fileToolBar->addAction(action_New);
+	m_recentFilesMenu = new QMenu(this);
+	for (int i = 0; i < m_maxRecentFiles; i++)
+	{
+		m_recentFileAction[i] = new QAction(this);
+		m_recentFileAction[i]->setVisible(false);
+		connect(m_recentFileAction[i], SIGNAL(triggered()), this, SLOT(openRecentFile()));
+		m_recentFilesMenu->addAction(m_recentFileAction[i]);
+	}
+	action_Open->setMenu(m_recentFilesMenu);
 	m_fileToolBar->addAction(action_Open);
 	m_fileToolBar->addAction(action_Save);
 	m_fileToolBar->addAction(action_SaveAs);
@@ -128,7 +138,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	// Connect signal and slots
 	connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
-	        this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
+			this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
 	m_bench.registerNotify(this);
 
@@ -136,12 +146,12 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	for (int i = 0; i < 2; i++)
 		m_bench.addOptics(LensType, m_bench.nOptics());
-
+/*
 	Cavity& cavity = m_bench.cavity();
 	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(1)));
 	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(2)));
 	m_bench.notifyCavityChange();
-
+*/
 	// NOTE: this has to be the last part of the constructor
 	if (!fileName.isEmpty())
 		openFile(fileName);
@@ -152,6 +162,9 @@ void GaussianBeamWindow::closeEvent(QCloseEvent* event)
 	Q_UNUSED(event);
 	writeSettings();
 }
+
+/////////////////////////////////////////////////
+// Settings
 
 void GaussianBeamWindow::writeSettings()
 {
@@ -167,15 +180,11 @@ void GaussianBeamWindow::readSettings()
 	resize(settings.value("GaussianBeamWindow/size", QSize(800, 600)).toSize());
 	move(settings.value("GaussianBeamWindow/pos", QPoint(100, 100)).toPoint());
 	m_bench.setWavelength(settings.value("GaussianBeamWindow/wavelength", 461e-9).toDouble());
+	updateRecentFileActions();
 }
 
-void GaussianBeamWindow::on_action_RemoveOptics_triggered()
-{
-	for (int row = m_model->rowCount() - 1; row >= 0; row--)
-		if ((m_bench.optics(row)->type() != CreateBeamType) &&
-		    m_selectionModel->isRowSelected(row, QModelIndex()))
-			m_bench.removeOptics(row);
-}
+/////////////////////////////////////////////////
+// Wavelength
 
 void GaussianBeamWindow::wavelengthSpinBox_valueChanged(double wavelength)
 {
@@ -187,6 +196,9 @@ void GaussianBeamWindow::OpticsBenchWavelengthChanged()
 	m_wavelengthSpinBox->setValue(m_bench.wavelength()*Units::getUnit(UnitWavelength).divider());
 }
 
+/////////////////////////////////////////////////
+// Optics
+
 void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 {
 	QModelIndex index = m_selectionModel->currentIndex();
@@ -196,6 +208,25 @@ void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 
 	m_bench.addOptics(opticsType, row);
 	m_table->resizeColumnsToContents();
+}
+
+void GaussianBeamWindow::on_action_RemoveOptics_triggered()
+{
+	for (int row = m_model->rowCount() - 1; row >= 0; row--)
+		if ((m_bench.optics(row)->type() != CreateBeamType) &&
+			m_selectionModel->isRowSelected(row, QModelIndex()))
+			m_bench.removeOptics(row);
+}
+
+/////////////////////////////////////////////////
+// File managment
+
+void GaussianBeamWindow::newFile()
+{
+	writeSettings();
+	GaussianBeamWindow* newWindow = new GaussianBeamWindow;
+	newWindow->move(newWindow->pos() + QPoint(15, 15));
+	newWindow->show();
 }
 
 void GaussianBeamWindow::openFile(const QString& path)
@@ -215,6 +246,13 @@ void GaussianBeamWindow::openFile(const QString& path)
 		statusBar()->showMessage(tr("File") + " " + QFileInfo(fileName).fileName() + " " + tr("loaded"));
 		settings.setValue("GaussianBeamWindow/lastDirectory", QFileInfo(fileName).path());
 	}
+}
+
+void GaussianBeamWindow::openRecentFile()
+{
+	QAction* action = qobject_cast<QAction*>(sender());
+	if (action)
+		openFile(action->data().toString());
 }
 
 void GaussianBeamWindow::saveFile(const QString& path)
@@ -245,6 +283,41 @@ void GaussianBeamWindow::setCurrentFile(const QString& fileName)
 		setWindowTitle(QFileInfo(m_currentFile).fileName() + " - GaussianBeam");
 	else
 		setWindowTitle("GaussianBeam");
+
+	// Update the recent file list
+	QSettings settings;
+	QStringList files = settings.value("GaussianBeamWindow/recentFileList").toStringList();
+	files.removeAll(fileName);
+	files.prepend(fileName);
+	while (files.size() > m_maxRecentFiles)
+		files.removeLast();
+	settings.setValue("GaussianBeamWindow/recentFileList", files);
+
+	foreach (QWidget* widget, QApplication::topLevelWidgets())
+	{
+		GaussianBeamWindow* window = qobject_cast<GaussianBeamWindow*>(widget);
+		if (window)
+			window->updateRecentFileActions();
+	}
+}
+
+void GaussianBeamWindow::updateRecentFileActions()
+{
+	QSettings settings;
+	QStringList files = settings.value("GaussianBeamWindow/recentFileList").toStringList();
+
+	int numRecentFiles = qMin(files.size(), (int)m_maxRecentFiles);
+
+	for (int i = 0; i < numRecentFiles; i++)
+	{
+		QString text = tr("&%1 %2").arg(i + 1).arg(QFileInfo(files[i]).fileName());
+		m_recentFileAction[i]->setText(text);
+		m_recentFileAction[i]->setData(files[i]);
+		m_recentFileAction[i]->setStatusTip(tr("Open file ") + files[i]);
+		m_recentFileAction[i]->setVisible(true);
+	}
+	for (int i = numRecentFiles; i < m_maxRecentFiles; i++)
+		m_recentFileAction[i]->setVisible(false);
 }
 
 void GaussianBeamWindow::updateWidget(const QModelIndex& /*topLeft*/, const QModelIndex& /*bottomRight*/)

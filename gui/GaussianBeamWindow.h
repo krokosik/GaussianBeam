@@ -39,12 +39,13 @@ class GaussianBeamWindow : public QMainWindow, private OpticsBenchNotify, privat
 	Q_OBJECT
 
 public:
-	GaussianBeamWindow(const QString& fileName);
+	GaussianBeamWindow(const QString& fileName = QString());
 
 public slots:
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
 protected slots:
+	void on_action_New_triggered()                { newFile();                         }
 	void on_action_Open_triggered()               { openFile();                        }
 	void on_action_Save_triggered()               { saveFile(m_currentFile);           }
 	void on_action_SaveAs_triggered()             { saveFile();                        }
@@ -58,6 +59,7 @@ protected slots:
 	void on_action_AddGenericABCD_triggered()     { insertOptics(GenericABCDType);     }
 	void on_action_AddDielectricSlab_triggered()  { insertOptics(DielectricSlabType);  }
 	void wavelengthSpinBox_valueChanged(double wavelength);
+	void openRecentFile();
 
 protected:
 	virtual void closeEvent(QCloseEvent* event);
@@ -67,9 +69,11 @@ private:
 	virtual void OpticsBenchWavelengthChanged();
 
 private:
+	void newFile();
 	void openFile(const QString& path = QString());
 	void saveFile(const QString& path = QString());
 	void setCurrentFile(const QString& fileName);
+	void updateRecentFileActions();
 	void insertOptics(OpticsType opticsType);
 	void readSettings();
 	void writeSettings();
@@ -96,6 +100,8 @@ private:
 	QToolBar* m_fileToolBar;
 	QMenu*    m_addOpticsMenu;
 	QMenu*    m_recentFilesMenu;
+	static const int m_maxRecentFiles = 5;
+	QAction*  m_recentFileAction[m_maxRecentFiles];
 	OpticsBench m_globalBench;
 	QDoubleSpinBox* m_wavelengthSpinBox;
 	GaussianBeamWidget* m_widget;

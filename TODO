@@ -20,11 +20,12 @@ WISHLIST:
 	undo framework
 	reimplement paint items in view for optics painting in scene coordinates
 	Thick lens, thermal lens
-	Non linear hyperbolic fit
 	Camera interfaces
 	Set view limits to bench limits button
 	Horizontal and vertical waists
 	TEMmn modes
+	more intrication between opticsbench bounds and view bounds
+	Warn when closing a modified file + modified status in window title
 
 BUGS:
 	Problem with n > 1 and target beam

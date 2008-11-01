@@ -22,6 +22,9 @@
    <property name="text" >
     <string>Save</string>
    </property>
+   <property name="shortcut" >
+    <string>Ctrl+S</string>
+   </property>
   </action>
   <action name="action_SaveAs" >
    <property name="icon" >
@@ -40,6 +43,9 @@
    <property name="text" >
     <string>Print</string>
    </property>
+   <property name="shortcut" >
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <action name="action_Open" >
    <property name="icon" >
@@ -49,10 +55,16 @@
    <property name="text" >
     <string>Open</string>
    </property>
+   <property name="shortcut" >
+    <string>Ctrl+O</string>
+   </property>
   </action>
   <action name="action_AddLens" >
    <property name="text" >
     <string>&amp;Lens</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="action_AddFlatInterface" >
@@ -101,6 +113,18 @@
   <action name="action_AddDielectricSlab" >
    <property name="text" >
     <string>&amp;Dielectric slab</string>
+   </property>
+  </action>
+  <action name="action_New" >
+   <property name="icon" >
+    <iconset resource="GaussianBeamRessource.qrc" >
+     <normaloff>:/images/document-new.png</normaloff>:/images/document-new.png</iconset>
+   </property>
+   <property name="text" >
+    <string>New</string>
+   </property>
+   <property name="shortcut" >
+    <string>Ctrl+N</string>
    </property>
   </action>
  </widget>
