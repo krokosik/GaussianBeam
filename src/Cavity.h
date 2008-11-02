@@ -45,6 +45,8 @@ public:
 	void addOptics(const ABCD* optics);
 	/// Remove the optics @p optics from the cavity
 	void removeOptics(const ABCD* optics);
+	/// Check if a given optics is in the cavity
+	bool isOpticsInCavity(const ABCD* optics) const;
 
 private:
 	void computeMatrix() const;

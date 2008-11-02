@@ -146,6 +146,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		else
 			data << tr("none");
 	}
+	else if (column == Property::OpticsCavity)
+	{
+		const ABCD* optics = dynamic_cast<const ABCD*>(m_bench.optics(row));
+		if (optics)
+			return m_bench.cavity().isOpticsInCavity(optics) ? tr("true") : tr("false");
+		return "N/A";
+	}
 	else
 		return QVariant();
 
@@ -261,7 +268,7 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	}
 	else if (column == Property::OpticsName)
 		m_bench.setOpticsName(row, value.toString().toUtf8().data());
- 	else if (column == Property::OpticsLock)
+	else if (column == Property::OpticsLock)
 	{
 		/// @todo make specific functions in OpticsBench to change this. Move this logic to OpticsBench
 		int lockId = value.toInt();
@@ -280,6 +287,15 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		}
 		else
 			m_bench.lockTo(row, lockId);
+	}
+	else if (column == Property::OpticsCavity)
+	{
+		const ABCD* optics = dynamic_cast<const ABCD*>(m_bench.optics(row));
+		if (optics && value.toBool())
+			m_bench.cavity().addOptics(optics);
+		else if(optics)
+			m_bench.cavity().removeOptics(optics);
+		m_bench.notifyCavityChange();
 	}
 
 	return true;
@@ -320,6 +336,9 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 		    !optics->relativeLockTreeAbsoluteLock())
 			flags |= Qt::ItemIsEditable;
 	}
+
+	if ((column == Property::OpticsCavity) && (dynamic_cast<const ABCD*>(m_bench.optics(row))))
+		flags |= Qt::ItemIsEditable;
 
 	return flags;
 }

@@ -44,7 +44,7 @@
         <attribute name="label" >
          <string>Optics bench</string>
         </attribute>
-        <layout class="QVBoxLayout" >
+        <layout class="QVBoxLayout" name="verticalLayout_2" >
          <item>
           <widget class="QGroupBox" name="groupBox" >
            <property name="title" >
@@ -101,6 +101,22 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="groupBox_2" >
+           <property name="title" >
+            <string>Cavity</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout" >
+            <item>
+             <widget class="QLabel" name="cavityLabel" >
+              <property name="text" >
+               <string>Unstable</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <spacer>
            <property name="orientation" >
             <enum>Qt::Vertical</enum>
@@ -120,8 +136,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>179</width>
-          <height>463</height>
+          <width>234</width>
+          <height>493</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -336,8 +352,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>185</width>
-          <height>376</height>
+          <width>234</width>
+          <height>493</height>
          </rect>
         </property>
         <attribute name="label" >

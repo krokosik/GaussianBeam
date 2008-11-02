@@ -26,7 +26,7 @@ namespace Property
 enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyPhase, BeamDistanceToWaist,
             BeamParameter, BeamWaist, BeamWaistPosition, BeamRayleigh, BeamDivergence, Index,
             OpticsType, OpticsPosition, OpticsRelativePosition, OpticsProperties, OpticsName,
-            OpticsLock, OpticsSensitivity};
+            OpticsLock, OpticsSensitivity, OpticsCavity};
 }
 
 /**

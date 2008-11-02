@@ -20,6 +20,7 @@
 #include "OpticsBench.h"
 
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -30,12 +31,23 @@ Cavity::Cavity()
 
 void Cavity::addOptics(const ABCD* optics)
 {
-	m_opticsList.push_back(optics);
+	if (!isOpticsInCavity(optics))
+		m_opticsList.push_back(optics);
+
+	/// @todo sort
 }
 
 void Cavity::removeOptics(const ABCD* optics)
 {
 	m_opticsList.remove(optics);
+}
+
+bool Cavity::isOpticsInCavity(const ABCD* optics) const
+{
+	if (find(m_opticsList.begin(), m_opticsList.end(), optics) != m_opticsList.end())
+		return true;
+
+	return false;
 }
 
 void Cavity::computeMatrix() const

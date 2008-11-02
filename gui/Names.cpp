@@ -51,6 +51,7 @@ void initNames(QApplication* app)
 	Property::fullName.insert(Property::OpticsSensitivity,      app->translate("Names", "Sensitivity"));
 	Property::fullName.insert(Property::OpticsName,             app->translate("Names", "Name"));
 	Property::fullName.insert(Property::OpticsLock,             app->translate("Names", "Lock"));
+	Property::fullName.insert(Property::OpticsCavity,           app->translate("Names", "Cavity"));
 
 	Property::shortName.insert(Property::BeamPosition,           app->translate("Names", "z"));
 	Property::shortName.insert(Property::BeamRadius,             app->translate("Names", "w"));
@@ -71,6 +72,7 @@ void initNames(QApplication* app)
 	Property::shortName.insert(Property::OpticsSensitivity,      app->translate("Names", "Sens."));
 	Property::shortName.insert(Property::OpticsName,             app->translate("Names", "Name"));
 	Property::shortName.insert(Property::OpticsLock,             app->translate("Names", "Lock"));
+	Property::shortName.insert(Property::OpticsCavity,           app->translate("Names", "Cav."));
 
 	Property::unit.insert(Property::BeamPosition,           UnitPosition);
 	Property::unit.insert(Property::BeamRadius,             UnitWaist);
@@ -91,6 +93,7 @@ void initNames(QApplication* app)
 	Property::unit.insert(Property::OpticsSensitivity,      UnitLess);//app->translate(       "Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).string(false) + tr("²") + ")";
 	Property::unit.insert(Property::OpticsName,             UnitLess);
 	Property::unit.insert(Property::OpticsLock,             UnitLess);
+	Property::unit.insert(Property::OpticsCavity,           UnitLess);
 
 	OpticsName::fullName.insert(CreateBeamType,      app->translate("Names", "Input beam"));
 	OpticsName::fullName.insert(LensType,            app->translate("Names", "Lens"));
