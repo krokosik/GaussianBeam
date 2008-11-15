@@ -22,9 +22,11 @@
 #include "gui/Unit.h"
 #include "src/GaussianBeam.h"
 #include "src/Utils.h"
+#include "src/OpticsBench.h"
 
 #include <QtGui>
 #include <QtDebug>
+#include <QtGlobal>
 
 #include <cmath>
 
@@ -70,26 +72,38 @@ QColor wavelengthColor(double wavelength)
 /////////////////////////////////////////////////
 // OpticsScene class
 
-OpticsScene::OpticsScene(OpticsBench& bench, QObject* parent)
+OpticsScene::OpticsScene(OpticsBench* bench, QObject* parent)
 	: QGraphicsScene(parent)
-	, OpticsBenchNotify(bench)
 {
+	// Bench connections
+	m_bench = bench;
+	connect(m_bench, SIGNAL(dataChanged(int, int)),   this, SLOT(onOpticsBenchDataChanged(int, int)));
+	connect(m_bench, SIGNAL(targetBeamChanged()),     this, SLOT(onOpticsBenchTargetBeamChanged()));
+	connect(m_bench, SIGNAL(boundariesChanged()),     this, SLOT(onOpticsBenchBoundariesChanged()));
+	connect(m_bench, SIGNAL(opticsAdded(int)),        this, SLOT(onOpticsBenchOpticsAdded(int)));
+	connect(m_bench, SIGNAL(opticsRemoved(int, int)), this, SLOT(onOpticsBenchOpticsRemoved(int, int)));
+	connect(m_bench, SIGNAL(fitsRemoved(int, int)),   this, SLOT(onOpticsBenchFitsRemoved(int, int)));
+	connect(m_bench, SIGNAL(fitDataChanged(int)),     this, SLOT(onOpticsBenchFitDataChanged(int)));
+
 	setItemIndexMethod(QGraphicsScene::NoIndex);
 
-	m_targetBeamItem = new BeamItem(m_bench.targetBeam());
+	m_targetBeamItem = new BeamItem(m_bench->targetBeam());
 	m_targetBeamItem->setPlainStyle(false);
 	m_targetBeamItem->setAuxiliary(true);
 	m_targetBeamItem->setPos(0., 0.);
 	addItem(m_targetBeamItem);
 
-	m_cavityBeamItem = new BeamItem(m_bench.cavity().eigenBeam(m_bench.wavelength(), 0));
+	m_cavityBeamItem = new BeamItem(m_bench->cavity().eigenBeam(m_bench->wavelength(), 0));
 	m_cavityBeamItem->setPlainStyle(false);
 	m_cavityBeamItem->setAuxiliary(true);
 	m_cavityBeamItem->setPos(0., 0.);
-	m_cavityBeamItem->setVisible(false);
+	m_cavityBeamItem->setVisible(true);
 	addItem(m_cavityBeamItem);
 
-	m_bench.registerNotify(this);
+	// Sync with bench
+	for (int i = 0; i < m_bench->nOptics(); i++)
+		onOpticsBenchOpticsAdded(i);
+	onOpticsBenchBoundariesChanged();
 }
 
 void OpticsScene::showTargetBeam(bool show)
@@ -105,13 +119,13 @@ bool OpticsScene::targetBeamVisible()
 /// @todo get rid of this trick
 #define SCENEHALFHEIGHT 0.005
 
-void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
+void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 {
 	foreach (QGraphicsItem* graphicsItem, items())
 	{
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
 		{
-			int opticsIndex = m_bench.opticsIndex(opticsItem->optics());
+			int opticsIndex = m_bench->opticsIndex(opticsItem->optics());
 			if ((opticsIndex >= startOptics) && (opticsIndex <= endOptics))
 			{
 				opticsItem->setUpdate(false);
@@ -122,59 +136,47 @@ void OpticsScene::OpticsBenchDataChanged(int startOptics, int endOptics)
 	}
 
 	for (int i = qMax(0, startOptics-1); i <= endOptics; i++)
-	{
-		const Optics* optics = m_bench.optics(i);
-		m_beamItems[i]->setPos(0., 0.);
-		if (i == 0)
-			m_beamItems[i]->setLeftBound(m_bench.leftBoundary());
-		else
-			m_beamItems[i]->setLeftBound(optics->position() + optics->width());
-		if (i == m_bench.nOptics()-1)
-			m_beamItems[i]->setRightBound(m_bench.rightBoundary());
-		else
-			m_beamItems[i]->setRightBound(m_bench.optics(i+1)->position());
-	}
+		m_beamItems[i]->updateTransform();
 }
 
-void OpticsScene::OpticsBenchTargetBeamChanged()
+void OpticsScene::onOpticsBenchTargetBeamChanged()
 {
 	m_targetBeamItem->update();
 }
 
-void OpticsScene::OpticsBenchBoundariesChanged()
+void OpticsScene::onOpticsBenchBoundariesChanged()
 {
-	setSceneRect(m_bench.leftBoundary(), -SCENEHALFHEIGHT, m_bench.rightBoundary() - m_bench.leftBoundary(), 2.*SCENEHALFHEIGHT);
+	setSceneRect(m_bench->leftBoundary(), -SCENEHALFHEIGHT, m_bench->rightBoundary() - m_bench->leftBoundary(), 2.*SCENEHALFHEIGHT);
 
-	m_targetBeamItem->setLeftBound(m_bench.leftBoundary());
-	m_targetBeamItem->setRightBound(m_bench.rightBoundary());
-	m_cavityBeamItem->setLeftBound(m_bench.leftBoundary());
-	m_cavityBeamItem->setRightBound(m_bench.rightBoundary());
+	m_targetBeamItem->updateTransform();
+	m_cavityBeamItem->updateTransform();
 
-	if ((m_beamItems.size() != 0) && (m_beamItems.size() == m_bench.nOptics()))
+	if ((m_beamItems.size() != 0) && (m_beamItems.size() == m_bench->nOptics()))
 	{
-		m_beamItems[0]->setLeftBound(m_bench.leftBoundary());
-		m_beamItems[m_bench.nOptics()-1]->setRightBound(m_bench.rightBoundary());
+		m_beamItems[0]->updateTransform();
+		m_beamItems[m_bench->nOptics()-1]->updateTransform();
 	}
 
 	foreach (QGraphicsView* view, views())
 		dynamic_cast<OpticsView*>(view)->adjustRange();
 }
 
-void OpticsScene::OpticsBenchOpticsAdded(int index)
+void OpticsScene::onOpticsBenchOpticsAdded(int index)
 {
-	OpticsItem* opticsItem = new OpticsItem(m_bench.optics(index), m_bench);
+	OpticsItem* opticsItem = new OpticsItem(m_bench->optics(index), m_bench);
 	addItem(opticsItem);
 
-	BeamItem* beamItem = new BeamItem(m_bench.beam(index));
+	BeamItem* beamItem = new BeamItem(m_bench->beam(index));
 	m_beamItems.insert(index, beamItem);
+	beamItem->updateTransform();
 	addItem(beamItem);
 }
 
-void OpticsScene::OpticsBenchOpticsRemoved(int index, int count)
+void OpticsScene::onOpticsBenchOpticsRemoved(int index, int count)
 {
 	foreach (QGraphicsItem* graphicsItem, items())
 		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(graphicsItem))
-			if (m_bench.opticsIndex(opticsItem->optics()) == -1)
+			if (m_bench->opticsIndex(opticsItem->optics()) == -1)
 				removeItem(graphicsItem);
 
 	for (int i = index + count - 1; i >= index; i--)
@@ -193,14 +195,14 @@ void OpticsScene::addFitPoint(double position, double radius, QRgb color)
 	addItem(fitItem);
 }
 
-void OpticsScene::OpticsBenchFitsRemoved(int index, int count)
+void OpticsScene::onOpticsBenchFitsRemoved(int index, int count)
 {
 	Q_UNUSED(count);
 	/// @todo with more houskeeping in OpticsScene::OpticsBenchFitDataChanged this will not work any more
-	OpticsBenchFitDataChanged(index);
+	onOpticsBenchFitDataChanged(index);
 }
 
-void OpticsScene::OpticsBenchFitDataChanged(int index)
+void OpticsScene::onOpticsBenchFitDataChanged(int index)
 {
 	Q_UNUSED(index);
 
@@ -211,14 +213,14 @@ void OpticsScene::OpticsBenchFitDataChanged(int index)
 		m_fitItems.removeLast();
 	}
 
-	for (int index = 0; index < m_bench.nFit(); index++)
+	for (int index = 0; index < m_bench->nFit(); index++)
 	{
-		Fit& fit = m_bench.fit(index);
-		for (int i = 0; i < fit.size(); i++)
-			if (fit.value(i) != 0.)
+		Fit* fit = m_bench->fit(index);
+		for (int i = 0; i < fit->size(); i++)
+			if (fit->value(i) != 0.)
 			{
-				addFitPoint(fit.position(i), -fit.radius(i), fit.color());
-				addFitPoint(fit.position(i),  fit.radius(i), fit.color());
+				addFitPoint(fit->position(i), -fit->radius(i), fit->color());
+				addFitPoint(fit->position(i),  fit->radius(i), fit->color());
 			}
 	}
 }
@@ -259,14 +261,15 @@ void OpticsView::adjustRange()
 	if ((m_horizontalRange > scene()->width()) || (m_horizontalRange == 0.))
 		m_horizontalRange = scene()->width();
 
-	if ((m_verticalRange > scene()->height()) || (m_verticalRange == 0.))
-		m_verticalRange = scene()->height();
+//	if ((m_verticalRange > scene()->height()) || (m_verticalRange == 0.))
+//		m_verticalRange = scene()->height();
 
-	if ((m_horizontalRange == 0.) || (m_verticalRange == 0.) || (width() == 0.) || (height() == 0.))
+	if ((m_horizontalRange == 0.) /*|| (m_verticalRange == 0.)*/ || (width() == 0.) || (height() == 0.))
 		return;
 
+	double scale = width()/m_horizontalRange;
 	QMatrix scaling = matrix();
-	scaling.setMatrix(width()/m_horizontalRange, scaling.m12(), scaling.m21(), height()/m_verticalRange, scaling.dx(), scaling.dy());
+	scaling.setMatrix(scale, scaling.m12(), scaling.m21(), scale, scaling.dx(), scaling.dy());
 	setMatrix(scaling);
 
 	m_opticsViewProperties->setViewWidth(m_horizontalRange);
@@ -384,7 +387,7 @@ void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 /////////////////////////////////////////////////
 // OpticsItem class
 
-OpticsItem::OpticsItem(const Optics* optics, OpticsBench& bench)
+OpticsItem::OpticsItem(const Optics* optics, OpticsBench* bench)
 	: QGraphicsItem()
 	, m_optics(optics)
 	, m_bench(bench)
@@ -426,7 +429,7 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 			newPos.setX(qMin(rect.right(), qMax(newPos.x(), rect.left())));
 		newPos.setY(0.);
 		// Propose the new position
-		m_bench.setOpticsPosition(m_bench.opticsIndex(m_optics), newPos.x());
+		m_bench->setOpticsPosition(m_bench->opticsIndex(m_optics), newPos.x());
 		// Adjust the new position to what the bench decided in last
 		newPos.setX(m_optics->position());
 		return newPos;
@@ -536,33 +539,32 @@ BeamItem::BeamItem(const Beam* beam)
 	setZValue(0.);
 }
 
-void BeamItem::setLeftBound(double leftBound)
+void BeamItem::updateTransform()
 {
-	prepareGeometryChange();
-	m_leftBound = leftBound;
-}
+	Q_ASSERT(beam()->origin().size() == 2);
 
-void BeamItem::setRightBound(double rightBound)
-{
+	resetTransform();
+	setPos(beam()->origin()[0], beam()->origin()[1]);
+	rotate(-beam()->angle()*180./M_PI);
+	scale(1., 100.);
 	prepareGeometryChange();
-	m_rightBound = rightBound;
 }
 
 QRectF BeamItem::boundingRect() const
 {
 	QRectF result = scene()->sceneRect();
-	result.setLeft(m_leftBound);
-	result.setRight(m_rightBound);
+	result.setLeft(m_beam->start());
+	result.setRight(m_beam->stop());
 	return result;
 }
 
 void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
 {
-	if (start < m_leftBound)
-		start = m_leftBound;
+	if (start < m_beam->start())
+		start = m_beam->start();
 
-	if (stop > m_rightBound)
-		stop = m_rightBound;
+	if (stop > m_beam->stop())
+		stop = m_beam->stop();
 
 	if (start >= stop)
 		return;
@@ -604,13 +606,13 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		QPolygonF beamPolygonUp, beamPolygonDown;
 
 		// Construct the upper part of the beam
-		double nextLeft, left = m_leftBound;
+		double nextLeft, left = m_beam->start();
 		drawSegment(left, nextLeft = waistPosition - 5.*rayleigh, horizontalScale, 1,  beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition - rayleigh,    horizontalScale, 10, beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition + rayleigh,    horizontalScale, 20, beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition + 5.*rayleigh, horizontalScale, 10, beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = m_rightBound,                horizontalScale, 1,  beamPolygonUp); left = nextLeft;
-		beamPolygonUp.append(QPointF(m_rightBound, m_beam->radius(m_rightBound)));
+		drawSegment(left, nextLeft = m_beam->stop(),                horizontalScale, 1,  beamPolygonUp); left = nextLeft;
+		beamPolygonUp.append(QPointF(m_beam->stop(), m_beam->radius(m_beam->stop())));
 
 		// Mirror the upper part to make the lower part
 		for (int i = beamPolygonUp.size() - 1; i >= 0; i--)
@@ -628,15 +630,15 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	// The waist is not pixel resolved
 	else
 	{
-		double sgn = sign((m_rightBound - waistPosition)*(m_leftBound - waistPosition));
-		double rightRadius = m_beam->radius(m_rightBound);
-		double leftRadius = m_beam->radius(m_leftBound);
+		double sgn = sign((m_beam->stop() - waistPosition)*(m_beam->start() - waistPosition));
+		double rightRadius = m_beam->radius(m_beam->stop());
+		double leftRadius = m_beam->radius(m_beam->start());
 
 		QPolygonF ray;
-		ray << QPointF(m_leftBound, leftRadius)
-			<< QPointF(m_rightBound, sgn*rightRadius)
-			<< QPointF(m_rightBound, -sgn*rightRadius)
-			<< QPointF(m_leftBound, -leftRadius);
+		ray << QPointF(m_beam->start(), leftRadius)
+			<< QPointF(m_beam->stop(), sgn*rightRadius)
+			<< QPointF(m_beam->stop(), -sgn*rightRadius)
+			<< QPointF(m_beam->start(), -leftRadius);
 		painter->drawConvexPolygon(ray);
 	}
 

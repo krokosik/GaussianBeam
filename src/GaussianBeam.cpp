@@ -24,13 +24,25 @@
 
 using namespace std;
 
-Beam::Beam(double waist, double waistPosition, double wavelength, double index, double M2)
-	: m_waist(waist)
-	, m_waistPosition(waistPosition)
-	, m_wavelength(wavelength)
-	, m_index(index)
-	, m_M2(M2)
+Beam::Beam()
 {
+	init();
+}
+
+Beam::Beam(double wavelength)
+{
+	init();
+	m_wavelength = wavelength;
+}
+
+Beam::Beam(double waist, double waistPosition, double wavelength, double index, double M2)
+{
+	init();
+	m_waist = waist;
+	m_waistPosition = waistPosition;
+	m_wavelength = wavelength;
+	m_index = index;
+	m_M2 = M2;
 }
 
 Beam::Beam(const complex<double>& q, double z, double wavelength, double index, double M2)
@@ -38,9 +50,24 @@ Beam::Beam(const complex<double>& q, double z, double wavelength, double index, 
 	, m_index(index)
 	, m_M2(M2)
 {
-	const double z0 = q.imag();
-	m_waist = sqrt(z0*wavelength*m_M2/(m_index*M_PI));
-	m_waistPosition = z - q.real();
+	init();
+	m_wavelength = wavelength;
+	m_index = index;
+	m_M2 = M2;
+	setQ(q, z);
+}
+
+void Beam::init()
+{
+	m_wavelength = 0.;
+	m_waist = 0.;
+	m_waistPosition = 0.;
+	m_index = 1.;
+	m_M2 = 1.;
+	m_angle = 0.;
+	m_start = 0.;
+	m_stop = 0.;
+	m_origin = vector<double>(2, 0.);
 }
 
 double Beam::divergence() const
@@ -96,9 +123,26 @@ double Beam::gouyPhase(double z) const
 	return atan(zred(z));
 }
 
+void Beam::setQ(complex<double> q, double z)
+{
+	setRayleigh(q.imag());
+	setWaistPosition(z - q.real());
+}
+
 complex<double> Beam::q(double z) const
 {
 	return complex<double>(z - waistPosition(), rayleigh());
+}
+
+void Beam::rotate(double pivot, double angle)
+{
+	double l = 2.*pivot*sin(angle/2.);
+
+	m_origin[0] += l*sin(m_angle + angle/2.);
+	m_origin[1] += l*cos(m_angle + angle/2.);
+
+
+	m_angle += angle;
 }
 
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)

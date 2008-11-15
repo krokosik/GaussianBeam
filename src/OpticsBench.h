@@ -28,43 +28,17 @@
 #include <list>
 #include <map>
 
-class OpticsBench;
-
-/**
-* OpticsBenchNotify. Inherit from this class and register to the bench
-* using OpticsBench::registerNotify(this) if you want to
-* be notified of optics bench change events.
-* Upon registration, (almost) all notifications are called for initilization
-*/
-class OpticsBenchNotify
-{
-public:
-	/// Constructor
-	OpticsBenchNotify(OpticsBench& opticsBench);
-	/// Called when the wavevelength changes
-	virtual void OpticsBenchWavelengthChanged() {};
-	/// Called when Optics @p index is added
-	virtual void OpticsBenchOpticsAdded(int /*index*/) {};
-	virtual void OpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {};
-	virtual void OpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {};
-	virtual void OpticsBenchTargetBeamChanged() {};
-	virtual void OpticsBenchBoundariesChanged() {};
-	virtual void OpticsBenchFitAdded(int /*index*/) {};
-	virtual void OpticsBenchFitsRemoved(int /*index*/, int /*count*/) {};
-	virtual void OpticsBenchFitDataChanged(int /*index*/) {};
-
-protected:
-	/// A reference to the OpticsBench to which we register;
-	OpticsBench& m_bench;
-};
+#include <QObject>
 
 /**
 * OpticsBench
 */
-class OpticsBench
+class OpticsBench : public QObject
 {
+Q_OBJECT
+
 public:
-	OpticsBench();
+	OpticsBench(QObject* parent = 0);
 	~OpticsBench();
 
 public:
@@ -131,23 +105,13 @@ public:
 
 	/// Cavity
 	Cavity& cavity() { return m_cavity; }
-	/**
-	* If you modified a Cavity class obtained by the cavity() function, call this
-	* function to notify this modification
-	*/
-	void notifyCavityChange();
 
 	/// Waist fit
 	int nFit() const;
-	Fit& addFit(unsigned int index, int nData = 0);
-	Fit& fit(unsigned int index);
+	Fit* addFit(unsigned int index, int nData = 0);
+	Fit* fit(unsigned int index);
 	void removeFit(unsigned int index);
 	void removeFits(unsigned int startIndex, int n);
-	/**
-	* If you modified a Fit class obtained by the fit() function, call this
-	* function to notify this modification
-	*/
-	void notifyFitChange(unsigned int index);
 
 	/// Magic waist
 	const TargetBeam* targetBeam() const { return &m_targetBeam; }
@@ -155,16 +119,26 @@ public:
 	bool magicWaist();
 	bool localOptimum();
 
-	/// Register modification callback
-	void registerNotify(OpticsBenchNotify* notify);
-
 	/// Debugging
 	void printTree();
+
+signals:
+	void wavelengthChanged();
+	void opticsAdded(int index);
+	void opticsRemoved(int index, int count);
+	void dataChanged(int startOptics, int endOptics);
+	void targetBeamChanged();
+	void boundariesChanged();
+	void fitAdded(int index);
+	void fitsRemoved(int index, int count);
+	void fitDataChanged(int index);
+
+private slots:
+	void onFitChanged();
 
 private:
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
-	void emitChange(int startOptics, int endOptics) const;
 
 private:
 	double m_wavelength;
@@ -176,7 +150,7 @@ private:
 	double m_leftBoundary, m_rightBoundary;
 
 	/// Waist fit
-	std::vector<Fit> m_fits;
+	std::vector<Fit*> m_fits;
 
 	/// Magic waist
 	TargetBeam m_targetBeam;
@@ -187,9 +161,6 @@ private:
 	/// Optics naming
 	std::map<OpticsType, int> m_lastOpticsName;
 	std::map<OpticsType, std::string> m_opticsPrefix;
-
-	/// Callback
-	std::list<OpticsBenchNotify*> m_notifyList;
 
 	/// @todo it might be possible to remove this
 	friend class OpticsFunction;

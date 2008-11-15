@@ -48,6 +48,9 @@ Optics::~Optics()
 	relativeUnlock();
 }
 
+/////////////////////////////////////////////////
+// Locking functions
+
 void Optics::setAbsoluteLock(bool absoluteLock)
 {
 	if (absoluteLock)
@@ -58,7 +61,7 @@ void Optics::setAbsoluteLock(bool absoluteLock)
 
 bool Optics::relativeLockedTo(const Optics* const optics) const
 {
-	return relativeLockRootConst()->isRelativeLockDescendant(optics);
+	return relativeLockRoot()->isRelativeLockDescendant(optics);
 }
 
 bool Optics::relativeLockTo(Optics* optics)
@@ -95,12 +98,12 @@ Optics* Optics::relativeLockRoot()
 		return m_relativeLockParent->relativeLockRoot();
 }
 
-const Optics* Optics::relativeLockRootConst() const
+const Optics* Optics::relativeLockRoot() const
 {
 	if (!m_relativeLockParent)
 		return this;
 	else
-		return m_relativeLockParent->relativeLockRootConst();
+		return m_relativeLockParent->relativeLockRoot();
 }
 
 bool Optics::isRelativeLockDescendant(const Optics* const optics) const
@@ -150,7 +153,7 @@ CreateBeam::CreateBeam(double waist, double waistPosition, double index, string 
 
 void CreateBeam::setWaist(double waist)
 {
-	if (waist != 0.)
+	if (waist > 0.)
 		m_waist = waist;
 }
 
@@ -195,6 +198,23 @@ void Lens::setFocal(double focal)
 }
 
 /////////////////////////////////////////////////
+// FlatMirror class
+
+Beam FlatMirror::image(const Beam& beam) const
+{
+	Beam result = ABCD::image(beam);
+	result.rotate(position(), 2.*angle());
+	return result;
+}
+
+Beam FlatMirror::antecedent(const Beam& beam) const
+{
+	Beam result = ABCD::antecedent(beam);
+	result.rotate(position(), -2.*angle());
+	return result;
+}
+
+/////////////////////////////////////////////////
 // CurvedMirror class
 
 void CurvedMirror::setCurvatureRadius(double curvatureRadius)
@@ -224,22 +244,28 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 /////////////////////////////////////////////////
 // ABCD class
 
-ABCD::ABCD(OpticsType type, double position, std::string name)
-	: Optics(type, true/*Is ABCD*/, position, name)
-{}
-
 Beam ABCD::image(const Beam& inputBeam) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-	return Beam(qOut, position() + width(), inputBeam.wavelength(), inputBeam.index()*indexJump(), inputBeam.M2());
+
+	Beam outputBeam = inputBeam;
+	outputBeam.setIndex(inputBeam.index()*indexJump());
+	outputBeam.setQ(qOut, position() + width());
+
+	return outputBeam;
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam) const
 {
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
-	return Beam(qIn, position(), outputBeam.wavelength(), outputBeam.index()/indexJump(), outputBeam.M2());
+
+	Beam inputBeam = outputBeam;
+	inputBeam.setIndex(outputBeam.index()/indexJump());
+	inputBeam.setQ(qIn, position());
+
+	return inputBeam;
 }
 
 bool ABCD::stabilityCriterion1() const

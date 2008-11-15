@@ -20,6 +20,7 @@
 #define GAUSSIANBEAM_H
 
 #include <complex>
+#include <vector>
 
 namespace Property
 {
@@ -35,8 +36,10 @@ enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyP
 class Beam
 {
 public:
-	/// Default constructor. Produced an invalid Beam. @todo this should disappear
-	Beam() {}
+	/// Default constructor
+	Beam();
+	/// Constructor
+	Beam(double wavelength);
 	/// Constructor
 	Beam(double waist, double waistPosition, double wavelength, double index = 1., double M2 = 1.);
 	/// Construct a Gaussian beam from a given complex beam parapeter @p q at position @p z
@@ -44,6 +47,7 @@ public:
 
 public:
 
+	// Intrinsic properties
 	/// @return the waist position
 	double waistPosition() const { return m_waistPosition; }
 	/// Set the waist position to @p waistPosition
@@ -86,6 +90,24 @@ public:
 	double gouyPhase(double z) const;
 	/// @return the beam complex parameter \f$ q = (z-z_w) + iz_0 \f$ at position @p z
 	std::complex<double> q(double z) const;
+	/// Set the complex beam parameter
+	void setQ(std::complex<double> q, double z);
+
+	// Geometrical properties
+	/// @return the start of the beam along the propagation axis, from the origin
+	double start() const { return m_start; }
+	/// Set the start of the beam along the propagation axis
+	void setStart(double start) { m_start = start; }
+	/// @return the stop of the beam along the propagation axis, from the origin
+	double stop() const { return m_stop; }
+	/// Set the end of the beam along the propagation axis
+	void setStop(double stop) { m_stop = stop; }
+	/// Rotate the beam by an angle @p angle around position @p pivot
+	void rotate(double pivot, double angle);
+	/// @return the position for the origin of this beam in the plane
+	std::vector<double> origin() const { return m_origin; }
+	/// @return the angle between the wave vector and a common basis axis.
+	double angle() const { return m_angle; }
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
@@ -97,13 +119,20 @@ public:
 
 private:
 	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }
+	void init();
 
 private:
+	// Optical properties
 	double m_waist;
 	double m_waistPosition;
 	double m_wavelength;
 	double m_index;
 	double m_M2;
+	// Geometrical properties
+	std::vector<double> m_origin;
+	double m_angle;
+	double m_start;
+	double m_stop;
 };
 
 std::ostream& operator<<(std::ostream& out, const Beam& beam);

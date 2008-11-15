@@ -34,9 +34,9 @@
 class CornerWidget;
 class TablePropertySelector;
 
-class GaussianBeamWindow : public QMainWindow, private OpticsBenchNotify, private Ui::GaussianBeamWindow
+class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	GaussianBeamWindow(const QString& fileName = QString());
@@ -61,12 +61,10 @@ protected slots:
 	void wavelengthSpinBox_valueChanged(double wavelength);
 	void openRecentFile();
 
+	void onOpticsBenchWavelengthChanged();
+
 protected:
 	virtual void closeEvent(QCloseEvent* event);
-
-// optics bench inherited virtual functions
-private:
-	virtual void OpticsBenchWavelengthChanged();
 
 private:
 	void newFile();
@@ -97,12 +95,13 @@ private:
 	void parseXml10(const QDomElement& element);
 
 private:
+	OpticsBench* m_bench;
+
 	QToolBar* m_fileToolBar;
 	QMenu*    m_addOpticsMenu;
 	QMenu*    m_recentFilesMenu;
 	static const int m_maxRecentFiles = 5;
 	QAction*  m_recentFileAction[m_maxRecentFiles];
-	OpticsBench m_globalBench;
 	QDoubleSpinBox* m_wavelengthSpinBox;
 	GaussianBeamWidget* m_widget;
 	GaussianBeamModel* m_model;

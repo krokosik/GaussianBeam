@@ -30,16 +30,9 @@
 using namespace std;
 
 /////////////////////////////////////////////////
-// OpticsBenchNotify
-
-OpticsBenchNotify::OpticsBenchNotify(OpticsBench& opticsBench)
-	: m_bench(opticsBench)
-{}
-
-/////////////////////////////////////////////////
 // OpticsBench
 
-OpticsBench::OpticsBench()
+OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
 {
 	m_opticsPrefix[LensType]            = "L";
 	m_opticsPrefix[FlatMirrorType]      = "M";
@@ -49,15 +42,15 @@ OpticsBench::OpticsBench()
 	m_opticsPrefix[GenericABCDType]     = "G";
 	m_opticsPrefix[DielectricSlabType]  = "D";
 
-	m_optics.clear();
-	addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
-	m_optics[0]->setAbsoluteLock(true);
-
 	m_wavelength = 461e-9;
 	m_leftBoundary = -0.1;
 	m_rightBoundary = 0.7;
 
-	m_fits.push_back(Fit(3));
+	m_optics.clear();
+	addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
+	m_optics[0]->setAbsoluteLock(true);
+
+	addFit(0, 3);
 }
 
 OpticsBench::~OpticsBench()
@@ -74,11 +67,6 @@ OpticsBench::~OpticsBench()
 /////////////////////////////////////////////////
 // Cavity
 
-void OpticsBench::notifyCavityChange()
-{
-	cerr << m_cavity.eigenBeam(wavelength(), 1.);
-}
-
 /////////////////////////////////////////////////
 // Fit
 
@@ -87,24 +75,21 @@ int OpticsBench::nFit() const
 	return m_fits.size();
 }
 
-Fit& OpticsBench::addFit(unsigned int index, int nData)
+Fit* OpticsBench::addFit(unsigned int index, int nData)
 {
-	m_fits.insert(m_fits.begin() + index, Fit(nData));
-
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchFitAdded(index);
-
-	return m_fits[index];
+	Fit* fit = new Fit(nData, this);
+	m_fits.insert(m_fits.begin() + index, fit);
+	connect(fit, SIGNAL(changed()), this, SLOT(onFitChanged()));
+	emit(fitAdded(index));
+	return fit;
 }
 
-Fit& OpticsBench::fit(unsigned int index)
+Fit* OpticsBench::fit(unsigned int index)
 {
-	static Fit defaultFit;
-
 	if (index < m_fits.size())
 		return m_fits[index];
 
-	return defaultFit;
+	return 0;
 }
 
 void OpticsBench::removeFit(unsigned int index)
@@ -115,35 +100,21 @@ void OpticsBench::removeFit(unsigned int index)
 void OpticsBench::removeFits(unsigned int startIndex, int n)
 {
 	m_fits.erase(m_fits.begin() + startIndex, m_fits.begin() + startIndex + n);
-
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchFitsRemoved(startIndex, n);
+	emit(fitsRemoved(startIndex, n));
 }
 
-void OpticsBench::notifyFitChange(unsigned int index)
+void OpticsBench::onFitChanged()
 {
-	cerr << "OpticsBench::notifyFitChange" << endl;
-	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchFitDataChanged(index);
-}
+	int index = 0;
 
-/////////////////////////////////////////////////
-// Register & notify
+	for (vector<Fit*>::iterator it = m_fits.begin(); it != m_fits.end(); it++)
+		if ((*it) == sender())
+		{
+			index = it - m_fits.begin();
+			break;
+		}
 
-void OpticsBench::registerNotify(OpticsBenchNotify* notify)
-{
-	m_notifyList.push_back(notify);
-
-	notify->OpticsBenchWavelengthChanged();
-	notify->OpticsBenchBoundariesChanged();
-
-	for (int i = 0; i < nOptics(); i++)
-		notify->OpticsBenchOpticsAdded(i);
-
-	for (int i = 0; i < nFit(); i++)
-		notify->OpticsBenchFitAdded(i);
-
-	///@todo call all the other notifications ?
+	emit(fitDataChanged(index));
 }
 
 /////////////////////////////////////////////////
@@ -156,8 +127,7 @@ void OpticsBench::setWavelength(double wavelength)
 	setTargetBeam(m_targetBeam);
 	computeBeams();
 
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchWavelengthChanged();
+	emit(wavelengthChanged());
 }
 
 void OpticsBench::setLeftBoundary(double leftBoundary)
@@ -165,8 +135,10 @@ void OpticsBench::setLeftBoundary(double leftBoundary)
 	if (leftBoundary < m_rightBoundary)
 		m_leftBoundary = leftBoundary;
 
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchBoundariesChanged();
+	if (nOptics() > 0)
+		m_beams[0]->setStart(m_leftBoundary);
+
+	emit(boundariesChanged());
 }
 
 void OpticsBench::setRightBoundary(double rightBoundary)
@@ -174,8 +146,10 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 	if (rightBoundary > m_leftBoundary)
 		m_rightBoundary = rightBoundary;
 
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchBoundariesChanged();
+	if (nOptics() > 0)
+		m_beams[nOptics()-1]->setStop(m_rightBoundary);
+
+	emit(boundariesChanged());
 }
 
 /////////////////////////////////////////////////
@@ -195,11 +169,8 @@ int OpticsBench::opticsIndex(const Optics* optics) const
 void OpticsBench::addOptics(Optics* optics, int index)
 {
 	m_optics.insert(m_optics.begin() + index,  optics);
-	m_beams.insert(m_beams.begin() + index, new Beam());
-
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchOpticsAdded(index);
-
+	m_beams.insert(m_beams.begin() + index, new Beam(wavelength()));
+	emit(opticsAdded(index));
 	computeBeams(index);
 }
 
@@ -244,9 +215,7 @@ void OpticsBench::removeOptics(int index, int count)
 		m_beams.erase(m_beams.begin() + index);
 	}
 
-	for (std::list<OpticsBenchNotify*>::iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchOpticsRemoved(index, count);
-
+	emit(opticsRemoved(index, count));
 	computeBeams(index);
 }
 
@@ -272,7 +241,7 @@ void OpticsBench::lockTo(int index, string opticsName)
 			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	emitChange(0, nOptics()-1);
+	emit(dataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::lockTo(int index, int id)
@@ -283,7 +252,7 @@ void OpticsBench::lockTo(int index, int id)
 			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	emitChange(0, nOptics()-1);
+	emit(dataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::printTree()
@@ -310,7 +279,7 @@ void OpticsBench::setOpticsName(int index, std::string name)
 			return;
 
 	m_optics[index]->setName(name);
-	emitChange(0, nOptics()-1);
+	emit(dataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::opticsPropertyChanged(int /*index*/)
@@ -341,8 +310,7 @@ void OpticsBench::setBeam(const Beam& beam, int index)
 void OpticsBench::setTargetBeam(const TargetBeam& beam)
 {
 	m_targetBeam = beam;
-	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchTargetBeamChanged();
+	emit(targetBeamChanged());
 }
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
@@ -350,28 +318,37 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	if (m_optics.size() == 0)
 		return;
 
-	Beam beam;
-
 	if (backward)
 	{
-		beam = *m_beams[changedIndex];
 		for (int i = changedIndex + 1; i < nOptics(); i++)
-			*m_beams[i] = beam = m_optics[i]->image(beam);
-		beam = *m_beams[changedIndex];
+			*m_beams[i] = m_optics[i]->image(*m_beams[i-1]);
 		for (int i = changedIndex - 1; i >= 0; i--)
-			*m_beams[i] = beam = m_optics[i+1]->antecedent(beam);
+			*m_beams[i] = m_optics[i+1]->antecedent(*m_beams[i+1]);
 		CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
-		createBeam->setBeam(beam);
+		createBeam->setBeam(*m_beams[0]);
 	}
 	else
 	{
 		if (changedIndex == 0)
-			beam.setWavelength(wavelength());
-		else
-			beam = *m_beams[changedIndex - 1];
+		{
+			Beam beam(wavelength());
+			*m_beams[0] = m_optics[0]->image(beam);
+		}
 
-		for (int i = changedIndex; i < nOptics(); i++)
-			*m_beams[i] = beam = m_optics[i]->image(beam);
+		for (int i = ::max(changedIndex, 1); i < nOptics(); i++)
+			*m_beams[i] = m_optics[i]->image(*m_beams[i-1]);
+	}
+
+	for (int i = 0; i < nOptics(); i++)
+	{
+		if (i == 0)
+			m_beams[i]->setStart(leftBoundary());
+		else
+			m_beams[i]->setStart(m_optics[i]->position() + m_optics[i]->width());
+		if (i == nOptics()-1)
+			m_beams[i]->setStop(rightBoundary());
+		else
+			m_beams[i]->setStop(m_optics[i+1]->position());
 	}
 
 	OpticsFunction function(m_optics, m_wavelength);
@@ -380,13 +357,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 
 	m_sensitivity = function.curvature(function.currentPosition())/2.;
 
-	emitChange(changedIndex, nOptics()-1);
-}
-
-void OpticsBench::emitChange(int startOptics, int endOptics) const
-{
-	for (std::list<OpticsBenchNotify*>::const_iterator it = m_notifyList.begin(); it != m_notifyList.end(); it++)
-		(*it)->OpticsBenchDataChanged(startOptics, endOptics);
+	emit(dataChanged(changedIndex, nOptics()-1));
 }
 
 /////////////////////////////////////////////////

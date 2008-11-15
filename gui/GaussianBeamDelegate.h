@@ -43,7 +43,7 @@ public:
 
 class PropertyEditor : public QWidget
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	PropertyEditor(QList<EditorProperty>& properties, QWidget* parent = 0);
@@ -59,10 +59,10 @@ private:
 
 class GaussianBeamDelegate : public QItemDelegate
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
-	GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench& bench);
+	GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench* bench);
 
 public:
 	QWidget *createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const;
@@ -73,7 +73,7 @@ public:
 
 private:
 	GaussianBeamModel* m_model;
-	const OpticsBench& m_bench;
+	const OpticsBench* m_bench;
 };
 
 #endif

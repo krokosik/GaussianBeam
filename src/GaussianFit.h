@@ -23,6 +23,8 @@
 
 #include <vector>
 
+#include <QObject>
+
 /**
 * Type of data measured by the user for beam fitting
 */
@@ -33,11 +35,13 @@ enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 * It fits the given data with a linear fit, and finds the only hyperbola
 * that is tangent to the resulting line
 */
-class Fit
+class Fit : public QObject
 {
+Q_OBJECT
+
 public:
 	/// Constructor
-	Fit(int nData = 0, std::string name = "");
+	Fit(int nData = 0, QObject* parent = 0);
 
 public:
 	/// @return the number of points in the fit
@@ -47,15 +51,15 @@ public:
 	/// @return the user name given to the fit
 	std::string name() const { return m_name; }
 	/// Set the user name of the fit
-	void setName(std::string name) { m_name = name; }
+	void setName(std::string name);
 	/// @return the type of measured data
 	FitDataType dataType() const { return m_dataType; }
 	/// Set the type of mesured data
-	void setDataType(FitDataType dataType) { m_dataType = dataType; }
+	void setDataType(FitDataType dataType);
 	/// @return the RGB color associated to the fit
 	unsigned int color() const { return m_color; }
 	/// Set the RGB color accociated to the fit
-	void setColor(unsigned int color) { m_color = color; }
+	void setColor(unsigned int color);
 	/// @return the position of date number @p index
 	double position(unsigned int index) const { return m_positions[index]; }
 	/// @return the measured value number @p index
@@ -75,12 +79,14 @@ public:
 	/// @return the residue of the non-linear fit
 	double residue(double wavelength) const;
 
+signals:
+	void changed();
+
 private:
 	/// Actually o the fit
 	void fitBeam(double wavelength) const;
 	/// Non linear fit functions
 	Beam nonLinearFit(const Beam& guessBeam, double* residue) const;
-	static void lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, int iflag, int iter, int nfev);
 	static void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info);
 	void error(double* par, double* fvec) const;
 	/// Linear fit functions

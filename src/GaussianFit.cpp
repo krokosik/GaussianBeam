@@ -29,16 +29,12 @@ int Fit::m_fitCount = 0;
 
 using namespace std;
 
-Fit::Fit(int nData, string name)
+Fit::Fit(int nData, QObject* parent) : QObject(parent)
 {
-	if (name.empty())
-	{
-		stringstream stream;
-		stream << "Fit" << m_fitCount++ << ends;
-		stream >> name;
-	}
+	stringstream stream;
+	stream << "Fit" << m_fitCount++ << ends;
+	stream >> m_name;
 
-	m_name = name;
 	m_dirty = true;
 	m_lastWavelength = 0.;
 	/// @todo change this default to Radius_e2
@@ -47,6 +43,24 @@ Fit::Fit(int nData, string name)
 
 	for (int i = 0; i < nData; i++)
 		addData(0., 0.);
+}
+
+void Fit::setName(std::string name)
+{
+	m_name = name;
+	emit(changed());
+}
+
+void Fit::setColor(unsigned int color)
+{
+	m_color = color;
+	emit(changed());
+}
+
+void Fit::setDataType(FitDataType dataType)
+{
+	m_dataType = dataType;
+	emit(changed());
 }
 
 int Fit::nonZeroSize() const
@@ -71,6 +85,8 @@ void Fit::setData(unsigned int index, double position, double value)
 	m_positions[index] = position;
 	m_values[index] = value;
 	m_dirty = true;
+
+	emit(changed());
 }
 
 void Fit::addData(double position, double value)
@@ -78,12 +94,16 @@ void Fit::addData(double position, double value)
 	m_positions.push_back(position);
 	m_values.push_back(value);
 	m_dirty = true;
+
+	emit(changed());
 }
 
 void Fit::removeData(unsigned int index)
 {
 	m_positions.erase(m_positions.begin() + index);
 	m_values.erase(m_values.begin() + index);
+
+	emit(changed());
 }
 
 double Fit::radius(unsigned int index) const
@@ -107,6 +127,8 @@ void Fit::clear()
 	m_positions.clear();
 	m_values.clear();
 	m_dirty = true;
+
+	emit(changed());
 }
 
 const Beam& Fit::beam(double wavelength) const
@@ -146,33 +168,8 @@ void Fit::lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int
 {
 	const Fit* fit = static_cast<const Fit*>(data);
 	fit->error(par, fvec);
-	*info = *info;		// to prevent a 'unused variable' warning
+	*info = *info; m_dat = m_dat;		// to prevent a 'unused variable' warning
 	// if <parameters drifted away> { *info = -1; }
-}
-
-/**
-* @p data  for soft control of printout behaviour, add control variables to the data struct
-* @p iflag 0 (init) 1 (outer loop) 2(inner loop) -1(terminated)
-* @p iter  outer loop counter
-* @p nfev  number of calls to evaluate
-*/
-void Fit::lm_print_beam(int n_par, double *par, int m_dat, double *fvec, void *data, int iflag, int iter, int nfev)
-{
-	return;
-
-	if (iflag == 2)
-		printf("trying step in gradient direction\n");
-	else if (iflag == 1)
-		printf("determining gradient (iteration %d)\n", iter);
-	else if (iflag == 0)
-		printf("starting minimization\n");
-	else if (iflag == -1)
-		printf("terminated after %d evaluations\n", nfev);
-
-	printf("  par: ");
-	for (int i = 0; i < n_par; ++i)
-		printf(" %12g", par[i]);
-	printf(" => norm: %12g\n", lm_enorm(m_dat, fvec));
 }
 
 Beam Fit::nonLinearFit(const Beam& guessBeam, double* residue) const

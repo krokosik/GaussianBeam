@@ -60,42 +60,42 @@ bool GaussianBeamWindow::writeFile(const QString& fileName)
 
 void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
 {
-	xmlWriter.writeTextElement("wavelength", QString::number(m_bench.wavelength()));
-	xmlWriter.writeTextElement("leftBoundary", QString::number(m_bench.leftBoundary()));
-	xmlWriter.writeTextElement("rightBoundary", QString::number(m_bench.rightBoundary()));
+	xmlWriter.writeTextElement("wavelength", QString::number(m_bench->wavelength()));
+	xmlWriter.writeTextElement("leftBoundary", QString::number(m_bench->leftBoundary()));
+	xmlWriter.writeTextElement("rightBoundary", QString::number(m_bench->rightBoundary()));
 
 	xmlWriter.writeStartElement("targetBeam");
 	xmlWriter.writeAttribute("id", "0");
-		xmlWriter.writeTextElement("position", QString::number(m_bench.targetBeam()->waistPosition()));
-		xmlWriter.writeTextElement("waist", QString::number(m_bench.targetBeam()->waist()));
-		xmlWriter.writeTextElement("positionTolerance", QString::number(m_bench.targetBeam()->positionTolerance()));
-		xmlWriter.writeTextElement("waistTolerance", QString::number(m_bench.targetBeam()->waistTolerance()));
-		xmlWriter.writeTextElement("minOverlap", QString::number(m_bench.targetBeam()->minOverlap()));
-		xmlWriter.writeTextElement("overlapCriterion", QString::number(m_bench.targetBeam()->overlapCriterion()));
+		xmlWriter.writeTextElement("position", QString::number(m_bench->targetBeam()->waistPosition()));
+		xmlWriter.writeTextElement("waist", QString::number(m_bench->targetBeam()->waist()));
+		xmlWriter.writeTextElement("positionTolerance", QString::number(m_bench->targetBeam()->positionTolerance()));
+		xmlWriter.writeTextElement("waistTolerance", QString::number(m_bench->targetBeam()->waistTolerance()));
+		xmlWriter.writeTextElement("minOverlap", QString::number(m_bench->targetBeam()->minOverlap()));
+		xmlWriter.writeTextElement("overlapCriterion", QString::number(m_bench->targetBeam()->overlapCriterion()));
 	xmlWriter.writeEndElement();
 
-	for (int i = 0; i < m_bench.nFit(); i++)
+	for (int i = 0; i < m_bench->nFit(); i++)
 	{
-		Fit& fit = m_bench.fit(i);
+		Fit* fit = m_bench->fit(i);
 		xmlWriter.writeStartElement("beamFit");
 		xmlWriter.writeAttribute("id", QString::number(i));
-			xmlWriter.writeTextElement("name", fit.name().c_str());
-			xmlWriter.writeTextElement("dataType", QString::number(int(fit.dataType())));
-			xmlWriter.writeTextElement("color", QString::number(fit.color()));
-			for (int j = 0; j < fit.size(); j++)
+			xmlWriter.writeTextElement("name", fit->name().c_str());
+			xmlWriter.writeTextElement("dataType", QString::number(int(fit->dataType())));
+			xmlWriter.writeTextElement("color", QString::number(fit->color()));
+			for (int j = 0; j < fit->size(); j++)
 			{
 				xmlWriter.writeStartElement("data");
 				xmlWriter.writeAttribute("id", QString::number(j));
-					xmlWriter.writeTextElement("position", QString::number(fit.position(j)));
-					xmlWriter.writeTextElement("value",  QString::number(fit.value(j)));
+					xmlWriter.writeTextElement("position", QString::number(fit->position(j)));
+					xmlWriter.writeTextElement("value",  QString::number(fit->value(j)));
 				xmlWriter.writeEndElement();
 			}
 		xmlWriter.writeEndElement();
 	}
 
 	xmlWriter.writeStartElement("opticsList");
-	for (int i = 0; i < m_bench.nOptics(); i++)
-		writeOptics(xmlWriter, m_bench.optics(i));
+	for (int i = 0; i < m_bench->nOptics(); i++)
+		writeOptics(xmlWriter, m_bench->optics(i));
 	xmlWriter.writeEndElement();
 }
 

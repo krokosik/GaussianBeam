@@ -43,9 +43,14 @@ public:
 	* @p name name of the optics
 	*/
 	Optics(OpticsType type, bool ABCD, double position, std::string name);
-	/// Destructor
+	/**
+	* Destructor
+	*/
 	virtual ~Optics();
-	/// Duplicate the optics into a new independant class. This function can clone an optics without knowing its actual type.
+	/**
+	* Duplicate the optics into a new independant class.
+	* This function can clone an optics without knowing its actual type.
+	*/
 	virtual Optics* clone() const = 0;
 
 public:
@@ -78,6 +83,10 @@ public:
 	double width() const { return m_width; }
 	/// Set the width of the optics
 	void setWidth(double width) { m_width = width; }
+	/// @return the angle between the optics and the optics
+	double angle() const { return m_angle; }
+	/// Set the angle between the optics and the optics
+	void setAngle(double angle) { m_angle = angle; }
 	/// @return the name of the optics
 	std::string name() const { return m_name; }
 	/// Set the name of the optics
@@ -102,7 +111,7 @@ public:
 	/// Query relative lock. @return true if @p optics within the locking tree of this optics
 	bool relativeLockedTo(const Optics* const optics) const;
 	/// @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
-	bool relativeLockTreeAbsoluteLock() const { return relativeLockRootConst()->absoluteLock(); }
+	bool relativeLockTreeAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
 	/**
 	* Lock the optics to the given @p optics. Only works if @p optics is not within the locking tree of this optics.
 	* If the locking succeeds, the absolute lock is set to false.
@@ -127,17 +136,19 @@ public:
 	*/
 	void eraseLockingTree();
 
-private:
-	/// @todo this is not clean. Think...
-	Optics* relativeLockRoot();
-	const Optics* relativeLockRootConst() const;
-	/// Check if @p optics is this optics or recursively one of this optic's descendants
-	bool isRelativeLockDescendant(const Optics* const optics) const;
-	/// translate this optics and recursively its descendant by @p distance
-	void moveDescendant(double distance);
-
 protected:
 	void setType(OpticsType type) { m_type = type; }
+
+private:
+	// Return the locking tree root, const and non-const versions
+	Optics* relativeLockRoot();
+	const Optics* relativeLockRoot() const;
+	// Check if @p optics is this optics or recursively one of this optic's descendants
+	bool isRelativeLockDescendant(const Optics* const optics) const;
+	// Translate this optics and recursively its descendant by @p distance
+	void moveDescendant(double distance);
+	// Notify all registered classes
+	void notify() const;
 
 private:
 	int m_id;
@@ -145,6 +156,7 @@ private:
 	bool m_ABCD;
 	double m_position;
 	double m_width;
+	double m_angle;
 	std::string m_name;
 	bool m_absoluteLock;
 	Optics* m_relativeLockParent;
@@ -164,7 +176,8 @@ class ABCD : public Optics
 {
 public:
 	/// Constructor
-	ABCD(OpticsType type, double position, std::string name = "");
+	ABCD(OpticsType type, double position, std::string name = "")
+		: Optics(type, true/*Is ABCD*/, position, name) {}
 	/// Destructor
 	virtual ~ABCD() {}
 
@@ -340,7 +353,7 @@ public:
 /**
 * Flat mirror optics. With repsect to beam propagation, this optics
 * is the indentiy, either for beams or ABCD matrices.
-* This class is used for cavity, for instance to bound a cavity
+* This class is used for cavities, for instance to bound a cavity
 */
 class FlatMirror : public ABCD
 {
@@ -349,6 +362,10 @@ public:
 	FlatMirror(double position, std::string name = "")
 		: ABCD(FlatMirrorType, position, name) {}
 	virtual FlatMirror* clone() const { return new FlatMirror(*this); }
+
+public:
+	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam) const;
 };
 
 /**
@@ -442,7 +459,7 @@ public:
 		: ABCD(abcd)
 		, m_A(abcd.A()), m_B(abcd.B()), m_C(abcd.C()), m_D(abcd.D())
 		{ setType(GenericABCDType); }
-	/// Constructor
+	/// Full constructor
 	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "")
 		: ABCD(GenericABCDType, position, name)
 		, m_A(A), m_B(B), m_C(C), m_D(D) { setWidth(width); }

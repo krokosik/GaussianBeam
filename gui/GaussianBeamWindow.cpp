@@ -33,13 +33,16 @@
 
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	: QMainWindow()
-	, OpticsBenchNotify(m_globalBench)
 {
 	m_currentFile = QString();
 	initSaveVariables();
 
 	setupUi(this);
 	setWindowIcon(QIcon(":/images/gaussianbeam16.png"));
+
+	// Bench
+	m_bench = new OpticsBench(this);
+	connect(m_bench, SIGNAL(wavelengthChanged()), this, SLOT(onOpticsBenchWavelengthChanged()));
 
 	// Table
 	m_tableConfigWidget = new TablePropertySelector(this);
@@ -140,17 +143,15 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	connect(m_model, SIGNAL(dataChanged(const QModelIndex&, const QModelIndex&)),
 			this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
-	m_bench.registerNotify(this);
-
 	readSettings();
 
 	for (int i = 0; i < 2; i++)
-		m_bench.addOptics(LensType, m_bench.nOptics());
+		m_bench->addOptics(LensType, m_bench->nOptics());
 /*
-	Cavity& cavity = m_bench.cavity();
-	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(1)));
-	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench.optics(2)));
-	m_bench.notifyCavityChange();
+	Cavity& cavity = m_bench->cavity();
+	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench->optics(1)));
+	cavity.addOptics(dynamic_cast<const ABCD*>(m_bench->optics(2)));
+	m_bench->notifyCavityChange();
 */
 	// NOTE: this has to be the last part of the constructor
 	if (!fileName.isEmpty())
@@ -171,7 +172,7 @@ void GaussianBeamWindow::writeSettings()
 	QSettings settings;
 	settings.setValue("GaussianBeamWindow/size", size());
 	settings.setValue("GaussianBeamWindow/pos", pos());
-	settings.setValue("GaussianBeamWindow/wavelength", m_bench.wavelength());
+	settings.setValue("GaussianBeamWindow/wavelength", m_bench->wavelength());
 }
 
 void GaussianBeamWindow::readSettings()
@@ -179,7 +180,7 @@ void GaussianBeamWindow::readSettings()
 	QSettings settings;
 	resize(settings.value("GaussianBeamWindow/size", QSize(800, 600)).toSize());
 	move(settings.value("GaussianBeamWindow/pos", QPoint(100, 100)).toPoint());
-	m_bench.setWavelength(settings.value("GaussianBeamWindow/wavelength", 461e-9).toDouble());
+	m_bench->setWavelength(settings.value("GaussianBeamWindow/wavelength", 461e-9).toDouble());
 	updateRecentFileActions();
 }
 
@@ -188,12 +189,12 @@ void GaussianBeamWindow::readSettings()
 
 void GaussianBeamWindow::wavelengthSpinBox_valueChanged(double wavelength)
 {
-	m_bench.setWavelength(wavelength*Units::getUnit(UnitWavelength).multiplier());
+	m_bench->setWavelength(wavelength*Units::getUnit(UnitWavelength).multiplier());
 }
 
-void GaussianBeamWindow::OpticsBenchWavelengthChanged()
+void GaussianBeamWindow::onOpticsBenchWavelengthChanged()
 {
-	m_wavelengthSpinBox->setValue(m_bench.wavelength()*Units::getUnit(UnitWavelength).divider());
+	m_wavelengthSpinBox->setValue(m_bench->wavelength()*Units::getUnit(UnitWavelength).divider());
 }
 
 /////////////////////////////////////////////////
@@ -206,16 +207,16 @@ void GaussianBeamWindow::insertOptics(OpticsType opticsType)
 	if (index.isValid() && m_selectionModel->hasSelection())
 		row = index.row() + 1;
 
-	m_bench.addOptics(opticsType, row);
+	m_bench->addOptics(opticsType, row);
 	m_table->resizeColumnsToContents();
 }
 
 void GaussianBeamWindow::on_action_RemoveOptics_triggered()
 {
 	for (int row = m_model->rowCount() - 1; row >= 0; row--)
-		if ((m_bench.optics(row)->type() != CreateBeamType) &&
+		if ((m_bench->optics(row)->type() != CreateBeamType) &&
 			m_selectionModel->isRowSelected(row, QModelIndex()))
-			m_bench.removeOptics(row);
+			m_bench->removeOptics(row);
 }
 
 /////////////////////////////////////////////////

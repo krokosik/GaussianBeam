@@ -19,21 +19,20 @@
 #ifndef GAUSSIANBEAMMODEL_H
 #define GAUSSIANBEAMMODEL_H
 
-#include "src/OpticsBench.h"
-#include "src/GaussianBeam.h"
 #include "src/Optics.h"
 
 #include <QAbstractTableModel>
 #include <QList>
 
 class TablePropertySelector;
+class OpticsBench;
 
-class GaussianBeamModel : public QAbstractTableModel, private OpticsBenchNotify
+class GaussianBeamModel : public QAbstractTableModel
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
-	GaussianBeamModel(OpticsBench& bench, TablePropertySelector* propertySelector, QObject* parent = 0);
+	GaussianBeamModel(OpticsBench* bench, TablePropertySelector* propertySelector, QObject* parent = 0);
 	~GaussianBeamModel();
 
 	int rowCount(const QModelIndex& parent = QModelIndex()) const;
@@ -47,15 +46,16 @@ public:
 	bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex());
 	Property::Type columnContent(int column) const { return m_columns[column]; }
 
-private:
-	void OpticsBenchDataChanged(int startOptics, int endOptics);
-	void OpticsBenchOpticsAdded(int index);
-	void OpticsBenchOpticsRemoved(int index, int count);
-
 private slots:
 	void propertyWidgetModified();
 
+	void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	void onOpticsBenchOpticsAdded(int index);
+	void onOpticsBenchOpticsRemoved(int index, int count);
+
 private:
+	OpticsBench* m_bench;
+
 	QList<Property::Type> m_columns;
 	TablePropertySelector* m_propertySelector;
 };

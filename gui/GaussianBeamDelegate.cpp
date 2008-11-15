@@ -54,7 +54,7 @@ QList<QVariant> PropertyEditor::values() const
 	return properties;
 }
 
-GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench& bench)
+GaussianBeamDelegate::GaussianBeamDelegate(QObject* parent, GaussianBeamModel* model, OpticsBench* bench)
 	: QItemDelegate(parent)
 	, m_model(model)
 	, m_bench(bench)
@@ -68,7 +68,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 
 	int row = index.row();
 	Property::Type column = m_model->columnContent(index.column());
-	const Optics* optics = m_bench.optics(row);
+	const Optics* optics = m_bench->optics(row);
 
 	switch (column)
 	{
@@ -130,8 +130,8 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->addItem(tr("none"), -2);
 		editor->addItem(tr("absolute"), -1);
 		for (int i = 0; i < m_model->rowCount(); i++)
-			if ((!m_bench.optics(i)->relativeLockedTo(optics)) || (m_bench.optics(i) == optics->relativeLockParent()))
-				editor->addItem(QString::fromUtf8(m_bench.optics(i)->name().c_str()), m_bench.optics(i)->id());
+			if ((!m_bench->optics(i)->relativeLockedTo(optics)) || (m_bench->optics(i) == optics->relativeLockParent()))
+				editor->addItem(QString::fromUtf8(m_bench->optics(i)->name().c_str()), m_bench->optics(i)->id());
 		return editor;
 	}
 	case Property::OpticsCavity:
@@ -157,7 +157,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 
 	int row = index.row();
 	Property::Type column = m_model->columnContent(index.column());
-	const Optics* optics = m_bench.optics(row);
+	const Optics* optics = m_bench->optics(row);
 
 	switch (column)
 	{
@@ -226,8 +226,8 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		int lockId = -2;
 		if (optics->absoluteLock())
 			lockId = -1;
-		else if (m_bench.optics(row)->relativeLockParent())
-			lockId = m_bench.optics(row)->relativeLockParent()->id();
+		else if (m_bench->optics(row)->relativeLockParent())
+			lockId = m_bench->optics(row)->relativeLockParent()->id();
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
 		comboBox->setCurrentIndex(comboBox->findData(lockId));
 		break;

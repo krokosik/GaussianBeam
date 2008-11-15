@@ -20,7 +20,6 @@
 #define OPTICSVIEW_H
 
 #include "src/GaussianBeam.h"
-#include "src/OpticsBench.h"
 
 #include <QPoint>
 #include <QPainterPath>
@@ -38,28 +37,35 @@ class RullerSlider;
 class OpticsViewProperties;
 class StatusWidget;
 
-class OpticsScene : public QGraphicsScene, private OpticsBenchNotify
+class OpticsBench;
+class Optics;
+
+class OpticsScene : public QGraphicsScene
 {
+Q_OBJECT
+
 public:
-	OpticsScene(OpticsBench& bench, QObject* parent = 0);
+	OpticsScene(OpticsBench* bench, QObject* parent = 0);
 
 public:
 	void showTargetBeam(bool show = true);
 	bool targetBeamVisible();
 
-private:
-	void OpticsBenchDataChanged(int startOptics, int endOptics);
-	void OpticsBenchTargetBeamChanged();
-	void OpticsBenchBoundariesChanged();
-	void OpticsBenchOpticsAdded(int index);
-	void OpticsBenchOpticsRemoved(int index, int count);
-	void OpticsBenchFitDataChanged(int index);
-	void OpticsBenchFitsRemoved(int index, int count);
+private slots:
+	void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	void onOpticsBenchTargetBeamChanged();
+	void onOpticsBenchBoundariesChanged();
+	void onOpticsBenchOpticsAdded(int index);
+	void onOpticsBenchOpticsRemoved(int index, int count);
+	void onOpticsBenchFitDataChanged(int index);
+	void onOpticsBenchFitsRemoved(int index, int count);
 
 private:
 	void addFitPoint(double position, double radius, QRgb color);
 
 private:
+	OpticsBench* m_bench;
+
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
 	BeamItem* m_cavityBeamItem;
@@ -112,7 +118,7 @@ friend class OpticsScene;
 class OpticsItem : public QGraphicsItem
 {
 public:
-	OpticsItem(const Optics* optics, OpticsBench& bench);
+	OpticsItem(const Optics* optics, OpticsBench* bench);
 
 /// Inherited public functions
 public:
@@ -131,8 +137,7 @@ public:
 private:
 	const Optics* m_optics;
 	bool m_update;
-	OpticsBench& m_bench;
-
+	OpticsBench* m_bench;
 };
 
 class BeamItem : public QGraphicsItem
@@ -146,10 +151,7 @@ public:
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 public:
-	double leftBound() const { return m_leftBound; }
-	double rightBound() const { return m_rightBound; }
-	void setLeftBound(double leftBound);
-	void setRightBound(double rightBound);
+	void updateTransform();
 	const Beam* beam() const { return m_beam; }
 	void setPlainStyle(bool style = true) { m_style = style; }
 	bool auxiliary() const { return m_auxiliary; }
@@ -160,8 +162,6 @@ private:
 
 private:
 	const Beam* m_beam;
-	double m_leftBound;
-	double m_rightBound;
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;

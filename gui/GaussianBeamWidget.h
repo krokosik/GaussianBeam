@@ -20,8 +20,7 @@
 #define GAUSSIANBEAMWIDGET_H
 
 #include "ui_GaussianBeamWidget.h"
-#include "src/GaussianBeam.h"
-#include "src/OpticsBench.h"
+
 #include "src/Optics.h"
 
 #include <QWidget>
@@ -30,17 +29,18 @@ class QStandardItemModel;
 class QDomElement;
 class QAction;
 
+class OpticsBench;
 class OpticsScene;
 class GaussianBeamPlot;
 class GaussianBeamDelegate;
 class GaussianBeamModel;
 
-class GaussianBeamWidget : public QWidget, private OpticsBenchNotify, private Ui::GaussianBeamWidget
+class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamWidget
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
-	GaussianBeamWidget(OpticsBench& bench, OpticsScene* opticsScene, QWidget* parent = 0);
+	GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsScene, QWidget* parent = 0);
 	~GaussianBeamWidget();
 
 public:
@@ -74,15 +74,14 @@ protected slots:
 	void on_pushButton_FitAddRow_clicked();
 	void on_pushButton_FitRemoveRow_clicked();
 
-// optics bench inherited virtual functions
-private:
-	virtual void OpticsBenchDataChanged(int startOptics, int endOptics);
-	virtual void OpticsBenchTargetBeamChanged();
-	virtual void OpticsBenchBoundariesChanged();
-	virtual void OpticsBenchFitAdded(int index);
-	virtual void OpticsBenchFitsRemoved(int index, int count);
-	virtual void OpticsBenchFitDataChanged(int index);
-	virtual void OpticsBenchWavelengthChanged();
+	// OpticsBench notifications
+	void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	void onOpticsBenchTargetBeamChanged();
+	void onOpticsBenchBoundariesChanged();
+	void onOpticsBenchFitAdded(int index);
+	void onOpticsBenchFitsRemoved(int index, int count);
+	void onOpticsBenchFitDataChanged(int index);
+	void onOpticsBenchWavelengthChanged();
 
 private slots:
 	void fitModelChanged(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
@@ -97,8 +96,9 @@ private:
 	void writeSettings();
 
 private:
-	OpticsScene* m_opticsScene;
+	OpticsBench* m_bench;
 
+	OpticsScene* m_opticsScene;
 	QStandardItemModel* fitModel;
 	QItemSelectionModel* fitSelectionModel;
 	GaussianBeamPlot* plot;

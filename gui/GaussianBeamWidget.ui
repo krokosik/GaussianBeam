@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>254</width>
-    <height>606</height>
+    <width>274</width>
+    <height>589</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -30,14 +30,14 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page_Bench" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>234</width>
+          <width>297</width>
           <height>493</height>
          </rect>
         </property>
@@ -136,7 +136,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>234</width>
+          <width>297</width>
           <height>493</height>
          </rect>
         </property>
@@ -352,8 +352,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>234</width>
-          <height>493</height>
+          <width>235</width>
+          <height>498</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -371,7 +371,7 @@
               <string>Add a new fit</string>
              </property>
              <property name="text" >
-              <string/>
+              <string>Fit</string>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >
@@ -385,21 +385,11 @@
               <string>Delete this fit</string>
              </property>
              <property name="text" >
-              <string/>
+              <string>Fit</string>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >
                <normaloff>:/images/edit-delete.png</normaloff>:/images/edit-delete.png</iconset>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButton_RenameFit" >
-             <property name="toolTip" >
-              <string>Rename the current fit</string>
-             </property>
-             <property name="text" >
-              <string>Rename</string>
              </property>
             </widget>
            </item>
@@ -418,12 +408,46 @@
              <property name="text" >
               <string>color</string>
              </property>
+             <property name="scaledContents" >
+              <bool>true</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="wordWrap" >
+              <bool>true</bool>
+             </property>
+             <property name="margin" >
+              <number>1</number>
+             </property>
+             <property name="openExternalLinks" >
+              <bool>false</bool>
+             </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_FitColor" >
+             <property name="sizePolicy" >
+              <sizepolicy vsizetype="Minimum" hsizetype="Minimum" >
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="text" >
               <string/>
+             </property>
+             <property name="flat" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pushButton_RenameFit" >
+             <property name="toolTip" >
+              <string>Rename the current fit</string>
+             </property>
+             <property name="text" >
+              <string>Rename</string>
              </property>
             </widget>
            </item>
@@ -483,7 +507,7 @@
            <item>
             <widget class="QPushButton" name="pushButton_FitAddRow" >
              <property name="text" >
-              <string>Add row</string>
+              <string>Row</string>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >
@@ -494,7 +518,7 @@
            <item>
             <widget class="QPushButton" name="pushButton_FitRemoveRow" >
              <property name="text" >
-              <string>Remove row</string>
+              <string>Row</string>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >

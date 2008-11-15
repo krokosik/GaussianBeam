@@ -37,7 +37,7 @@ class QStatusBar;
 */
 class RullerSlider : public QScrollBar
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	RullerSlider(OpticsView* view, bool zoomScroll = false);
@@ -63,7 +63,7 @@ private:
 */
 class OpticsViewProperties : public QWidget, private Ui::OpticsViewProperties
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	OpticsViewProperties(OpticsView* view);
@@ -89,6 +89,8 @@ private:
 */
 class CornerWidget : public QWidget
 {
+Q_OBJECT
+
 public:
 	CornerWidget(QColor backgroundColor, const char*  pixmapName, QWidget* widget, QWidget* parent = 0);
 
@@ -107,7 +109,7 @@ private:
 */
 class PropertySelector : public QWidget
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	PropertySelector(QWidget* parent = 0);
@@ -143,7 +145,7 @@ private slots:
 */
 class StatusPropertySelector : public PropertySelector
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	StatusPropertySelector(QWidget* parent = 0);
@@ -154,7 +156,7 @@ public:
 */
 class TablePropertySelector : public PropertySelector
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	TablePropertySelector(QWidget* parent = 0);
@@ -165,7 +167,7 @@ public:
 */
 class StatusWidget : public QWidget
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	StatusWidget(QStatusBar* statusBar);
