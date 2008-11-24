@@ -145,6 +145,15 @@ void Beam::rotate(double pivot, double angle)
 	m_angle += angle;
 }
 
+vector<double> Beam::beamCoordinates(const vector<double>& point) const
+{
+	vector<double> result(2, 0.);
+	result[0] =  cos(m_angle)*(point[0] - m_origin[0]) + sin(m_angle)*(point[1] - m_origin[1]);
+	result[1] = -sin(m_angle)*(point[0] - m_origin[0]) + cos(m_angle)*(point[1] - m_origin[1]);
+	return result;
+}
+
+
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
 {
 //	double w1 = beam1.radius(z);

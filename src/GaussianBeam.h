@@ -31,7 +31,11 @@ enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyP
 }
 
 /**
-* This class represents a Gaussian beam, defined by its waist and position
+* @brief This class represents a Gaussian beam.
+* A beam is defined by an origin (2 coordinates in the plane), and the angle between the wave vector
+* and the canonical basis of the plane. All varying beam properties are defined according to a single coordinate
+* that corresponds to the algebraic distance between the origin and a point on the beam axis.
+* The Gaussian properties of the beam are defined by its wavelength, waist and waist position
 */
 class Beam
 {
@@ -108,6 +112,12 @@ public:
 	std::vector<double> origin() const { return m_origin; }
 	/// @return the angle between the wave vector and a common basis axis.
 	double angle() const { return m_angle; }
+	/**
+	* @return the beam coordinates of point @p point
+	* The first beam coordinate is the position of the orthogonal projection of @p point on the beam axis
+	* The second beam coordinate is the algebraic distance of @p point to the beam (negative if on the right, positive if on the left
+	*/
+	std::vector<double> beamCoordinates(const std::vector<double>& point) const;
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
