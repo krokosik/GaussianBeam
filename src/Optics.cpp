@@ -32,6 +32,7 @@ Optics::Optics(OpticsType type, bool ABCD, double position, string name)
 	, m_ABCD(ABCD)
 	, m_position(position)
 	, m_width(0.)
+	, m_angle(0.)
 	, m_name(name)
 	, m_absoluteLock(false)
 	, m_relativeLockParent(0)
@@ -202,15 +203,18 @@ void Lens::setFocal(double focal)
 
 Beam FlatMirror::image(const Beam& beam) const
 {
+	double ang = fmod(2.*angle() + M_PI, 2.*M_PI);
+
 	Beam result = ABCD::image(beam);
-	result.rotate(position(), 2.*angle());
+	result.rotate(position(), ang);
 	return result;
 }
 
 Beam FlatMirror::antecedent(const Beam& beam) const
 {
+	double ang = fmod(-2.*angle() + 5.*M_PI, 2.*M_PI);
 	Beam result = ABCD::antecedent(beam);
-	result.rotate(position(), -2.*angle());
+	result.rotate(position(), -ang);
 	return result;
 }
 

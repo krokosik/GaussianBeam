@@ -84,6 +84,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	}
 	case Property::OpticsPosition:
 	case Property::OpticsRelativePosition:
+	case Property::OpticsAngle:
 	case Property::BeamWaistPosition:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
@@ -134,6 +135,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 				editor->addItem(QString::fromUtf8(m_bench->optics(i)->name().c_str()), m_bench->optics(i)->id());
 		return editor;
 	}
+/*
 	case Property::OpticsCavity:
 	{
 		QComboBox* editor = new QComboBox(parent);
@@ -141,6 +143,7 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->addItem(tr("true"), 1);
 		return editor;
 	}
+*/
 	default:
 		return 0;
 	}
@@ -162,6 +165,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	switch (column)
 	{
 	case Property::OpticsPosition:
+	case Property::OpticsAngle:
 	case Property::OpticsRelativePosition:
 	case Property::BeamWaist:
 	case Property::BeamWaistPosition:
@@ -232,6 +236,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		comboBox->setCurrentIndex(comboBox->findData(lockId));
 		break;
 	}
+/*
 	case Property::OpticsCavity:
 	{
 		bool value = m_model->data(index, Qt::DisplayRole).toBool();
@@ -239,6 +244,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		comboBox->setCurrentIndex(comboBox->findData(value));
 		break;
 	}
+*/
 	default:
 		return QItemDelegate::setEditorData(editor, index);
 	}
@@ -255,7 +261,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	switch (column)
 	{
 	case Property::OpticsLock:
-	case Property::OpticsCavity:
+//	case Property::OpticsCavity:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
 		model->setData(index, comboBox->itemData(comboBox->currentIndex()));

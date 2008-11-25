@@ -30,6 +30,31 @@
 
 #include <QObject>
 
+/*
+* OpticsTreeItem
+class OpticsTreeItem
+{
+public:
+	OpticsTreeItem(Optics* optics, OpticsTreeItem* parent = 0);
+
+public:
+	void move(OpticsTreeItem* parent);
+	void remove();
+	Beam* axis();
+	Optics* optics() { return m_optics; }
+	Beam* image() { return m_image; }
+	void sort();
+
+private:
+	void insert(OpticsTreeItem* parent);
+
+private:
+	OpticsTreeItem* m_parent;
+	Optics* m_optics;
+	Beam* m_image;
+	OpticsTreeItem* m_child;
+};
+*/
 /**
 * OpticsBench
 */
@@ -101,6 +126,7 @@ public:
 	const Beam* beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
+	const Beam* axis(int index) const;
 	double closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
 	double sensitivity(int index) const { return m_sensitivity[index]; }
 
@@ -146,6 +172,8 @@ private:
 	std::vector<Optics*> m_optics;
 	std::vector<Beam*> m_beams;
 	std::vector<double> m_sensitivity;
+
+//	std::vector<OpticsTreeItem> m_opticsTree;
 
 	/// Exclusion area
 	double m_leftBoundary, m_rightBoundary;

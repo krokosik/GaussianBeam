@@ -29,6 +29,68 @@
 
 using namespace std;
 
+/*
+OpticsTreeItem::OpticsTreeItem(Optics* optics, OpticsTreeItem* parent)
+{
+	m_optics = optics;
+	m_parent = 0;
+	m_child = 0;
+	m_image = new Beam();
+	insert(parent);
+}
+
+Beam* OpticsTreeItem::axis()
+{
+	if (m_parent == 0)
+		return 0;
+
+	return m_parent->image();
+}
+
+void OpticsTreeItem::move(OpticsTreeItem* parent)
+{
+	if (parent == 0)
+		return;
+
+	remove();
+	insert(parent);
+}
+
+void OpticsTreeItem::insert(OpticsTreeItem* parent)
+{
+	if (parent == 0)
+		return;
+
+	// Attach old parent's child to this item
+	OpticsTreeItem* child = parent->m_child;
+	m_child = child;
+	if (child)
+		child->m_parent = this;
+
+	// Attach to the parent
+	m_parent = parent;
+	m_parent->m_child = this;
+}
+
+void OpticsTreeItem::remove()
+{
+	m_parent->m_child = m_child;
+	if (m_child)
+		m_child->m_parent = m_parent;
+
+	m_parent = 0;
+	m_child = 0;
+}
+
+void OpticsTreeItem::sort()
+{
+	double position = optics()->position();
+	for (OpticsTreeItem* newParent = parent; (newParent != 0) && (newParent->optics()->position()
+	while (
+}
+
+*/
+
 /////////////////////////////////////////////////
 // OpticsBench
 
@@ -46,9 +108,9 @@ OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
 	m_leftBoundary = -0.1;
 	m_rightBoundary = 0.7;
 
-	m_optics.clear();
-	addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
-	m_optics[0]->setAbsoluteLock(true);
+	CreateBeam* inputBeam = new CreateBeam(180e-6, 10e-3, 1., "w0");
+	inputBeam->setAbsoluteLock(true);
+	addOptics(inputBeam, 0);
 
 	addFit(0, 3);
 }
@@ -168,8 +230,14 @@ int OpticsBench::opticsIndex(const Optics* optics) const
 
 void OpticsBench::addOptics(Optics* optics, int index)
 {
+	Beam* beam = new Beam(wavelength());
+
+/*	OpticsTreeItem* parent = index < m_opticsTree.size() ? &m_opticsTree[index] : 0;
+	m_opticsTree.insert(m_opticsTree.begin() + index, OpticsTreeItem(optics, parent));
+*/
 	m_optics.insert(m_optics.begin() + index,  optics);
-	m_beams.insert(m_beams.begin() + index, new Beam(wavelength()));
+	m_beams.insert(m_beams.begin() + index, beam);
+
 	emit(opticsAdded(index));
 	computeBeams(index);
 }
@@ -311,6 +379,14 @@ void OpticsBench::setTargetBeam(const TargetBeam& beam)
 {
 	m_targetBeam = beam;
 	emit(targetBeamChanged());
+}
+
+const Beam* OpticsBench::axis(int index) const
+{
+	if (index == 0)
+		return m_beams[0];
+	else
+		return m_beams[index - 1];
 }
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
