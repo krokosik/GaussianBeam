@@ -360,6 +360,34 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	emit(dataChanged(changedIndex, nOptics()-1));
 }
 
+double OpticsBench::closestPosition(const vector<double>& point, int preferedSide) const
+{
+	double bestPosition = 0.;
+	double bestDistance = 1e300;
+
+	for (int i = 0; i < nOptics(); i++)
+	{
+		vector<double> coord = m_beams[i]->beamCoordinates(point);
+		double newDistance = coord[1];
+
+//		if (newDistance > bestDistance)
+//			continue;
+
+		if (coord[0] < m_beams[i]->start())
+			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->start()));
+		else if (coord[0] > m_beams[i]->stop())
+			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->stop()));
+
+		if (newDistance < bestDistance)
+		{
+			bestPosition = coord[0];
+			bestDistance = newDistance;
+		}
+	}
+
+	return bestPosition;
+}
+
 /////////////////////////////////////////////////
 // Magic waist
 

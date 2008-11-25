@@ -18,6 +18,8 @@
 
 #include "Utils.h"
 
+#include <cmath>
+
 using namespace std;
 
 /////////////////////////////////////////////////
@@ -71,6 +73,9 @@ vector<double> operator-(const vector<double>& v1, const vector<double>& v2)
 	return result;
 }
 
+namespace Utils
+{
+
 double scalar(const vector<double>& v1, const vector<double>& v2)
 {
 	double result = 0;
@@ -80,3 +85,15 @@ double scalar(const vector<double>& v1, const vector<double>& v2)
 
 	return result;
 }
+
+double norm(const std::vector<double>& v1)
+{
+	return sqrt(scalar(v1, v1));
+}
+
+double distance(const std::vector<double>& v1, const std::vector<double>& v2)
+{
+	return norm(v2 - v1);
+}
+
+} // namespace Utils

@@ -40,6 +40,11 @@ inline std::vector<double> operator*(double r, const std::vector<double>& v) { r
 std::vector<double> operator+(const std::vector<double>& v1, const std::vector<double>& v2);
 std::vector<double> operator-(const std::vector<double>& v1, const std::vector<double>& v2);
 
-double scalar(const std::vector<double>& v1, const std::vector<double>& v2);
+namespace Utils
+{
+	double scalar(const std::vector<double>& v1, const std::vector<double>& v2);
+	double norm(const std::vector<double>& v1);
+	double distance(const std::vector<double>& v1, const std::vector<double>& v2);
+}
 
 #endif

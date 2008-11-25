@@ -153,6 +153,13 @@ vector<double> Beam::beamCoordinates(const vector<double>& point) const
 	return result;
 }
 
+vector<double> Beam::absoluteCoordinates(double position) const
+{
+	vector<double> result = m_origin;
+	result[0] += position*cos(m_angle);
+	result[1] += position*sin(m_angle);
+	return result;
+}
 
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
 {

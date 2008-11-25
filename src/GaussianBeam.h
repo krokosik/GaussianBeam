@@ -118,6 +118,8 @@ public:
 	* The second beam coordinate is the algebraic distance of @p point to the beam (negative if on the right, positive if on the left
 	*/
 	std::vector<double> beamCoordinates(const std::vector<double>& point) const;
+	/// @return the absolute coordinates of position @p position in the beam
+	std::vector<double> absoluteCoordinates(double position) const;
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z

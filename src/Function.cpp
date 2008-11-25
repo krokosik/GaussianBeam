@@ -122,9 +122,9 @@ vector<double> Function::localExtremum(const vector<double>& x, bool min) const
 		double beta = 0.;
 		if (!oldGrad.empty())
 		{
-			//beta = scalar(grad, grad)/scalar(oldGrad, oldGrad); // Fletcher-Reeves
-			beta = scalar(grad, grad - oldGrad)/scalar(oldGrad, oldGrad); // Polak-Ribière
-			//beta = scalar(grad, grad - oldGrad)/scalar(direction, grad - oldGrad); // Hestenes-Stiefel
+			//beta = Utils::scalar(grad, grad)/Utils::scalar(oldGrad, oldGrad); // Fletcher-Reeves
+			beta = Utils::scalar(grad, grad - oldGrad)/Utils::scalar(oldGrad, oldGrad); // Polak-Ribière
+			//beta = Utils::scalar(grad, grad - oldGrad)/Utils::scalar(direction, grad - oldGrad); // Hestenes-Stiefel
 			beta = ::max(0., beta);
 		}
 		direction =  beta*direction - grad;

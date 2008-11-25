@@ -101,6 +101,7 @@ public:
 	const Beam* beam(int index) const { return m_beams[index]; }
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
+	double closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
 	double sensitivity(int index) const { return m_sensitivity[index]; }
 
 	/// Cavity
