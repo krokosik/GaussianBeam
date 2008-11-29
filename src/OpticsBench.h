@@ -75,11 +75,11 @@ public:
 	/// Set the bench wavelength to @p wavelength
 	void setWavelength(double wavelength);
 	/// @return the bench left boundary
-	double leftBoundary() { return m_leftBoundary; }
+	double leftBoundary() { return m_leftBottomBoundary[0]; }
 	/// Set the bench left boundary to @p leftBoundary
 	void setLeftBoundary(double leftBoundary);
 	/// @return the bench right boundary
-	double rightBoundary() { return m_rightBoundary; }
+	double rightBoundary() { return m_rightTopBoundary[0]; }
 	/// Set the bench right boundary to @p leftBoundary
 	void setRightBoundary(double rightBoundary);
 
@@ -127,7 +127,7 @@ public:
 	void setInputBeam(const Beam& beam);
 	void setBeam(const Beam& beam, int index);
 	const Beam* axis(int index) const;
-	double closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
+	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
 	double sensitivity(int index) const { return m_sensitivity[index]; }
 
 	/// Cavity
@@ -166,6 +166,7 @@ private slots:
 private:
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
+	void updateExtremeBeams();
 
 private:
 	double m_wavelength;
@@ -176,7 +177,8 @@ private:
 //	std::vector<OpticsTreeItem> m_opticsTree;
 
 	/// Exclusion area
-	double m_leftBoundary, m_rightBoundary;
+	std::vector<double> m_leftBottomBoundary;
+	std::vector<double> m_rightTopBoundary;
 
 	/// Waist fit
 	std::vector<Fit*> m_fits;

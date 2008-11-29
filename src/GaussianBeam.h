@@ -120,6 +120,8 @@ public:
 	std::vector<double> beamCoordinates(const std::vector<double>& point) const;
 	/// @return the absolute coordinates of position @p position in the beam
 	std::vector<double> absoluteCoordinates(double position) const;
+	/// @return the extreme positions of the intersection of the beam and a rectangle of given diagonal
+	std::vector<double> rectangleIntersection(std::vector<double> p1, std::vector<double> p2);
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z

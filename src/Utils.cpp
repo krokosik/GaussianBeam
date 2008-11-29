@@ -57,20 +57,38 @@ vector<double> operator/(const vector<double>& v, double r)
 	return result;
 }
 
+vector<double>& operator+=(vector<double>& v1, const vector<double>& v2)
+{
+	for (unsigned int i = 0; i < ::min(v1.size(), v2.size()); i++)
+		v1[i] += v2[i];
+	return v1;
+}
+
+vector<double>& operator-=(vector<double>& v1, const vector<double>& v2)
+{
+	for (unsigned int i = 0; i < ::min(v1.size(), v2.size()); i++)
+		v1[i] -= v2[i];
+	return v1;
+}
+
 vector<double> operator+(const vector<double>& v1, const vector<double>& v2)
 {
 	vector<double> result = v1;
-	for (unsigned int i = 0; i < ::min(v1.size(), v2.size()); i++)
-		result[i] += v2[i];
+	result += v2;
 	return result;
 }
 
 vector<double> operator-(const vector<double>& v1, const vector<double>& v2)
 {
 	vector<double> result = v1;
-	for (unsigned int i = 0; i < ::min(v1.size(), v2.size()); i++)
-		result[i] -= v2[i];
+	result -= v2;
 	return result;
+}
+
+vector<double>& operator<<(vector<double>& v, double r)
+{
+	v.push_back(r);
+	return v;
 }
 
 namespace Utils

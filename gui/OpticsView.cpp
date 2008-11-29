@@ -232,8 +232,9 @@ void OpticsScene::onOpticsBenchFitDataChanged(int index)
 /////////////////////////////////////////////////
 // OpticsView class
 
-OpticsView::OpticsView(QGraphicsScene* scene)
+OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 	: QGraphicsView(scene)
+	, m_bench(bench)
 {
 	setRenderHint(QPainter::Antialiasing);
 	setBackgroundBrush(Qt::white);
@@ -351,15 +352,12 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 	if (m_statusWidget)
 	{
 		QPointF position = mapToScene(event->pos());
-		position.setY(0.);
+		std::vector<double> pos(2);
+		pos[0] = position.x();
+		pos[1] = -position.y();
+		std::pair<Beam*, double> p = m_bench->closestPosition(pos);
 
-		foreach (QGraphicsItem* graphicsItem, items())
-			if (BeamItem* beamItem = dynamic_cast<BeamItem*>(graphicsItem))
-				if (beamItem->boundingRect().contains(position) && !beamItem->auxiliary())
-				{
-					m_statusWidget->showBeamInfo(beamItem->beam(), position.x());
-					break;
-				}
+		m_statusWidget->showBeamInfo(p.first, p.second);
 	}
 
 	QGraphicsView::mouseMoveEvent(event);
@@ -428,15 +426,16 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 	if ((change == ItemPositionChange && scene()) && m_update)
 	{
 		QPointF newPos = value.toPointF();
-		QRectF rect = scene()->sceneRect();
-		if (!rect.contains(newPos))
-			newPos.setX(qMin(rect.right(), qMax(newPos.x(), rect.left())));
-		newPos.setY(0.);
+		std::vector<double> benchPosition(2);
+		benchPosition[0] = newPos.x();
+		benchPosition[1] = -newPos.y();
+		std::pair<Beam*, double> p = m_bench->closestPosition(benchPosition);
+
 		// Propose the new position
-		m_bench->setOpticsPosition(m_bench->opticsIndex(m_optics), newPos.x());
-		// Adjust the new position to what the bench decided in last
-		newPos.setX(m_optics->position());
-		return newPos;
+		qDebug() << "Old Pos" << x() << y();
+		m_bench->setOpticsPosition(m_bench->opticsIndex(m_optics), p.second);
+		qDebug() << "New Pos" << x() << y();
+		return pos();
 	}
 
 	return QGraphicsItem::itemChange(change, value);
@@ -540,6 +539,7 @@ BeamItem::BeamItem(const Beam* beam)
 	m_drawText = true;
 	m_style = true;
 	m_auxiliary = false;
+	m_scale = 100.;
 	setZValue(0.);
 }
 
@@ -548,9 +548,9 @@ void BeamItem::updateTransform()
 	Q_ASSERT(beam()->origin().size() == 2);
 
 	resetTransform();
-	setPos(beam()->origin()[0], beam()->origin()[1]);
+	setPos(beam()->origin()[0], -beam()->origin()[1]);
 	rotate(-beam()->angle()*180./M_PI);
-	scale(1., 100.);
+	scale(1., m_scale);
 	prepareGeometryChange();
 }
 
@@ -601,8 +601,8 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	const double waistPosition = m_beam->waistPosition();
 	const double rayleigh = m_beam->rayleigh();
 
-	double horizontalScale = 1./option->matrix.m11(); // m/Pixels
-	double verticalScale   = 1./option->matrix.m22(); // m/Pixels
+	double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
+	double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
 
 	// The waist is pixel reoslved
 	if (waist/verticalScale > 1.)

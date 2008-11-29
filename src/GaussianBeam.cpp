@@ -20,6 +20,7 @@
 #include "Utils.h"
 
 #include <iostream>
+#include <algorithm>
 #include <cmath>
 
 using namespace std;
@@ -139,7 +140,7 @@ void Beam::rotate(double pivot, double angle)
 	double l = 2.*pivot*sin(angle/2.);
 
 	m_origin[0] += l*sin(m_angle + angle/2.);
-	m_origin[1] += l*cos(m_angle + angle/2.);
+	m_origin[1] -= l*cos(m_angle + angle/2.);
 
 
 	m_angle += angle;
@@ -159,6 +160,29 @@ vector<double> Beam::absoluteCoordinates(double position) const
 	result[0] += position*cos(m_angle);
 	result[1] += position*sin(m_angle);
 	return result;
+}
+
+vector<double> Beam::rectangleIntersection(vector<double> p1, vector<double> p2)
+{
+	static const double infinity = 1e100;
+	p1 -= m_origin;
+	p2 -= m_origin;
+	vector<double> intersections;
+
+	if (cos(m_angle) != 0.)
+		intersections << p1[0]/cos(m_angle) << p2[0]/cos(m_angle);
+	else
+		intersections << -infinity << +infinity;
+
+	if (sin(m_angle) != 0.)
+		intersections << p1[1]/sin(m_angle) << p2[1]/sin(m_angle);
+	else
+		intersections << -infinity << +infinity;
+
+	sort(intersections.begin(), intersections.end());
+	intersections.pop_back();
+	intersections.erase(intersections.begin());
+	return intersections;
 }
 
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)

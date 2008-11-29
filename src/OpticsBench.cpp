@@ -105,8 +105,12 @@ OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
 	m_opticsPrefix[DielectricSlabType]  = "D";
 
 	m_wavelength = 461e-9;
-	m_leftBoundary = -0.1;
-	m_rightBoundary = 0.7;
+	m_leftBottomBoundary = vector<double>(2);
+	m_leftBottomBoundary[0] = -0.1;
+	m_leftBottomBoundary[1] = -1.; /// @bug change
+	m_rightTopBoundary = vector<double>(2);
+	m_rightTopBoundary[0] = 0.7;
+	m_rightTopBoundary[1] = 1.; /// @bug change
 
 	CreateBeam* inputBeam = new CreateBeam(180e-6, 10e-3, 1., "w0");
 	inputBeam->setAbsoluteLock(true);
@@ -194,22 +198,20 @@ void OpticsBench::setWavelength(double wavelength)
 
 void OpticsBench::setLeftBoundary(double leftBoundary)
 {
-	if (leftBoundary < m_rightBoundary)
-		m_leftBoundary = leftBoundary;
+	if (leftBoundary < m_rightTopBoundary[0])
+		m_leftBottomBoundary[0] = leftBoundary;
 
-	if (nOptics() > 0)
-		m_beams[0]->setStart(m_leftBoundary);
+	updateExtremeBeams();
 
 	emit(boundariesChanged());
 }
 
 void OpticsBench::setRightBoundary(double rightBoundary)
 {
-	if (rightBoundary > m_leftBoundary)
-		m_rightBoundary = rightBoundary;
+	if (rightBoundary > m_leftBottomBoundary[0])
+		m_rightTopBoundary[0] = rightBoundary;
 
-	if (nOptics() > 0)
-		m_beams[nOptics()-1]->setStop(m_rightBoundary);
+	updateExtremeBeams();
 
 	emit(boundariesChanged());
 }
@@ -389,6 +391,15 @@ const Beam* OpticsBench::axis(int index) const
 		return m_beams[index - 1];
 }
 
+void OpticsBench::updateExtremeBeams()
+{
+	if (nOptics() > 0)
+	{
+		m_beams[0]->setStart(m_beams[0]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[0]);
+		m_beams[nOptics()-1]->setStop(m_beams[nOptics()-1]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[1]);
+	}
+}
+
 void OpticsBench::computeBeams(int changedIndex, bool backward)
 {
 	if (m_optics.size() == 0)
@@ -417,15 +428,12 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 
 	for (int i = 0; i < nOptics(); i++)
 	{
-		if (i == 0)
-			m_beams[i]->setStart(leftBoundary());
-		else
+		if (i != 0)
 			m_beams[i]->setStart(m_optics[i]->position() + m_optics[i]->width());
-		if (i == nOptics()-1)
-			m_beams[i]->setStop(rightBoundary());
-		else
+		if (i < nOptics()-1)
 			m_beams[i]->setStop(m_optics[i+1]->position());
 	}
+	updateExtremeBeams();
 
 	OpticsFunction function(m_optics, m_wavelength);
 	function.setOverlapBeam(*m_beams.back());
@@ -436,10 +444,12 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	emit(dataChanged(changedIndex, nOptics()-1));
 }
 
-double OpticsBench::closestPosition(const vector<double>& point, int preferedSide) const
+pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, int preferedSide) const
 {
+	const double epsilon = 1e-5;
 	double bestPosition = 0.;
 	double bestDistance = 1e300;
+	Beam* bestBeam = 0;
 
 	for (int i = 0; i < nOptics(); i++)
 	{
@@ -454,14 +464,17 @@ double OpticsBench::closestPosition(const vector<double>& point, int preferedSid
 		else if (coord[0] > m_beams[i]->stop())
 			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->stop()));
 
-		if (newDistance < bestDistance)
+		double rho = fabs(newDistance/bestDistance) - 1.;
+		if ((rho < -epsilon) ||
+			((fabs(rho) < epsilon) && (intSign(coord[1])*preferedSide > 0)))
 		{
 			bestPosition = coord[0];
 			bestDistance = newDistance;
+			bestBeam = m_beams[i];
 		}
 	}
 
-	return bestPosition;
+	return pair<Beam*, double>(bestBeam, bestPosition);
 }
 
 /////////////////////////////////////////////////
@@ -484,8 +497,9 @@ bool OpticsBench::magicWaist()
 	const int nTry = 500000;
 	bool found = false;
 
-	const double minPos = m_leftBoundary;
-	const double maxPos = m_rightBoundary;
+	/// @bug this has to change !
+	const double minPos = m_leftBottomBoundary[0];
+	const double maxPos = m_rightTopBoundary[0];
 
 	vector<double> positions = function.currentPosition();
 

@@ -77,7 +77,7 @@ class OpticsView : public QGraphicsView
 Q_OBJECT
 
 public:
-	OpticsView(QGraphicsScene* scene);
+	OpticsView(QGraphicsScene* scene, OpticsBench* bench);
 
 public:
 	void setStatusWidget(StatusWidget* statusWidget) { m_statusWidget = statusWidget; }
@@ -104,6 +104,7 @@ private slots:
 	void scrollUpdated(int value);
 
 private:
+	OpticsBench* m_bench;
 	OpticsViewProperties* m_opticsViewProperties;
 	RullerSlider* m_horizontalRuller;
 	RullerSlider* m_verticalRuller;
@@ -165,6 +166,7 @@ private:
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;
+	double m_scale;
 };
 
 #endif

@@ -80,8 +80,7 @@ vector<double> Function::lineParametric(double x) const
 
 double Function::lineValue(double x) const
 {
-	double sign = m_min ? 1. : -1.;
-	return sign*value(lineParametric(x));
+	return sign(m_min)*value(lineParametric(x));
 }
 
 vector<double> Function::lineExtremum(const vector<double>& x, const vector<double>& u, bool min) const

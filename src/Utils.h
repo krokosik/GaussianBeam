@@ -31,14 +31,22 @@ inline double sign(double x)
 	return x < 0. ? -1. : 1.;
 }
 
+inline int intSign(double x)
+{
+	return x < 0. ? -1 : 1;
+}
+
 std::vector<double> operator+(const std::vector<double>& v, double r);
 std::vector<double> operator-(const std::vector<double>& v, double r);
 std::vector<double> operator*(const std::vector<double>& v, double r);
 std::vector<double> operator/(const std::vector<double>& v, double r);
 inline std::vector<double> operator+(double r, const std::vector<double>& v) { return v + r; }
 inline std::vector<double> operator*(double r, const std::vector<double>& v) { return v * r; }
+std::vector<double>& operator+=(std::vector<double>& v1, const std::vector<double>& v2);
+std::vector<double>& operator-=(std::vector<double>& v1, const std::vector<double>& v2);
 std::vector<double> operator+(const std::vector<double>& v1, const std::vector<double>& v2);
 std::vector<double> operator-(const std::vector<double>& v1, const std::vector<double>& v2);
+std::vector<double>& operator<<(std::vector<double>& v, double r);
 
 namespace Utils
 {
