@@ -106,6 +106,8 @@ const Unit Units::getUnit(UnitType unit)
 		return Unit(-3, "m");
 	else if (unit == UnitPhase)
 		return Unit(0, "rad");
+	else if (unit == UnitAngle)
+		return Unit(0, QChar(0xB0));
 	else if (unit == UnitLess)
 		return Unit(0, QString());
 

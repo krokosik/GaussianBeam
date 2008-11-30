@@ -167,6 +167,7 @@ private:
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
 	void updateExtremeBeams();
+	void detectCavities();
 
 private:
 	double m_wavelength;

@@ -135,6 +135,7 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 		xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D()));
 	}
 	xmlWriter.writeTextElement("position", QString::number(optics->position()));
+	xmlWriter.writeTextElement("angle", QString::number(optics->angle()));
 	xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
 	xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
 	if (optics->relativeLockParent())

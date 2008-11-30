@@ -20,6 +20,7 @@
 #define UTILS_H
 
 #include <vector>
+#include <cmath>
 
 inline double sqr(double x)
 {
@@ -34,6 +35,15 @@ inline double sign(double x)
 inline int intSign(double x)
 {
 	return x < 0. ? -1 : 1;
+}
+
+inline double fmodPos(double x, double m)
+{
+	double result = fmod(x, m);
+	if (x < 0.)
+		return result + m;
+
+	return result;
 }
 
 std::vector<double> operator+(const std::vector<double>& v, double r);

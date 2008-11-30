@@ -133,6 +133,33 @@ OpticsBench::~OpticsBench()
 /////////////////////////////////////////////////
 // Cavity
 
+void OpticsBench::detectCavities()
+{
+	static const double epsilon = 1e-10;
+
+	// Cavity detection criterions for a given beam to close a cavity with a given optics
+	// - The optics is on the beam optics axis
+	// - The optics is in the beam range
+	// - The beam is while it is not copropagating with the optics antecedent.
+	// - The image of the beam by the optics is copropagating with the actual optics image
+
+	for (int i = 0; i < nOptics(); i++)
+		for (int j = 1; j < i; j++)
+		{
+			Beam* beam = m_beams[i];
+			Optics* optics = m_optics[j];
+			vector<double> opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
+			cerr << "Checking cavity " << i << " and " << j << endl;
+			if (   (fabs(opticsCoordinates[1]) < epsilon)
+			    && (opticsCoordinates[0] >= beam->start())
+			    && (opticsCoordinates[0] <= beam->stop())
+			    && !Beam::copropagating(*beam, *m_beams[j-1])
+			    && Beam::copropagating(optics->image(*beam, *m_beams[j-1]), *m_beams[j]))
+				cerr << " Detected cavity around beams " << i << " and " << j << endl;
+		}
+
+}
+
 /////////////////////////////////////////////////
 // Fit
 
@@ -434,6 +461,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 			m_beams[i]->setStop(m_optics[i+1]->position());
 	}
 	updateExtremeBeams();
+	detectCavities();
 
 	OpticsFunction function(m_optics, m_wavelength);
 	function.setOverlapBeam(*m_beams.back());

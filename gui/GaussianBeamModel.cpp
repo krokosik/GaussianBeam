@@ -156,7 +156,7 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 			data << tr("none");
 	}
 	else if (column == Property::OpticsAngle)
-		data << m_bench->optics(row)->angle();
+		data << m_bench->optics(row)->angle()*180./M_PI;
 /*
 	else if (column == Property::OpticsCavity)
 	{
@@ -304,7 +304,7 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 	else if (column == Property::OpticsAngle)
 	{
 		Optics* optics = m_bench->opticsForPropertyChange(row);
-		optics->setAngle(value.toDouble());
+		optics->setAngle(value.toDouble()*M_PI/180.);
 		m_bench->opticsPropertyChanged(row);
 	}
 /*

@@ -44,7 +44,7 @@ private:
 
 enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
                UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth, UnitPhase, UnitLess};
+               UnitWidth, UnitPhase, UnitAngle, UnitLess};
 
 class Units
 {

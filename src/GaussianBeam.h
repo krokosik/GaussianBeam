@@ -130,6 +130,10 @@ public:
 	* @todo this is only implented for beams of identical wavelength
 	*/
 	static double overlap(const Beam& beam1, const Beam& beam2, double z = 0.);
+	/**
+	* Tell whether the two given beams share the same optical axis, in the same direction
+	*/
+	static bool copropagating(const Beam& beam1, const Beam& beam2);
 
 private:
 	inline double zred(double z) const { return (z - waistPosition())/rayleigh(); }

@@ -256,6 +256,8 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 	{
 		if (child.tagName() == "position")
 			optics->setPosition(child.text().toDouble());
+		else if (child.tagName() == "angle")
+			optics->setAngle(child.text().toDouble());
 		else if (child.tagName() == "name")
 			optics->setName(child.text().toUtf8().data());
 		else if (child.tagName() == "absoluteLock")

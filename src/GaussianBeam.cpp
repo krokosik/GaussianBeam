@@ -143,7 +143,8 @@ void Beam::rotate(double pivot, double angle)
 	m_origin[1] -= l*cos(m_angle + angle/2.);
 
 
-	m_angle += angle;
+	m_angle = fmodPos(m_angle + angle, 2.*M_PI);
+
 }
 
 vector<double> Beam::beamCoordinates(const vector<double>& point) const
@@ -206,6 +207,23 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
 //	cerr << "Coupling = " << eta << " // " << zred1 << " " << zred2 << " " << rho << endl;
 
 	return eta;
+}
+
+bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
+{
+	static const double epsilon = 1e-7;
+	vector<double> deltaOrigin = beam1.origin() - beam2.origin();
+	double deltaAngle = fmodPos(beam1.angle() - beam2.angle(), 2.*M_PI);
+
+	cerr << " angles = " << beam1.angle() << " " << beam2.angle() << " " << deltaAngle << endl;
+	cerr << " criterion = " << deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0] << endl;
+
+	if (   (   (deltaAngle < epsilon)
+		    || (deltaAngle > (2.*M_PI - epsilon)))
+		&& (fabs(deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0]) < epsilon))
+		return true;
+
+	return false;
 }
 
 ostream& operator<<(ostream& out, const Beam& beam)

@@ -93,7 +93,7 @@ void initNames(QApplication* app)
 	Property::unit.insert(Property::OpticsSensitivity,      UnitLess);//app->translate(       "Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).string(false) + tr("²") + ")";
 	Property::unit.insert(Property::OpticsName,             UnitLess);
 	Property::unit.insert(Property::OpticsLock,             UnitLess);
-	Property::unit.insert(Property::OpticsAngle,            UnitLess);
+	Property::unit.insert(Property::OpticsAngle,            UnitAngle);
 
 	OpticsName::fullName.insert(CreateBeamType,      app->translate("Names", "Input beam"));
 	OpticsName::fullName.insert(LensType,            app->translate("Names", "Lens"));

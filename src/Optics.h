@@ -60,12 +60,26 @@ public:
 	* Compute the image of a given input beam
 	* @p inputBeam input beam
 	*/
-	virtual Beam image(const Beam& inputBeam) const = 0;
+	Beam image(const Beam& inputBeam) const { return image(inputBeam, inputBeam); }
+	/**
+	* Compute the image of a given input beam
+	* using a different optical axis as angle reference
+	* @p inputBeam input beam
+	* @p opticalAxis input optical axis
+	*/
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const = 0;
 	/**
 	* Compute the input beam corresponding to a given output beam
 	* @p outputBeam output beam
 	*/
-	virtual Beam antecedent(const Beam& outputBeam) const = 0;
+	Beam antecedent(const Beam& outputBeam) const { return antecedent(outputBeam, outputBeam); }
+	/**
+	* Compute the input beam corresponding to a given output beam
+	* using a different optical axis as angle reference
+	* @p outputBeam output beam
+	* @p opticalAxis output optical axis
+	*/
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const = 0;
 	/**
 	* Index jump from one side of the optics to the other
 	* @return final index / initial index
@@ -85,9 +99,9 @@ public:
 	double width() const { return m_width; }
 	/// Set the width of the optics
 	void setWidth(double width) { m_width = width; }
-	/// @return the angle between the optics and the optics
+	/// @return the angle between the optics and the optical axis
 	double angle() const { return m_angle; }
-	/// Set the angle between the optics and the optics
+	/// Set the angle between the optics and the optical axis
 	void setAngle(double angle) { m_angle = angle; }
 	/// @return the name of the optics
 	std::string name() const { return m_name; }
@@ -185,9 +199,9 @@ public:
 
 public:
 	/// @return the image of @p inputBeam
-	virtual Beam image(const Beam& inputBeam) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
 	/// @return the antecedent if @p outputBeam
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 
 public:
 	/// @return coefficient A of the ABCD matrix
@@ -264,8 +278,8 @@ public:
 	virtual CreateBeam* clone() const { return new CreateBeam(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 
 public:
 	/// @return the waist width of the input beam
@@ -366,8 +380,8 @@ public:
 	virtual FlatMirror* clone() const { return new FlatMirror(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam) const;
-	virtual Beam antecedent(const Beam& outputBeam) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 };
 
 /**

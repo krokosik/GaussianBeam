@@ -170,12 +170,12 @@ void CreateBeam::setM2(double M2)
 		m_M2 = M2;
 }
 
-Beam CreateBeam::image(const Beam& inputBeam) const
+Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 {
 	return Beam(m_waist, position(), inputBeam.wavelength(), m_index, m_M2);
 }
 
-Beam CreateBeam::antecedent(const Beam& outputBeam) const
+Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& /*oopticalAxis*/) const
 {
 	return Beam(m_waist, position(), outputBeam.wavelength(), m_index, m_M2);
 }
@@ -201,19 +201,26 @@ void Lens::setFocal(double focal)
 /////////////////////////////////////////////////
 // FlatMirror class
 
-Beam FlatMirror::image(const Beam& beam) const
+Beam FlatMirror::image(const Beam& beam, const Beam& opticalAxis) const
 {
-	double ang = fmod(2.*angle() + M_PI, 2.*M_PI);
+	Beam result = ABCD::image(beam, opticalAxis);
 
-	Beam result = ABCD::image(beam);
-	result.rotate(position(), ang);
+	double relativeAngle = angle() + opticalAxis.angle() - beam.angle();
+
+	if ((relativeAngle > M_PI/2.) && (relativeAngle < 3.*M_PI/2.))
+		return result;
+
+	double rotationAngle = fmod(2.*relativeAngle + M_PI, 2.*M_PI);
+	result.rotate(position(), rotationAngle);
 	return result;
 }
 
-Beam FlatMirror::antecedent(const Beam& beam) const
+Beam FlatMirror::antecedent(const Beam& beam, const Beam& opticalAxis) const
 {
+	/// @bug make the inverse of the previous function
+
 	double ang = fmod(-2.*angle() + 5.*M_PI, 2.*M_PI);
-	Beam result = ABCD::antecedent(beam);
+	Beam result = ABCD::antecedent(beam, opticalAxis);
 	result.rotate(position(), -ang);
 	return result;
 }
@@ -248,7 +255,7 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 /////////////////////////////////////////////////
 // ABCD class
 
-Beam ABCD::image(const Beam& inputBeam) const
+Beam ABCD::image(const Beam& inputBeam, const Beam& opticalAxis) const
 {
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
@@ -260,7 +267,7 @@ Beam ABCD::image(const Beam& inputBeam) const
 	return outputBeam;
 }
 
-Beam ABCD::antecedent(const Beam& outputBeam) const
+Beam ABCD::antecedent(const Beam& outputBeam, const Beam& opticalAxis) const
 {
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());

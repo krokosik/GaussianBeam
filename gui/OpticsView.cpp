@@ -497,11 +497,17 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == FlatMirrorType)
 	{
-		painter->drawRect(rect);
-		QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
-		painter->setBrush(ABCDBrush);
-		painter->drawRect(rect);
+		QRectF mirrorRect = rect;
+		mirrorRect.setLeft(0.);
 
+		painter->setPen(QPen(Qt::NoPen));
+		painter->setBrush(QBrush(Qt::black, Qt::BDiagPattern));
+		painter->drawRect(mirrorRect);
+
+		mirrorRect.setRight(rect.right()/5.);
+		painter->setPen(QPen());
+		painter->setBrush(QBrush(Qt::black));
+		painter->drawRect(mirrorRect);
 	}
 	else if (m_optics->type() == CurvedMirrorType)
 	{
