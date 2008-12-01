@@ -385,14 +385,15 @@ public:
 };
 
 /**
-* Implements a curved mirror. This is equivalent to a lens of focal curvatureRadius()/2
+* Implements a curved mirror.
+* This is equivalent to a lens of focal curvatureRadius()/2 and the reflection properties of a mirror
 */
-class CurvedMirror : public ABCD
+class CurvedMirror : public FlatMirror
 {
 public:
 	/// Constructor
 	CurvedMirror(double curvatureRadius, double position, std::string name = "")
-		: ABCD(CurvedMirrorType, position, name), m_curvatureRadius(curvatureRadius) {}
+		: FlatMirror(position, name), m_curvatureRadius(curvatureRadius) { setType(CurvedMirrorType); }
 	virtual CurvedMirror* clone() const { return new CurvedMirror(*this); }
 
 public:

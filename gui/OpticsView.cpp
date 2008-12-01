@@ -129,9 +129,9 @@ void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 			if ((opticsIndex >= startOptics) && (opticsIndex <= endOptics))
 			{
 				opticsItem->setUpdate(false);
-				double position = opticsItem->optics()->position();
 				const Beam* axis = m_bench->axis(opticsIndex);
-				opticsItem->setPos(axis->origin()[0] + position*cos(axis->angle()), axis->origin()[1] - position*sin(axis->angle()));
+				std::vector<double> coord = axis->absoluteCoordinates(opticsItem->optics()->position());
+				opticsItem->setPos(coord[0], -coord[1]);
 				opticsItem->resetTransform();
 				opticsItem->rotate(-(axis->angle() + opticsItem->optics()->angle())*180./M_PI);
 				opticsItem->setUpdate(true);

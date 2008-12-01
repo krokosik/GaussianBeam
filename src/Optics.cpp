@@ -203,12 +203,12 @@ void Lens::setFocal(double focal)
 
 Beam FlatMirror::image(const Beam& beam, const Beam& opticalAxis) const
 {
-	Beam result = ABCD::image(beam, opticalAxis);
-
 	double relativeAngle = angle() + opticalAxis.angle() - beam.angle();
 
 	if ((relativeAngle > M_PI/2.) && (relativeAngle < 3.*M_PI/2.))
-		return result;
+		return beam;
+
+	Beam result = ABCD::image(beam, opticalAxis);
 
 	double rotationAngle = fmod(2.*relativeAngle + M_PI, 2.*M_PI);
 	result.rotate(position(), rotationAngle);
@@ -217,11 +217,10 @@ Beam FlatMirror::image(const Beam& beam, const Beam& opticalAxis) const
 
 Beam FlatMirror::antecedent(const Beam& beam, const Beam& opticalAxis) const
 {
-	/// @bug make the inverse of the previous function
+ 	Beam result = ABCD::antecedent(beam, opticalAxis);
 
-	double ang = fmod(-2.*angle() + 5.*M_PI, 2.*M_PI);
-	Beam result = ABCD::antecedent(beam, opticalAxis);
-	result.rotate(position(), -ang);
+	/// @bug rotate this beam
+
 	return result;
 }
 
