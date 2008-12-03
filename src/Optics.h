@@ -69,6 +69,18 @@ public:
 	*/
 	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const = 0;
 	/**
+        * Compute the image of a given 2D input beam
+        * @p inputBeam input Beam
+        */
+	Beam2D image(const Beam2D& inputBeam) const { return image(inputBeam, inputBeam); }
+        /**
+	* Compute the image of a given input 2D beam
+	* using a different optical axis as angle reference
+	* @p inputBeam input beam
+	* @p opticalAxis input optical axis
+	*/
+	virtual Beam2D image(const Beam2D& inputBeam, const Beam2D& opticalAxis) const;
+	/**
 	* Compute the input beam corresponding to a given output beam
 	* @p outputBeam output beam
 	*/

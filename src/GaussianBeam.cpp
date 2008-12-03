@@ -231,3 +231,23 @@ ostream& operator<<(ostream& out, const Beam& beam)
 	out << "Waist = " << beam.waist() << " Waist position = " << beam.waistPosition();
 	return out;
 }
+
+Beam* Beam2D::beam(Orientation orientation)
+{
+	if (orientation == Vertical)
+		return &m_vBeam;
+
+	return &m_hBeam;
+}
+
+const Beam* Beam2D::beam(Orientation orientation) const
+{
+	if (orientation  == Vertical)
+		return &m_vBeam;
+
+	return &m_hBeam;
+}
+
+
+
+

@@ -49,6 +49,14 @@ Optics::~Optics()
 	relativeUnlock();
 }
 
+Beam2D Optics::image(const Beam2D& inputBeam, const Beam2D& opticalAxis) const
+{
+	Beam2D result;
+	*result.beam(Horizontal) = image(*inputBeam.beam(Horizontal), *opticalAxis.beam(Horizontal));
+	*result.beam(Vertical) = image(*inputBeam.beam(Vertical), *opticalAxis.beam(Vertical));
+	return result;
+}
+
 /////////////////////////////////////////////////
 // Locking functions
 

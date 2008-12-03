@@ -30,6 +30,9 @@ enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyP
             OpticsLock, OpticsSensitivity, OpticsAngle};
 }
 
+
+enum  Orientation {Horizontal,  Vertical};
+
 /**
 * @brief This class represents a Gaussian beam.
 * A beam is defined by an origin (2 coordinates in the plane), and the angle between the wave vector
@@ -154,6 +157,23 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& out, const Beam& beam);
+
+/**
+* 2D gaussian beam that features different waists on the
+* horizontal and vertical directions
+*/
+class Beam2D
+{
+public:
+	Beam2D() {}
+
+public:
+	Beam* beam(Orientation orientation);
+	const Beam* beam(Orientation orientation) const;
+
+private:
+	Beam m_hBeam, m_vBeam;
+};
 
 /**
 * Target beam
