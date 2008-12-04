@@ -25,6 +25,11 @@ namespace Property
 	QMap<Property::Type, UnitType> unit;
 }
 
+namespace OrientationName
+{
+	QMap<Orientation, QString> fullName;
+}
+
 namespace OpticsName
 {
 	QMap<OpticsType, QString> fullName;
@@ -52,6 +57,7 @@ void initNames(QApplication* app)
 	Property::fullName.insert(Property::OpticsName,             app->translate("Names", "Name"));
 	Property::fullName.insert(Property::OpticsLock,             app->translate("Names", "Lock"));
 	Property::fullName.insert(Property::OpticsAngle,            app->translate("Names", "Angle"));
+	Property::fullName.insert(Property::OpticsOrientation,      app->translate("Names", "Aspect"));
 
 	Property::shortName.insert(Property::BeamPosition,           app->translate("Names", "z"));
 	Property::shortName.insert(Property::BeamRadius,             app->translate("Names", "w"));
@@ -73,6 +79,7 @@ void initNames(QApplication* app)
 	Property::shortName.insert(Property::OpticsName,             app->translate("Names", "Name"));
 	Property::shortName.insert(Property::OpticsLock,             app->translate("Names", "Lock"));
 	Property::shortName.insert(Property::OpticsAngle,            app->translate("Names", "Angle"));
+	Property::shortName.insert(Property::OpticsOrientation,      app->translate("Names", "Aspect"));
 
 	Property::unit.insert(Property::BeamPosition,           UnitPosition);
 	Property::unit.insert(Property::BeamRadius,             UnitWaist);
@@ -94,6 +101,7 @@ void initNames(QApplication* app)
 	Property::unit.insert(Property::OpticsName,             UnitLess);
 	Property::unit.insert(Property::OpticsLock,             UnitLess);
 	Property::unit.insert(Property::OpticsAngle,            UnitAngle);
+	Property::unit.insert(Property::OpticsOrientation,      UnitLess);
 
 	OpticsName::fullName.insert(CreateBeamType,      app->translate("Names", "Input beam"));
 	OpticsName::fullName.insert(LensType,            app->translate("Names", "Lens"));
@@ -105,6 +113,10 @@ void initNames(QApplication* app)
 	OpticsName::fullName.insert(DielectricSlabType,  app->translate("Names", "Dielectric slab"));
 	OpticsName::fullName.insert(ThermalLensType,     app->translate("Names", "Thermal lens"));
 	OpticsName::fullName.insert(GenericABCDType,     app->translate("Names", "Generic ABCD"));
+
+	OrientationName::fullName.insert(Horizontal, app->translate("Names", "Horizontal"));
+	OrientationName::fullName.insert(Vertical,   app->translate("Names", "Vertical"));
+	OrientationName::fullName.insert(Spherical,  app->translate("Names", "Spherical"));
 }
 
 QString breakString(QString string)

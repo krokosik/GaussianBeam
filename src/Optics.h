@@ -31,6 +31,8 @@ enum OpticsType {CreateBeamType, FreeSpaceType,
                  FlatInterfaceType, CurvedInterfaceType,
                  DielectricSlabType, ThickLensType, ThermalLensType, GenericABCDType, UserType};
 
+enum  Orientation {Spherical = 0, Horizontal = 1,  Vertical = 2};
+
 /**
 * Generic optics class. An optics is a transformation of a Gaussian beam
 */
@@ -40,11 +42,10 @@ public:
 	/**
 	* Constructor
 	* @p type enum type of the optics
-	* @p ABCD tell ifthe optics is of ABCD type
 	* @p position stating position of the optics
 	* @p name name of the optics
 	*/
-	Optics(OpticsType type, bool ABCD, double position, std::string name);
+	Optics(OpticsType type, double position, std::string name);
 	/**
 	* Destructor
 	*/
@@ -60,38 +61,26 @@ public:
 	* Compute the image of a given input beam
 	* @p inputBeam input beam
 	*/
-	Beam image(const Beam& inputBeam) const { return image(inputBeam, inputBeam); }
+	Beam image(const Beam& inputBeam, Orientation orientation = Horizontal) const { return image(inputBeam, inputBeam, orientation); }
 	/**
 	* Compute the image of a given input beam
 	* using a different optical axis as angle reference
 	* @p inputBeam input beam
 	* @p opticalAxis input optical axis
 	*/
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const = 0;
-	/**
-        * Compute the image of a given 2D input beam
-        * @p inputBeam input Beam
-        */
-	Beam2D image(const Beam2D& inputBeam) const { return image(inputBeam, inputBeam); }
-        /**
-	* Compute the image of a given input 2D beam
-	* using a different optical axis as angle reference
-	* @p inputBeam input beam
-	* @p opticalAxis input optical axis
-	*/
-	virtual Beam2D image(const Beam2D& inputBeam, const Beam2D& opticalAxis) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const = 0;
 	/**
 	* Compute the input beam corresponding to a given output beam
 	* @p outputBeam output beam
 	*/
-	Beam antecedent(const Beam& outputBeam) const { return antecedent(outputBeam, outputBeam); }
+	Beam antecedent(const Beam& outputBeam, Orientation orientation = Horizontal) const { return antecedent(outputBeam, outputBeam, orientation); }
 	/**
 	* Compute the input beam corresponding to a given output beam
 	* using a different optical axis as angle reference
 	* @p outputBeam output beam
 	* @p opticalAxis output optical axis
 	*/
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const = 0;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const = 0;
 	/**
 	* Index jump from one side of the optics to the other
 	* @return final index / initial index
@@ -114,16 +103,24 @@ public:
 	/// @return the angle between the optics and the optical axis
 	double angle() const { return m_angle; }
 	/// Set the angle between the optics and the optical axis
-	void setAngle(double angle) { m_angle = angle; }
+	void setAngle(double angle) { if (isRotable()) m_angle = angle; }
+	/// @return the orientaition of the optics, i.e. its anisotropy (e.g. cylindric aspect for lenses)
+	Orientation orientation() const { return m_orientation; }
+	/// Set the orientation of the optics
+	void setOrientation(Orientation orientation) { if (isOrientable()) m_orientation = orientation; }
 	/// @return the name of the optics
 	std::string name() const { return m_name; }
 	/// Set the name of the optics
 	void setName(std::string name) { m_name = name; }
+	/// @return true if the optics is rotable, i.e. if it can form an angle different from Pi/2 with the optical axis
+	bool isRotable() const { return m_rotable; }
+	/// @return true if the optics is orientable, i.e. if it can be anisotropic
+	bool isOrientable() const { return m_orientable; }
 	/// @return true if the optics is of type ABCD
 	bool isABCD() const { return m_ABCD; }
 	/// @return the unique ID of the optics
 	int id() const { return m_id; }
-	/// set the optics id. This function is reserved to loading functions. Do not use
+	/// set the optics id. This function is reserved to loading functions: do not use
 	void setId(int id) { m_id = id; }
 	/// Query absolute lock. @return true if the lock is absolute, false otherwise
 	bool absoluteLock() const { return m_absoluteLock; }
@@ -166,6 +163,10 @@ public:
 
 protected:
 	void setType(OpticsType type) { m_type = type; }
+	void setABCD(bool ABCD = true) { m_ABCD = ABCD; }
+	void setRotable(bool rotable = true) { m_rotable = rotable; }
+	void setOrientable(bool orientable = true) { m_orientable = orientable; }
+	bool isAligned(Orientation orientation) const { return (m_orientation == Spherical) || (m_orientation == orientation); }
 
 private:
 	// Return the locking tree root, const and non-const versions
@@ -181,9 +182,10 @@ private:
 private:
 	int m_id;
 	OpticsType m_type;
-	bool m_ABCD;
 	double m_position;
 	double m_width;
+	bool m_ABCD, m_rotable, m_orientable;
+	Orientation m_orientation;
 	double m_angle;
 	std::string m_name;
 	bool m_absoluteLock;
@@ -205,15 +207,15 @@ class ABCD : public Optics
 public:
 	/// Constructor
 	ABCD(OpticsType type, double position, std::string name = "")
-		: Optics(type, true/*Is ABCD*/, position, name) {}
+		: Optics(type, position, name) { setABCD(); }
 	/// Destructor
 	virtual ~ABCD() {}
 
 public:
 	/// @return the image of @p inputBeam
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
 	/// @return the antecedent if @p outputBeam
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
 
 public:
 	/// @return coefficient A of the ABCD matrix
@@ -264,7 +266,7 @@ class Interface : public ABCD, public Dielectric
 public:
 	/// Constructor
 	Interface(OpticsType type, double indexRatio, double position, std::string name = "")
-		: ABCD(type, position, name), Dielectric(indexRatio) {}
+		: ABCD(type, position, name), Dielectric(indexRatio) { setRotable(); }
 	/// Destructor
 	virtual ~Interface() {}
 
@@ -290,8 +292,8 @@ public:
 	virtual CreateBeam* clone() const { return new CreateBeam(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
 
 public:
 	/// @return the waist width of the input beam
@@ -343,7 +345,7 @@ class Lens : public ABCD
 public:
 	/// Constructor
 	Lens(double focal, double position, std::string name = "")
-		: ABCD(LensType, position, name) , m_focal(focal) {}
+		: ABCD(LensType, position, name) , m_focal(focal) { setOrientable(); }
 	virtual Lens* clone() const { return new Lens(*this); }
 
 public:
@@ -388,12 +390,12 @@ class FlatMirror : public ABCD
 public:
 	/// Constructor
 	FlatMirror(double position, std::string name = "")
-		: ABCD(FlatMirrorType, position, name) {}
+		: ABCD(FlatMirrorType, position, name) { setRotable(); }
 	virtual FlatMirror* clone() const { return new FlatMirror(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
 };
 
 /**
@@ -405,7 +407,7 @@ class CurvedMirror : public FlatMirror
 public:
 	/// Constructor
 	CurvedMirror(double curvatureRadius, double position, std::string name = "")
-		: FlatMirror(position, name), m_curvatureRadius(curvatureRadius) { setType(CurvedMirrorType); }
+		: FlatMirror(position, name), m_curvatureRadius(curvatureRadius) { setType(CurvedMirrorType); setOrientable(); }
 	virtual CurvedMirror* clone() const { return new CurvedMirror(*this); }
 
 public:
@@ -441,7 +443,7 @@ class CurvedInterface : public Interface
 public:
 	/// Constructor
 	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "")
-		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) {}
+		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) { setOrientable(); }
 	virtual CurvedInterface* clone() const { return new CurvedInterface(*this); }
 
 public:

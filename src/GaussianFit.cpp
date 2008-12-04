@@ -60,6 +60,7 @@ void Fit::setColor(unsigned int color)
 void Fit::setDataType(FitDataType dataType)
 {
 	m_dataType = dataType;
+	m_dirty = true;
 	emit(changed());
 }
 
@@ -102,6 +103,7 @@ void Fit::removeData(unsigned int index)
 {
 	m_positions.erase(m_positions.begin() + index);
 	m_values.erase(m_values.begin() + index);
+	m_dirty = true;
 
 	emit(changed());
 }

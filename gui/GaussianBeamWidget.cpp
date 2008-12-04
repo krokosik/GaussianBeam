@@ -452,9 +452,14 @@ void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()
 	if (index < 0)
 		return;
 
+	QList<int> removedRows;
+
 	for (int row = fitModel->rowCount() - 1; row >= 0; row--)
 		if (fitSelectionModel->isRowSelected(row, QModelIndex()) && (row < m_bench->fit(index)->size()))
-			m_bench->fit(index)->removeData(row);
+			removedRows << row;
+
+	foreach (int row, removedRows)
+		m_bench->fit(index)->removeData(row);
 }
 
 void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()

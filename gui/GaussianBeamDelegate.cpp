@@ -19,6 +19,7 @@
 #include "gui/GaussianBeamDelegate.h"
 #include "gui/GaussianBeamModel.h"
 #include "gui/Unit.h"
+#include "gui/Names.h"
 
 #include <QtGui>
 
@@ -135,15 +136,14 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 				editor->addItem(QString::fromUtf8(m_bench->optics(i)->name().c_str()), m_bench->optics(i)->id());
 		return editor;
 	}
-/*
-	case Property::OpticsCavity:
+	case Property::OpticsOrientation:
 	{
 		QComboBox* editor = new QComboBox(parent);
-		editor->addItem(tr("false"), 0);
-		editor->addItem(tr("true"), 1);
+		editor->addItem(OrientationName::fullName[Spherical] , Spherical);
+		editor->addItem(OrientationName::fullName[Horizontal], Horizontal);
+		editor->addItem(OrientationName::fullName[Vertical]  , Vertical);
 		return editor;
 	}
-*/
 	default:
 		return 0;
 	}
@@ -236,15 +236,11 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		comboBox->setCurrentIndex(comboBox->findData(lockId));
 		break;
 	}
-/*
-	case Property::OpticsCavity:
+	case Property::OpticsOrientation:
 	{
-		bool value = m_model->data(index, Qt::DisplayRole).toBool();
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
-		comboBox->setCurrentIndex(comboBox->findData(value));
-		break;
+		comboBox->setCurrentIndex(comboBox->findData(optics->orientation()));
 	}
-*/
 	default:
 		return QItemDelegate::setEditorData(editor, index);
 	}
@@ -261,7 +257,7 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 	switch (column)
 	{
 	case Property::OpticsLock:
-//	case Property::OpticsCavity:
+	case Property::OpticsOrientation:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
 		model->setData(index, comboBox->itemData(comboBox->currentIndex()));

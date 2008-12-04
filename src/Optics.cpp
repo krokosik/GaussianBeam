@@ -26,12 +26,15 @@ using namespace std;
 
 int Optics::m_lastId = 0;
 
-Optics::Optics(OpticsType type, bool ABCD, double position, string name)
+Optics::Optics(OpticsType type, double position, string name)
 	: m_id(++m_lastId)
 	, m_type(type)
-	, m_ABCD(ABCD)
 	, m_position(position)
 	, m_width(0.)
+	, m_ABCD(false)
+	, m_rotable(false)
+	, m_orientable(false)
+	, m_orientation(Spherical)
 	, m_angle(0.)
 	, m_name(name)
 	, m_absoluteLock(false)
@@ -47,14 +50,6 @@ Optics::~Optics()
 		(*it)->m_relativeLockParent = 0;
 
 	relativeUnlock();
-}
-
-Beam2D Optics::image(const Beam2D& inputBeam, const Beam2D& opticalAxis) const
-{
-	Beam2D result;
-	*result.beam(Horizontal) = image(*inputBeam.beam(Horizontal), *opticalAxis.beam(Horizontal));
-	*result.beam(Vertical) = image(*inputBeam.beam(Vertical), *opticalAxis.beam(Vertical));
-	return result;
 }
 
 /////////////////////////////////////////////////
@@ -153,10 +148,12 @@ void Optics::eraseLockingTree()
 // CreateBeam class
 
 CreateBeam::CreateBeam(double waist, double waistPosition, double index, string name)
-	: Optics(CreateBeamType, false/*Not ABCD*/, waistPosition, name)
+	: Optics(CreateBeamType, waistPosition, name)
 	, m_waist(waist)
 	, m_index(index)
 {
+	setRotable();
+	setOrientable();
 	m_M2 = 1.;
 }
 
@@ -178,12 +175,12 @@ void CreateBeam::setM2(double M2)
 		m_M2 = M2;
 }
 
-Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
+Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/, Orientation /*orientation*/) const
 {
 	return Beam(m_waist, position(), inputBeam.wavelength(), m_index, m_M2);
 }
 
-Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& /*oopticalAxis*/) const
+Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& /*oopticalAxis*/, Orientation /*orientation*/) const
 {
 	return Beam(m_waist, position(), outputBeam.wavelength(), m_index, m_M2);
 }
@@ -209,23 +206,29 @@ void Lens::setFocal(double focal)
 /////////////////////////////////////////////////
 // FlatMirror class
 
-Beam FlatMirror::image(const Beam& beam, const Beam& opticalAxis) const
+Beam FlatMirror::image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation) const
 {
-	double relativeAngle = angle() + opticalAxis.angle() - beam.angle();
+	if (!isAligned(orientation))
+		return inputBeam;
+
+	double relativeAngle = angle() + opticalAxis.angle() - inputBeam.angle();
 
 	if ((relativeAngle > M_PI/2.) && (relativeAngle < 3.*M_PI/2.))
-		return beam;
+		return inputBeam;
 
-	Beam result = ABCD::image(beam, opticalAxis);
+	Beam result = ABCD::image(inputBeam, opticalAxis);
 
 	double rotationAngle = fmod(2.*relativeAngle + M_PI, 2.*M_PI);
 	result.rotate(position(), rotationAngle);
 	return result;
 }
 
-Beam FlatMirror::antecedent(const Beam& beam, const Beam& opticalAxis) const
+Beam FlatMirror::antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation) const
 {
- 	Beam result = ABCD::antecedent(beam, opticalAxis);
+	if (!isAligned(orientation))
+		return outputBeam;
+
+	Beam result = ABCD::antecedent(outputBeam, opticalAxis);
 
 	/// @bug rotate this beam
 
@@ -262,8 +265,11 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 /////////////////////////////////////////////////
 // ABCD class
 
-Beam ABCD::image(const Beam& inputBeam, const Beam& opticalAxis) const
+Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/, Orientation orientation) const
 {
+	if (!isAligned(orientation))
+		return inputBeam;
+
 	const complex<double> qIn = inputBeam.q(position());
 	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
 
@@ -274,8 +280,11 @@ Beam ABCD::image(const Beam& inputBeam, const Beam& opticalAxis) const
 	return outputBeam;
 }
 
-Beam ABCD::antecedent(const Beam& outputBeam, const Beam& opticalAxis) const
+Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/, Orientation orientation) const
 {
+	if (!isAligned(orientation))
+		return outputBeam;
+
 	const complex<double> qOut = outputBeam.q(position() + width());
 	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
 

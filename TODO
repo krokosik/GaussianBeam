@@ -31,8 +31,9 @@ BUGS:
 	Problem with n > 1 and target beam
 	Problem in redraw when deleting an optics with non zero width
 	Implement ruller scale & vertical labels
-	Update all data when chaing the delegate
+	Update all data when chaging the delegate
 	Really find local optimum, not 100% local optimum
+	Angle is editable even for non rotable optics
 
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength

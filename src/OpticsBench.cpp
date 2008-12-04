@@ -105,6 +105,7 @@ OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
 	m_opticsPrefix[DielectricSlabType]  = "D";
 
 	m_wavelength = 461e-9;
+	m_spherical = true;
 	m_leftBottomBoundary = vector<double>(2);
 	m_leftBottomBoundary[0] = -0.1;
 	m_leftBottomBoundary[1] = -1.; /// @bug change
@@ -126,16 +127,20 @@ OpticsBench::~OpticsBench()
 		delete (*it);
 
 	// Delelte beams
-	for (vector<Beam*>::iterator it = m_beams.begin(); it != m_beams.end(); it++)
+	for (vector<Beam*>::iterator it = m_hBeams.begin(); it != m_hBeams.end(); it++)
+		delete (*it);
+	for (vector<Beam*>::iterator it = m_vBeams.begin(); it != m_vBeams.end(); it++)
 		delete (*it);
 }
 
 /////////////////////////////////////////////////
 // Cavity
 
-void OpticsBench::detectCavities()
+void OpticsBench::detectCavities(Orientation orientation)
 {
 	static const double epsilon = 1e-10;
+
+	vector<Beam*>& beams = orientedBeams(orientation);
 
 	// Cavity detection criterions for a given beam to close a cavity with a given optics
 	// - The optics is on the beam optics axis
@@ -146,15 +151,15 @@ void OpticsBench::detectCavities()
 	for (int i = 0; i < nOptics(); i++)
 		for (int j = 1; j < i; j++)
 		{
-			Beam* beam = m_beams[i];
+			Beam* beam = beams[i];
 			Optics* optics = m_optics[j];
-			vector<double> opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
+			vector<double> opticsCoordinates = beam->beamCoordinates(beams[j-1]->absoluteCoordinates(optics->position()));
 			cerr << "Checking cavity " << i << " and " << j << endl;
 			if (   (fabs(opticsCoordinates[1]) < epsilon)
 			    && (opticsCoordinates[0] >= beam->start())
 			    && (opticsCoordinates[0] <= beam->stop())
-			    && !Beam::copropagating(*beam, *m_beams[j-1])
-			    && Beam::copropagating(optics->image(*beam, *m_beams[j-1]), *m_beams[j]))
+			    && !Beam::copropagating(*beam, *beams[j-1])
+			    && Beam::copropagating(optics->image(*beam, *beams[j-1]), *beams[j]))
 				cerr << " Detected cavity around beams " << i << " and " << j << endl;
 		}
 
@@ -228,7 +233,8 @@ void OpticsBench::setLeftBoundary(double leftBoundary)
 	if (leftBoundary < m_rightTopBoundary[0])
 		m_leftBottomBoundary[0] = leftBoundary;
 
-	updateExtremeBeams();
+	updateExtremeBeams(Horizontal);
+	updateExtremeBeams(Vertical);
 
 	emit(boundariesChanged());
 }
@@ -238,7 +244,8 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 	if (rightBoundary > m_leftBottomBoundary[0])
 		m_rightTopBoundary[0] = rightBoundary;
 
-	updateExtremeBeams();
+	updateExtremeBeams(Horizontal);
+	updateExtremeBeams(Vertical);
 
 	emit(boundariesChanged());
 }
@@ -259,13 +266,12 @@ int OpticsBench::opticsIndex(const Optics* optics) const
 
 void OpticsBench::addOptics(Optics* optics, int index)
 {
-	Beam* beam = new Beam(wavelength());
-
 /*	OpticsTreeItem* parent = index < m_opticsTree.size() ? &m_opticsTree[index] : 0;
 	m_opticsTree.insert(m_opticsTree.begin() + index, OpticsTreeItem(optics, parent));
 */
 	m_optics.insert(m_optics.begin() + index,  optics);
-	m_beams.insert(m_beams.begin() + index, beam);
+	m_hBeams.insert(m_hBeams.begin() + index, new Beam(wavelength()));
+	m_vBeams.insert(m_vBeams.begin() + index, new Beam(wavelength()));
 
 	emit(opticsAdded(index));
 	computeBeams(index);
@@ -308,8 +314,10 @@ void OpticsBench::removeOptics(int index, int count)
 	{
 		delete m_optics[index];
 		m_optics.erase(m_optics.begin() + index);
-		delete m_beams[index];
-		m_beams.erase(m_beams.begin() + index);
+		delete m_hBeams[index];
+		m_hBeams.erase(m_hBeams.begin() + index);
+		delete m_vBeams[index];
+		m_vBeams.erase(m_vBeams.begin() + index);
 	}
 
 	emit(opticsRemoved(index, count));
@@ -387,7 +395,31 @@ void OpticsBench::opticsPropertyChanged(int /*index*/)
 /////////////////////////////////////////////////
 // Beams
 
-void OpticsBench::setInputBeam(const Beam& beam)
+vector<Beam*>& OpticsBench::orientedBeams(Orientation orientation)
+{
+	if (orientation == Vertical)
+		return m_vBeams;
+
+	return m_hBeams;
+}
+
+const vector<Beam*>& OpticsBench::orientedBeams(Orientation orientation) const
+{
+	if (orientation == Vertical)
+		return m_vBeams;
+
+	return m_hBeams;
+}
+
+const Beam* OpticsBench::beam(int index, Orientation orientation) const
+{
+	if (orientation == Vertical)
+		return m_vBeams[index];
+
+	return m_hBeams[index];
+}
+
+void OpticsBench::setInputBeam(const Beam& beam, Orientation orientation)
 {
 	if (m_optics.size() <= 0)
 		addOptics(new CreateBeam(180e-6, 10e-3, 1., "w0"), 0);
@@ -398,9 +430,9 @@ void OpticsBench::setInputBeam(const Beam& beam)
 	computeBeams();
 }
 
-void OpticsBench::setBeam(const Beam& beam, int index)
+void OpticsBench::setBeam(const Beam& beam, int index, Orientation orientation)
 {
-	*m_beams[index] = beam;
+	*orientedBeams(orientation)[index] = beam;
 	computeBeams(index, true);
 }
 
@@ -410,21 +442,64 @@ void OpticsBench::setTargetBeam(const TargetBeam& beam)
 	emit(targetBeamChanged());
 }
 
-const Beam* OpticsBench::axis(int index) const
+const Beam* OpticsBench::axis(int index, Orientation orientation) const
 {
 	if (index == 0)
-		return m_beams[0];
+		return beam(0, orientation);
 	else
-		return m_beams[index - 1];
+		return beam(index - 1, orientation);
 }
 
-void OpticsBench::updateExtremeBeams()
+void OpticsBench::updateExtremeBeams(Orientation orientation)
 {
+	vector<Beam*>& beams = orientedBeams(orientation);
+
 	if (nOptics() > 0)
 	{
-		m_beams[0]->setStart(m_beams[0]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[0]);
-		m_beams[nOptics()-1]->setStop(m_beams[nOptics()-1]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[1]);
+		beams[0]->setStart(beams[0]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[0]);
+		beams[nOptics()-1]->setStop(beams[nOptics()-1]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[1]);
 	}
+}
+
+void OpticsBench::computeBeams(int changedIndex, bool backward, Orientation orientation)
+{
+	vector<Beam*>& beams = orientedBeams(orientation);
+
+	if (backward)
+	{
+		for (int i = changedIndex + 1; i < nOptics(); i++)
+			*beams[i] = m_optics[i]->image(*beams[i-1]);
+		for (int i = changedIndex - 1; i >= 0; i--)
+			*beams[i] = m_optics[i+1]->antecedent(*beams[i+1]);
+		CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
+		createBeam->setBeam(*beams[0]);
+	}
+	else
+	{
+		if (changedIndex == 0)
+		{
+			Beam beam(wavelength());
+			*beams[0] = m_optics[0]->image(beam);
+		}
+
+		for (int i = ::max(changedIndex, 1); i < nOptics(); i++)
+			*beams[i] = m_optics[i]->image(*beams[i-1]);
+	}
+
+	for (int i = 0; i < nOptics(); i++)
+	{
+		if (i != 0)
+			beams[i]->setStart(m_optics[i]->position() + m_optics[i]->width());
+		if (i < nOptics()-1)
+			beams[i]->setStop(m_optics[i+1]->position());
+	}
+	updateExtremeBeams(orientation);
+
+	OpticsFunction function(m_optics, m_wavelength);
+	function.setOverlapBeam(*orientedBeams(orientation).back());
+	function.setCheckLock(false);
+
+	m_sensitivity = function.curvature(function.currentPosition())/2.;
 }
 
 void OpticsBench::computeBeams(int changedIndex, bool backward)
@@ -432,65 +507,49 @@ void OpticsBench::computeBeams(int changedIndex, bool backward)
 	if (m_optics.size() == 0)
 		return;
 
-	if (backward)
-	{
-		for (int i = changedIndex + 1; i < nOptics(); i++)
-			*m_beams[i] = m_optics[i]->image(*m_beams[i-1]);
-		for (int i = changedIndex - 1; i >= 0; i--)
-			*m_beams[i] = m_optics[i+1]->antecedent(*m_beams[i+1]);
-		CreateBeam* createBeam = dynamic_cast<CreateBeam*>(m_optics[0]);
-		createBeam->setBeam(*m_beams[0]);
-	}
-	else
-	{
-		if (changedIndex == 0)
+	computeBeams(changedIndex, backward, Horizontal);
+
+	m_spherical = true;
+	for (int i = 0; i < nOptics(); i++)
+		if (m_optics[i]->orientation() != Spherical)
 		{
-			Beam beam(wavelength());
-			*m_beams[0] = m_optics[0]->image(beam);
+			m_spherical = false;
+			break;
 		}
 
-		for (int i = ::max(changedIndex, 1); i < nOptics(); i++)
-			*m_beams[i] = m_optics[i]->image(*m_beams[i-1]);
-	}
+	if (isSpherical())
+		for (int i = 0; i < nOptics(); i++)
+			*m_vBeams[i] = *m_hBeams[i];
+	else
+		computeBeams(changedIndex, backward, Vertical);
 
-	for (int i = 0; i < nOptics(); i++)
-	{
-		if (i != 0)
-			m_beams[i]->setStart(m_optics[i]->position() + m_optics[i]->width());
-		if (i < nOptics()-1)
-			m_beams[i]->setStop(m_optics[i+1]->position());
-	}
-	updateExtremeBeams();
-	detectCavities();
-
-	OpticsFunction function(m_optics, m_wavelength);
-	function.setOverlapBeam(*m_beams.back());
-	function.setCheckLock(false);
-
-	m_sensitivity = function.curvature(function.currentPosition())/2.;
+	/// @note we only detect cavities for horizontal beams
+	detectCavities(Horizontal);
 
 	emit(dataChanged(changedIndex, nOptics()-1));
 }
 
-pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, int preferedSide) const
+pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, int preferedSide, Orientation orientation) const
 {
 	const double epsilon = 1e-5;
 	double bestPosition = 0.;
 	double bestDistance = 1e300;
 	Beam* bestBeam = 0;
 
+	const vector<Beam*>& beams = orientedBeams(orientation);
+
 	for (int i = 0; i < nOptics(); i++)
 	{
-		vector<double> coord = m_beams[i]->beamCoordinates(point);
+		vector<double> coord = beams[i]->beamCoordinates(point);
 		double newDistance = coord[1];
 
 //		if (newDistance > bestDistance)
 //			continue;
 
-		if (coord[0] < m_beams[i]->start())
-			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->start()));
-		else if (coord[0] > m_beams[i]->stop())
-			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->stop()));
+		if (coord[0] < beams[i]->start())
+			newDistance = Utils::distance(point, beams[i]->absoluteCoordinates(beams[i]->start()));
+		else if (coord[0] > beams[i]->stop())
+			newDistance = Utils::distance(point, beams[i]->absoluteCoordinates(beams[i]->stop()));
 
 		double rho = fabs(newDistance/bestDistance) - 1.;
 		if ((rho < -epsilon) ||
@@ -498,7 +557,7 @@ pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, in
 		{
 			bestPosition = coord[0];
 			bestDistance = newDistance;
-			bestBeam = m_beams[i];
+			bestBeam = beams[i];
 		}
 	}
 

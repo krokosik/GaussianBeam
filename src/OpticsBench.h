@@ -75,13 +75,15 @@ public:
 	/// Set the bench wavelength to @p wavelength
 	void setWavelength(double wavelength);
 	/// @return the bench left boundary
-	double leftBoundary() { return m_leftBottomBoundary[0]; }
+	double leftBoundary() const { return m_leftBottomBoundary[0]; }
 	/// Set the bench left boundary to @p leftBoundary
 	void setLeftBoundary(double leftBoundary);
 	/// @return the bench right boundary
-	double rightBoundary() { return m_rightTopBoundary[0]; }
+	double rightBoundary() const { return m_rightTopBoundary[0]; }
 	/// Set the bench right boundary to @p leftBoundary
 	void setRightBoundary(double rightBoundary);
+	/// @return true if the bench contains only spherical optics, i.e. if horizontal beams are identical to vertical beams
+	bool isSpherical() const { return m_spherical; }
 
 	// Optics
 
@@ -123,12 +125,12 @@ public:
 	void opticsPropertyChanged(int index);
 
 	/// Beams handling
-	const Beam* beam(int index) const { return m_beams[index]; }
-	void setInputBeam(const Beam& beam);
-	void setBeam(const Beam& beam, int index);
-	const Beam* axis(int index) const;
-	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
-	double sensitivity(int index) const { return m_sensitivity[index]; }
+	const Beam* beam(int index, Orientation orientation = Horizontal) const;
+	void setInputBeam(const Beam& beam, Orientation orientation = Horizontal);
+	void setBeam(const Beam& beam, int index, Orientation orientation = Horizontal);
+	const Beam* axis(int index, Orientation orientation = Horizontal) const;
+	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1, Orientation orientation = Horizontal) const;
+	double sensitivity(int index, Orientation orientation = Horizontal) const { return m_sensitivity[index]; }
 
 	/// Cavity
 	Cavity& cavity() { return m_cavity; }
@@ -164,16 +166,21 @@ private slots:
 	void onFitChanged();
 
 private:
+	std::vector<Beam*>& orientedBeams(Orientation orientation);
+	const std::vector<Beam*>& orientedBeams(Orientation orientation) const;
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backward = false);
-	void updateExtremeBeams();
-	void detectCavities();
+	// Used only by the previous function
+	void computeBeams(int changedIndex, bool backward, Orientation orientation);
+	void updateExtremeBeams(Orientation orientation);
+	void detectCavities(Orientation orientation);
 
 private:
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
-	std::vector<Beam*> m_beams;
+	std::vector<Beam*> m_hBeams, m_vBeams;
 	std::vector<double> m_sensitivity;
+	bool m_spherical;
 
 //	std::vector<OpticsTreeItem> m_opticsTree;
 

@@ -34,6 +34,11 @@ namespace Property
 	extern QMap<Property::Type, UnitType> unit;
 }
 
+namespace OrientationName
+{
+	extern QMap<Orientation, QString> fullName;
+}
+
 namespace OpticsName
 {
 	extern QMap<OpticsType, QString> fullName;
