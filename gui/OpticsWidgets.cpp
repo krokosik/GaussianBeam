@@ -235,7 +235,7 @@ void PropertySelector::checkBoxModified(int)
 	emit(propertyChanged());
 }
 
-void PropertySelector::itemModified(QListWidgetItem* item)
+void PropertySelector::itemModified(QListWidgetItem*)
 {
 	emit(propertyChanged());
 }
@@ -368,7 +368,7 @@ StatusWidget::StatusWidget(QStatusBar* statusBar)
 	setLayout(layout);
 }
 
-void StatusWidget::showBeamInfo(const Beam* beam, double z)
+void StatusWidget::showBeamInfo(const Beam* beam, double z, Orientation orientation)
 {
 	m_statusBar->clearMessage();
 
@@ -383,15 +383,15 @@ void StatusWidget::showBeamInfo(const Beam* beam, double z)
 		if (type == Property::BeamPosition)
 			value = z;
 		else if (type == Property::BeamRadius)
-			value = beam->radius(z);
+			value = beam->radius(z, orientation);
 		else if (type == Property::BeamDiameter)
-			value = 2.*beam->radius(z);
+			value = 2.*beam->radius(z, orientation);
 		else if (type == Property::BeamCurvature)
-			value = beam->curvature(z);
+			value = beam->curvature(z, orientation);
 		else if (type == Property::BeamGouyPhase)
-			value = beam->gouyPhase(z);
+			value = beam->gouyPhase(z, orientation);
 		else if ((type == Property::BeamDistanceToWaist) || (type == Property::BeamParameter))
-			value = z - beam->waistPosition();
+			value = z - beam->waistPosition(orientation);
 		else if (type == Property::Index)
 			value = beam->index();
 
@@ -400,7 +400,7 @@ void StatusWidget::showBeamInfo(const Beam* beam, double z)
 
 		if (type == Property::BeamParameter)
 		{
-			value = beam->rayleigh()*Units::getUnit(UnitRayleigh).divider();
+			value = beam->rayleigh(orientation)*Units::getUnit(UnitRayleigh).divider();
 			text += " + i" + QString::number(value, 'f', 2) + Units::getUnit(UnitRayleigh).string();
 		}
 

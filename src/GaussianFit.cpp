@@ -37,9 +37,10 @@ Fit::Fit(int nData, QObject* parent) : QObject(parent)
 
 	m_dirty = true;
 	m_lastWavelength = 0.;
-	/// @todo change this default to Radius_e2
+	/// @todo change this default to Radius_e2 or remember from the last usage
 	m_dataType = Diameter_e2;
 	m_color = 0;
+	m_orientation = Spherical;
 
 	for (int i = 0; i < nData; i++)
 		addData(0., 0.);
@@ -61,6 +62,12 @@ void Fit::setDataType(FitDataType dataType)
 {
 	m_dataType = dataType;
 	m_dirty = true;
+	emit(changed());
+}
+
+void Fit::setOrientation(Orientation orientation)
+{
+	m_orientation = orientation;
 	emit(changed());
 }
 
@@ -133,15 +140,11 @@ void Fit::clear()
 	emit(changed());
 }
 
-const Beam& Fit::beam(double wavelength) const
+double Fit::applyFit(Beam& beam) const
 {
-	fitBeam(wavelength);
-	return m_beam;
-}
-
-double Fit::residue(double wavelength) const
-{
-	fitBeam(wavelength);
+	fitBeam(beam.wavelength());
+	beam.setWaist(m_beam.waist(m_orientation), m_orientation);
+	beam.setWaistPosition(m_beam.waistPosition(m_orientation), m_orientation);
 	return m_residue;
 }
 
@@ -156,7 +159,7 @@ void Fit::error(double* par, double* fvec) const
 
 	for (int i = 0; i < size(); i++)
 		if (radius(i) > epsilon)
-			fvec[j++] = radius(i) - beam.radius(position(i));
+			fvec[j++] = radius(i) - beam.radius(position(i), m_orientation);
 }
 
 /**
@@ -177,15 +180,15 @@ void Fit::lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int
 Beam Fit::nonLinearFit(const Beam& guessBeam, double* residue) const
 {
 	const int nPar = 2;
-	double par[nPar] = {guessBeam.waist(), guessBeam.waistPosition()};
+	double par[nPar] = {guessBeam.waist(m_orientation), guessBeam.waistPosition(m_orientation)};
 
 	lm_control_type control;
 	lm_initialize_control(&control);
 	lm_minimize(nonZeroSize(), nPar, par, Fit::lm_evaluate_beam, NULL, (void*)(this), &control);
 
 	Beam result = guessBeam;
-	result.setWaist(par[0]);
-	result.setWaistPosition(par[1]);
+	result.setWaist(par[0], m_orientation);
+	result.setWaistPosition(par[1], m_orientation);
 	*residue = control.fnorm;
 
 	return result;
@@ -208,7 +211,7 @@ Beam Fit::linearFit(const vector<double>& positions, const vector<double>& radii
 	const double alpha = M_PI*fz*fpz/wavelength;
 	/// @todo index = 1., M2 = 1. ?
 	Beam result(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1., 1.);
-	result.setWaistPosition(z - result.rayleigh()*alpha);
+	result.setWaistPosition(z - result.rayleigh(m_orientation)*alpha, m_orientation);
 
 	return result;
 }

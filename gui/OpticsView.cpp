@@ -72,9 +72,12 @@ QColor wavelengthColor(double wavelength)
 /////////////////////////////////////////////////
 // OpticsScene class
 
-OpticsScene::OpticsScene(OpticsBench* bench, QObject* parent)
+OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* parent)
 	: QGraphicsScene(parent)
 {
+	m_orientation = orientation;
+	m_beamScale = 100.;
+
 	// Bench connections
 	m_bench = bench;
 	connect(m_bench, SIGNAL(dataChanged(int, int)),   this, SLOT(onOpticsBenchDataChanged(int, int)));
@@ -98,7 +101,7 @@ OpticsScene::OpticsScene(OpticsBench* bench, QObject* parent)
 	m_cavityBeamItem->setAuxiliary(true);
 	m_cavityBeamItem->setPos(0., 0.);
 	m_cavityBeamItem->setVisible(true);
-	addItem(m_cavityBeamItem);
+//	addItem(m_cavityBeamItem);
 
 	// Sync with bench
 	for (int i = 0; i < m_bench->nOptics(); i++)
@@ -111,7 +114,7 @@ void OpticsScene::showTargetBeam(bool show)
 	m_targetBeamItem->setVisible(show);
 }
 
-bool OpticsScene::targetBeamVisible()
+bool OpticsScene::targetBeamVisible() const
 {
 	return m_targetBeamItem->isVisible();
 }
@@ -193,7 +196,7 @@ void OpticsScene::addFitPoint(double position, double radius, QRgb color)
 	fitItem->setFlags(fitItem->flags() | QGraphicsItem::ItemIgnoresTransformations);
 	fitItem->setPen(QPen(color));
 	fitItem->setBrush(QBrush(color));
-	fitItem->setPos(position, radius);
+	fitItem->setPos(position, radius*m_beamScale);
 	fitItem->setZValue(2.);
 	m_fitItems.push_back(fitItem);
 	addItem(fitItem);
@@ -220,12 +223,13 @@ void OpticsScene::onOpticsBenchFitDataChanged(int index)
 	for (int index = 0; index < m_bench->nFit(); index++)
 	{
 		Fit* fit = m_bench->fit(index);
-		for (int i = 0; i < fit->size(); i++)
-			if (fit->value(i) != 0.)
-			{
-				addFitPoint(fit->position(i), -fit->radius(i), fit->color());
-				addFitPoint(fit->position(i),  fit->radius(i), fit->color());
-			}
+		if ((fit->orientation() == Spherical) || (fit->orientation() == orientation()))
+			for (int i = 0; i < fit->size(); i++)
+				if (fit->value(i) != 0.)
+				{
+					addFitPoint(fit->position(i), -fit->radius(i), fit->color());
+					addFitPoint(fit->position(i),  fit->radius(i), fit->color());
+				}
 	}
 }
 
@@ -357,7 +361,7 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 		pos[1] = -position.y();
 		std::pair<Beam*, double> p = m_bench->closestPosition(pos);
 
-		m_statusWidget->showBeamInfo(p.first, p.second);
+		m_statusWidget->showBeamInfo(p.first, p.second, dynamic_cast<OpticsScene*>(scene())->orientation());
 	}
 
 	QGraphicsView::mouseMoveEvent(event);
@@ -413,6 +417,7 @@ QRectF OpticsItem::boundingRect() const
 {
 	QRectF bounding;
 
+	/// @todo this can be improved
 	if (m_optics->width() == 0.)
 		bounding = QRectF(QPointF(-10., -66.), QSizeF(2.*10., 2.*66.));
 	else
@@ -432,9 +437,9 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 		std::pair<Beam*, double> p = m_bench->closestPosition(benchPosition);
 
 		// Propose the new position
-		qDebug() << "Old Pos" << x() << y();
+		//qDebug() << "Old Pos" << x() << y();
 		m_bench->setOpticsPosition(m_bench->opticsIndex(m_optics), p.second);
-		qDebug() << "New Pos" << x() << y();
+		//qDebug() << "New Pos" << x() << y();
 		return pos();
 	}
 
@@ -545,7 +550,6 @@ BeamItem::BeamItem(const Beam* beam)
 	m_drawText = true;
 	m_style = true;
 	m_auxiliary = false;
-	m_scale = 100.;
 	setZValue(0.);
 }
 
@@ -553,15 +557,21 @@ void BeamItem::updateTransform()
 {
 	Q_ASSERT(beam()->origin().size() == 2);
 
+	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
+	if (!opticsScene)
+		return;
+
 	resetTransform();
 	setPos(beam()->origin()[0], -beam()->origin()[1]);
 	rotate(-beam()->angle()*180./M_PI);
-	scale(1., m_scale);
+	scale(1., opticsScene->beamScale());
 	prepareGeometryChange();
 }
 
 QRectF BeamItem::boundingRect() const
 {
+	/// @bug this is incorrect
+
 	QRectF result = scene()->sceneRect();
 	result.setLeft(m_beam->start());
 	result.setRight(m_beam->stop());
@@ -570,6 +580,10 @@ QRectF BeamItem::boundingRect() const
 
 void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
 {
+	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
+	if (!opticsScene)
+		return;
+
 	if (start < m_beam->start())
 		start = m_beam->start();
 
@@ -585,7 +599,7 @@ void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, Q
 		step = pixel;
 
 	for (double z = start; z <= stop; z += step)
-		polygon.append(QPointF(z, m_beam->radius(z)));
+		polygon.append(QPointF(z, m_beam->radius(z, opticsScene->orientation())));
 }
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
@@ -603,9 +617,17 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 
 	QPen textPen(Qt::black);
 
-	const double waist = m_beam->waist();
-	const double waistPosition = m_beam->waistPosition();
-	const double rayleigh = m_beam->rayleigh();
+	const Orientation orientation = dynamic_cast<OpticsScene*>(scene())->orientation();
+	const double waist = m_beam->waist(orientation);
+	const double waistPosition = m_beam->waistPosition(orientation);
+	const double rayleigh = m_beam->rayleigh(orientation);
+	const double start = m_beam->start();
+	const double stop = m_beam->stop();
+
+	if (m_style == false)
+	{
+		qDebug() << "Drawing empty beam" << waist << waistPosition << rayleigh << start << stop;
+	}
 
 	double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
 	double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
@@ -616,13 +638,13 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		QPolygonF beamPolygonUp, beamPolygonDown;
 
 		// Construct the upper part of the beam
-		double nextLeft, left = m_beam->start();
+		double nextLeft, left = start;
 		drawSegment(left, nextLeft = waistPosition - 5.*rayleigh, horizontalScale, 1,  beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition - rayleigh,    horizontalScale, 10, beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition + rayleigh,    horizontalScale, 20, beamPolygonUp); left = nextLeft;
 		drawSegment(left, nextLeft = waistPosition + 5.*rayleigh, horizontalScale, 10, beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = m_beam->stop(),                horizontalScale, 1,  beamPolygonUp); left = nextLeft;
-		beamPolygonUp.append(QPointF(m_beam->stop(), m_beam->radius(m_beam->stop())));
+		drawSegment(left, nextLeft = stop,                        horizontalScale, 1,  beamPolygonUp); left = nextLeft;
+		beamPolygonUp.append(QPointF(stop, m_beam->radius(stop, orientation)));
 
 		// Mirror the upper part to make the lower part
 		for (int i = beamPolygonUp.size() - 1; i >= 0; i--)
@@ -640,15 +662,15 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	// The waist is not pixel resolved
 	else
 	{
-		double sgn = sign((m_beam->stop() - waistPosition)*(m_beam->start() - waistPosition));
-		double rightRadius = m_beam->radius(m_beam->stop());
-		double leftRadius = m_beam->radius(m_beam->start());
+		double sgn = sign((stop - waistPosition)*(start - waistPosition));
+		double rightRadius = m_beam->radius(stop, orientation);
+		double leftRadius = m_beam->radius(start, orientation);
 
 		QPolygonF ray;
-		ray << QPointF(m_beam->start(), leftRadius)
-			<< QPointF(m_beam->stop(), sgn*rightRadius)
-			<< QPointF(m_beam->stop(), -sgn*rightRadius)
-			<< QPointF(m_beam->start(), -leftRadius);
+		ray << QPointF(start, leftRadius)
+			<< QPointF(stop,  sgn*rightRadius)
+			<< QPointF(stop,  -sgn*rightRadius)
+			<< QPointF(start, -leftRadius);
 		painter->drawConvexPolygon(ray);
 	}
 
@@ -658,9 +680,9 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	if (m_drawText)
 	{
 		painter->setPen(textPen);
-		QPointF waistTop(waistPosition, - m_beam->waist());
+		QPointF waistTop(waistPosition, - waist);
 		painter->drawLine(QPointF(waistPosition, 0.), waistTop);
-		QString text; text.setNum(round(m_beam->waist()*Units::getUnit(UnitWaist).divider()));
+		QString text; text.setNum(round(waist*Units::getUnit(UnitWaist).divider()));
 		QRectF textRect(0., 0., 100., 15.);
 		textRect.moveCenter(waistTop - QPointF(0., 15.));
 		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);

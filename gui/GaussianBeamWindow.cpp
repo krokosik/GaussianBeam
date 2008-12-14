@@ -43,6 +43,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	// Bench
 	m_bench = new OpticsBench(this);
 	connect(m_bench, SIGNAL(wavelengthChanged()), this, SLOT(onOpticsBenchWavelengthChanged()));
+	connect(m_bench, SIGNAL(sphericityChanged()), this, SLOT(onOpticsBenchSphericityChanged()));
 
 	// Table
 	m_tableConfigWidget = new TablePropertySelector(this);
@@ -66,13 +67,17 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	connect(m_model, SIGNAL(modelReset()), m_table, SLOT(resizeColumnsToContents()));
 
 	// View
-	m_opticsScene = new OpticsScene(m_bench, this);
-	m_opticsView = new OpticsView(m_opticsScene, m_bench);
-	m_opticsView->setHorizontalRange(0.60);
-	m_opticsView->setVerticalRange(0.002);
+	m_hOpticsScene = new OpticsScene(m_bench, Horizontal, this);
+	m_vOpticsScene = new OpticsScene(m_bench, Vertical, this);
+	m_hOpticsView = new OpticsView(m_hOpticsScene, m_bench);
+	m_hOpticsView->setHorizontalRange(0.60);
+	m_hOpticsView->setVerticalRange(0.002);
+	m_vOpticsView = new OpticsView(m_vOpticsScene, m_bench);
+	m_vOpticsView->setHorizontalRange(0.60);
+	m_vOpticsView->setVerticalRange(0.002);
 
 	// Widget
-	m_widget = new GaussianBeamWidget(m_bench, m_opticsScene, this);
+	m_widget = new GaussianBeamWidget(m_bench, m_hOpticsScene, this);
 
 	// Wavelength widget
 	QWidget* wavelengthWidget = new QWidget(this);
@@ -123,14 +128,16 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	StatusWidget* statusWidget = new StatusWidget(statusBar());
 	statusBar()->addWidget(statusWidget, 1);
-	m_opticsView->setStatusWidget(statusWidget);
+	m_hOpticsView->setStatusWidget(statusWidget);
+	m_vOpticsView->setStatusWidget(statusWidget);
 
 	// Layouts
 	QSplitter *splitter = new QSplitter(Qt::Vertical, this);
 	splitter->addWidget(m_table);
-	splitter->addWidget(m_opticsView);
+	splitter->addWidget(m_hOpticsView);
+	splitter->addWidget(m_vOpticsView);
 	QList<int> sizes;
-	sizes << 10 << 10;
+	sizes << 10 << 10 << 10;
 	splitter->setSizes(sizes);
 	QDockWidget* dock = new QDockWidget(this);
 	dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
@@ -144,6 +151,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 			this, SLOT(updateWidget(const QModelIndex&, const QModelIndex&)));
 
 	readSettings();
+	onOpticsBenchSphericityChanged();
 
 	for (int i = 0; i < 2; i++)
 		m_bench->addOptics(LensType, m_bench->nOptics());
@@ -325,3 +333,16 @@ void GaussianBeamWindow::updateWidget(const QModelIndex& /*topLeft*/, const QMod
 {
 	m_table->resizeRowsToContents();
 }
+
+/////////////////////////////////////////////////
+// Views
+
+void GaussianBeamWindow::onOpticsBenchSphericityChanged()
+{
+	if (m_bench->isSpherical())
+		m_vOpticsView->hide();
+	else
+		m_vOpticsView->show();
+}
+
+

@@ -83,7 +83,7 @@ public:
 	/// Set the bench right boundary to @p leftBoundary
 	void setRightBoundary(double rightBoundary);
 	/// @return true if the bench contains only spherical optics, i.e. if horizontal beams are identical to vertical beams
-	bool isSpherical() const { return m_spherical; }
+	bool isSpherical() const;
 
 	// Optics
 
@@ -125,12 +125,13 @@ public:
 	void opticsPropertyChanged(int index);
 
 	/// Beams handling
-	const Beam* beam(int index, Orientation orientation = Horizontal) const;
-	void setInputBeam(const Beam& beam, Orientation orientation = Horizontal);
-	void setBeam(const Beam& beam, int index, Orientation orientation = Horizontal);
-	const Beam* axis(int index, Orientation orientation = Horizontal) const;
-	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1, Orientation orientation = Horizontal) const;
-	double sensitivity(int index, Orientation orientation = Horizontal) const { return m_sensitivity[index]; }
+	const Beam* beam(int index) const;
+	void setBeam(const Beam& beam, int index);
+	const Beam* inputBeam() const { return m_beams[0]; }
+	void setInputBeam(const Beam& beam);
+	const Beam* axis(int index) const;
+	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
+	double sensitivity(int index) const;
 
 	/// Cavity
 	Cavity& cavity() { return m_cavity; }
@@ -143,8 +144,12 @@ public:
 	void removeFits(unsigned int startIndex, int n);
 
 	/// Magic waist
-	const TargetBeam* targetBeam() const { return &m_targetBeam; }
-	void setTargetBeam(const TargetBeam& beam);
+	const Beam* targetBeam() const { return &m_targetBeam; }
+	void setTargetBeam(const Beam& beam);
+	double targetOverlap() const { return m_targetOverlap; }
+	void setTargetOverlap(double targetOverlap);
+	Orientation targetOrientation() const { return m_targetOrientation; }
+	void setTargetOrientation(Orientation orientation);
 	bool magicWaist();
 	bool localOptimum();
 
@@ -161,26 +166,24 @@ signals:
 	void fitAdded(int index);
 	void fitsRemoved(int index, int count);
 	void fitDataChanged(int index);
+	void sphericityChanged();
 
 private slots:
 	void onFitChanged();
 
 private:
-	std::vector<Beam*>& orientedBeams(Orientation orientation);
-	const std::vector<Beam*>& orientedBeams(Orientation orientation) const;
 	/// @todo on demand computing of beam, cavity and sensitity
-	void computeBeams(int changedIndex = 0, bool backward = false);
-	// Used only by the previous function
-	void computeBeams(int changedIndex, bool backward, Orientation orientation);
-	void updateExtremeBeams(Orientation orientation);
-	void detectCavities(Orientation orientation);
+	void computeBeams(int changedIndex = 0, bool backwards = false);
+	void updateExtremeBeams();
+	void detectCavities();
+	void checkFitSpherical();
 
 private:
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
-	std::vector<Beam*> m_hBeams, m_vBeams;
+	std::vector<Beam*> m_beams;
 	std::vector<double> m_sensitivity;
-	bool m_spherical;
+	bool m_beamSpherical, m_fitSpherical;
 
 //	std::vector<OpticsTreeItem> m_opticsTree;
 
@@ -192,7 +195,9 @@ private:
 	std::vector<Fit*> m_fits;
 
 	/// Magic waist
-	TargetBeam m_targetBeam;
+	Beam m_targetBeam;
+	double m_targetOverlap;
+	Orientation m_targetOrientation;
 
 	/// Cavity
 	Cavity m_cavity;

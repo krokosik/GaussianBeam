@@ -73,26 +73,33 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 
 	switch (column)
 	{
-	case Property::BeamWaist:
-	case Property::BeamRayleigh:
-	case Property::BeamDivergence:
-	{
-		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
-		editor->setAccelerated(true);
-		editor->setMinimum(0.);
-		editor->setMaximum(Unit::infinity);
-		return editor;
-	}
 	case Property::OpticsPosition:
 	case Property::OpticsRelativePosition:
 	case Property::OpticsAngle:
-	case Property::BeamWaistPosition:
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
 		editor->setMinimum(-Unit::infinity);
 		editor->setMaximum(Unit::infinity);
 		return editor;
+	}
+	case Property::BeamWaist:
+	case Property::BeamRayleigh:
+	case Property::BeamDivergence:
+	{
+		QList<EditorProperty> properties;
+		properties << EditorProperty(0., Unit::infinity);
+		if (!m_bench->isSpherical())
+			properties << EditorProperty(0., Unit::infinity);
+		return new PropertyEditor(properties, parent);
+	}
+	case Property::BeamWaistPosition:
+	{
+		QList<EditorProperty> properties;
+		properties << EditorProperty(-Unit::infinity, Unit::infinity);
+		if (!m_bench->isSpherical())
+			properties << EditorProperty(-Unit::infinity, Unit::infinity);
+		return new PropertyEditor(properties, parent);
 	}
 	case Property::OpticsProperties:
 	{
@@ -139,9 +146,15 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case Property::OpticsOrientation:
 	{
 		QComboBox* editor = new QComboBox(parent);
-		editor->addItem(OrientationName::fullName[Spherical] , Spherical);
-		editor->addItem(OrientationName::fullName[Horizontal], Horizontal);
-		editor->addItem(OrientationName::fullName[Vertical]  , Vertical);
+		editor->addItem(OrientationName::fullName[Spherical], Spherical);
+		/// @todo make this more general
+		if (optics->type() == CreateBeamType)
+			editor->addItem(OrientationName::fullName[Ellipsoidal], Ellipsoidal);
+		else
+		{
+			editor->addItem(OrientationName::fullName[Horizontal], Horizontal);
+			editor->addItem(OrientationName::fullName[Vertical]  , Vertical);
+		}
 		return editor;
 	}
 	default:
@@ -161,30 +174,36 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	int row = index.row();
 	Property::Type column = m_model->columnContent(index.column());
 	const Optics* optics = m_bench->optics(row);
+	PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
 
 	switch (column)
 	{
 	case Property::OpticsPosition:
 	case Property::OpticsAngle:
 	case Property::OpticsRelativePosition:
+	{
+		double value = m_model->data(index, Qt::EditRole).toList()[0].toDouble();
+		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
+		spinBox->setValue(value);
+		break;
+	}
 	case Property::BeamWaist:
 	case Property::BeamWaistPosition:
 	case Property::BeamRayleigh:
 	case Property::BeamDivergence:
 	{
-		double value = m_model->data(index, Qt::DisplayRole).toDouble();
-		QDoubleSpinBox* spinBox = static_cast<QDoubleSpinBox*>(editor);
-		spinBox->setValue(value);
+		QList<QVariant> values = m_model->data(index, Qt::EditRole).toList();
+		for(int i = 0; i < values.size(); i++)
+			propertyEditor->setValue(i, values[i].toDouble());
 		break;
 	}
 	case Property::OpticsProperties:
 	{
-		PropertyEditor* propertyEditor = static_cast<PropertyEditor*>(editor);
 		if (optics->type() == CreateBeamType)
 		{
 			const CreateBeam* createBeam = dynamic_cast<const CreateBeam*>(optics);
-			propertyEditor->setValue(0, createBeam->index());
-			propertyEditor->setValue(1, createBeam->M2());
+			propertyEditor->setValue(0, createBeam->beam()->index());
+			propertyEditor->setValue(1, createBeam->beam()->M2());
 		}
 		else if (optics->type() == LensType)
 			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider());
@@ -240,6 +259,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 	{
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
 		comboBox->setCurrentIndex(comboBox->findData(optics->orientation()));
+		break;
 	}
 	default:
 		return QItemDelegate::setEditorData(editor, index);
@@ -256,16 +276,20 @@ void GaussianBeamDelegate::setModelData(QWidget* editor, QAbstractItemModel* mod
 
 	switch (column)
 	{
+	case Property::OpticsProperties:
+	case Property::BeamWaist:
+	case Property::BeamWaistPosition:
+	case Property::BeamRayleigh:
+	case Property::BeamDivergence:
+	{
+		model->setData(index, static_cast<PropertyEditor*>(editor)->values());
+		break;
+	}
 	case Property::OpticsLock:
 	case Property::OpticsOrientation:
 	{
 		QComboBox *comboBox = static_cast<QComboBox*>(editor);
 		model->setData(index, comboBox->itemData(comboBox->currentIndex()));
-		break;
-	}
-	case Property::OpticsProperties:
-	{
-		model->setData(index, static_cast<PropertyEditor*>(editor)->values());
 		break;
 	}
 	default:

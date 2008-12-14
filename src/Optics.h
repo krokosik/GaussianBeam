@@ -31,8 +31,6 @@ enum OpticsType {CreateBeamType, FreeSpaceType,
                  FlatInterfaceType, CurvedInterfaceType,
                  DielectricSlabType, ThickLensType, ThermalLensType, GenericABCDType, UserType};
 
-enum  Orientation {Spherical = 0, Horizontal = 1,  Vertical = 2};
-
 /**
 * Generic optics class. An optics is a transformation of a Gaussian beam
 */
@@ -61,26 +59,26 @@ public:
 	* Compute the image of a given input beam
 	* @p inputBeam input beam
 	*/
-	Beam image(const Beam& inputBeam, Orientation orientation = Horizontal) const { return image(inputBeam, inputBeam, orientation); }
+	Beam image(const Beam& inputBeam) const { return image(inputBeam, inputBeam); }
 	/**
 	* Compute the image of a given input beam
 	* using a different optical axis as angle reference
 	* @p inputBeam input beam
 	* @p opticalAxis input optical axis
 	*/
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const = 0;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const = 0;
 	/**
 	* Compute the input beam corresponding to a given output beam
 	* @p outputBeam output beam
 	*/
-	Beam antecedent(const Beam& outputBeam, Orientation orientation = Horizontal) const { return antecedent(outputBeam, outputBeam, orientation); }
+	Beam antecedent(const Beam& outputBeam) const { return antecedent(outputBeam, outputBeam); }
 	/**
 	* Compute the input beam corresponding to a given output beam
 	* using a different optical axis as angle reference
 	* @p outputBeam output beam
 	* @p opticalAxis output optical axis
 	*/
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const = 0;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const = 0;
 	/**
 	* Index jump from one side of the optics to the other
 	* @return final index / initial index
@@ -213,9 +211,9 @@ public:
 
 public:
 	/// @return the image of @p inputBeam
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
 	/// @return the antecedent if @p outputBeam
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 
 public:
 	/// @return coefficient A of the ABCD matrix
@@ -292,29 +290,15 @@ public:
 	virtual CreateBeam* clone() const { return new CreateBeam(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 
 public:
-	/// @return the waist width of the input beam
-	double waist() const { return m_waist; }
-	/// Set the waist width to @p waist
-	void setWaist(double waist);
-	/// @return the refractive index of the medium in which the input beam propagates
-	double index() const { return m_index; }
-	/// Set the index of the input beam
-	void setIndex(double index);
-	/// @return the beam quality factor M² of the input beam
-	double M2() const { return m_M2; }
-	/// Set the input beam quality factor
-	void setM2(double M2);
-	/// Copy all properties of beam @p beam to class properties
+	const Beam* beam() const;
 	void setBeam(const Beam& beam);
 
 private:
-	double m_waist;
-	double m_index;
-	double m_M2;
+	Beam m_beam;
 };
 
 /////////////////////////////////////////////////
@@ -394,8 +378,8 @@ public:
 	virtual FlatMirror* clone() const { return new FlatMirror(*this); }
 
 public:
-	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
-	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation = Horizontal) const;
+	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
+	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
 };
 
 /**

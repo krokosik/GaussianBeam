@@ -12,7 +12,7 @@
   <property name="windowTitle" >
    <string>Gaussian Beam</string>
   </property>
-  <layout class="QHBoxLayout" >
+  <layout class="QVBoxLayout" name="verticalLayout_4" >
    <item>
     <layout class="QVBoxLayout" >
      <item>
@@ -30,15 +30,15 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex" >
-        <number>2</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_Bench" >
         <property name="geometry" >
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>297</width>
-          <height>493</height>
+          <width>222</width>
+          <height>194</height>
          </rect>
         </property>
         <attribute name="label" >
@@ -136,14 +136,35 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>297</width>
-          <height>493</height>
+          <width>254</width>
+          <height>470</height>
          </rect>
         </property>
         <attribute name="label" >
          <string>Magic waist</string>
         </attribute>
-        <layout class="QVBoxLayout" >
+        <layout class="QVBoxLayout" name="verticalLayout_5" >
+         <item>
+          <widget class="QLabel" name="label_9" >
+           <property name="text" >
+            <string>Aspect</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_TargetOrientation" >
+           <item>
+            <property name="text" >
+             <string>Spherical</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>Ellipsoidal</string>
+            </property>
+           </item>
+          </widget>
+         </item>
          <item>
           <widget class="QLabel" name="label" >
            <property name="text" >
@@ -152,14 +173,28 @@
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_TargetWaist" >
-           <property name="maximum" >
-            <double>100000.000000000000000</double>
-           </property>
-           <property name="value" >
-            <double>100.000000000000000</double>
-           </property>
-          </widget>
+          <layout class="QHBoxLayout" name="horizontalLayout_2" >
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_HTargetWaist" >
+             <property name="maximum" >
+              <double>100000.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>100.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_VTargetWaist" >
+             <property name="maximum" >
+              <double>100000.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>100.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
           <widget class="QLabel" name="label_2" >
@@ -169,92 +204,39 @@
           </widget>
          </item>
          <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_TargetPosition" >
-           <property name="minimum" >
-            <double>-100000.000000000000000</double>
-           </property>
-           <property name="maximum" >
-            <double>100000.000000000000000</double>
-           </property>
-           <property name="value" >
-            <double>550.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" >
+          <layout class="QHBoxLayout" name="horizontalLayout_3" >
            <item>
-            <widget class="QRadioButton" name="radioButton_Tolerance" >
-             <property name="text" >
-              <string>Tolerance</string>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_HTargetPosition" >
+             <property name="minimum" >
+              <double>-100000.000000000000000</double>
              </property>
-             <property name="checked" >
-              <bool>true</bool>
+             <property name="maximum" >
+              <double>100000.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>550.000000000000000</double>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QRadioButton" name="radioButton_Overlap" >
-             <property name="text" >
-              <string>Overlap</string>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_VTargetPosition" >
+             <property name="minimum" >
+              <double>-100000.000000000000000</double>
+             </property>
+             <property name="maximum" >
+              <double>100000.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>550.000000000000000</double>
              </property>
             </widget>
            </item>
           </layout>
          </item>
          <item>
-          <widget class="QLabel" name="label_WaistTolerance" >
-           <property name="text" >
-            <string>Tolerance on waist</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_WaistTolerance" >
-           <property name="suffix" >
-            <string> %</string>
-           </property>
-           <property name="decimals" >
-            <number>1</number>
-           </property>
-           <property name="minimum" >
-            <double>0.000000000000000</double>
-           </property>
-           <property name="maximum" >
-            <double>100000.000000000000000</double>
-           </property>
-           <property name="value" >
-            <double>5.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_PositionTolerance" >
-           <property name="text" >
-            <string>Tolerance on position</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QDoubleSpinBox" name="doubleSpinBox_PositionTolerance" >
-           <property name="suffix" >
-            <string> % Rayleigh</string>
-           </property>
-           <property name="decimals" >
-            <number>1</number>
-           </property>
-           <property name="maximum" >
-            <double>100000.000000000000000</double>
-           </property>
-           <property name="value" >
-            <double>5.000000000000000</double>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="label_MinOverlap" >
            <property name="text" >
-            <string>Overlap</string>
+            <string>Minimum overlap</string>
            </property>
           </widget>
          </item>
@@ -273,6 +255,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="checkBox_ShowTargetBeam" >
+           <property name="enabled" >
+            <bool>true</bool>
+           </property>
            <property name="text" >
             <string>Show target beam</string>
            </property>
@@ -352,26 +337,39 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>235</width>
-          <height>498</height>
+          <width>218</width>
+          <height>555</height>
          </rect>
         </property>
         <attribute name="label" >
          <string>Waist fit</string>
         </attribute>
-        <layout class="QVBoxLayout" >
+        <layout class="QVBoxLayout" name="verticalLayout_3" >
          <item>
-          <widget class="QComboBox" name="comboBox_Fit" />
-         </item>
-         <item>
-          <layout class="QHBoxLayout" >
+          <layout class="QHBoxLayout" name="horizontalLayout" >
+           <item>
+            <widget class="QComboBox" name="comboBox_Fit" >
+             <property name="sizePolicy" >
+              <sizepolicy vsizetype="Fixed" hsizetype="MinimumExpanding" >
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
            <item>
             <widget class="QPushButton" name="pushButton_AddFit" >
+             <property name="sizePolicy" >
+              <sizepolicy vsizetype="Fixed" hsizetype="Minimum" >
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="toolTip" >
               <string>Add a new fit</string>
              </property>
              <property name="text" >
-              <string>Fit</string>
+              <string/>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >
@@ -381,11 +379,17 @@
            </item>
            <item>
             <widget class="QPushButton" name="pushButton_RemoveFit" >
+             <property name="sizePolicy" >
+              <sizepolicy vsizetype="Fixed" hsizetype="Minimum" >
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
              <property name="toolTip" >
               <string>Delete this fit</string>
              </property>
              <property name="text" >
-              <string>Fit</string>
+              <string/>
              </property>
              <property name="icon" >
               <iconset resource="GaussianBeamRessource.qrc" >
@@ -436,9 +440,6 @@
              <property name="text" >
               <string/>
              </property>
-             <property name="flat" >
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
            <item>
@@ -452,6 +453,32 @@
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_8" >
+           <property name="text" >
+            <string>Orientation:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboBox_FitOrientation" >
+           <item>
+            <property name="text" >
+             <string>Spherical</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>Horizontal</string>
+            </property>
+           </item>
+           <item>
+            <property name="text" >
+             <string>Vertical</string>
+            </property>
+           </item>
+          </widget>
          </item>
          <item>
           <widget class="QLabel" name="label_4" >

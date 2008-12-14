@@ -83,13 +83,13 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	int majorVersion = versionList[0].toInt();
 	int minorVersion = versionList[1].toInt();
 	qDebug() << "File version" << majorVersion << minorVersion;
-	if ((majorVersion == 1) && ((minorVersion == 0) || (minorVersion == 1)))
+	if ((majorVersion == 1) && ((minorVersion >= 0) || (minorVersion <= 2)))
 	{
 		m_bench->removeOptics(0, m_bench->nOptics());
 		m_bench->removeFits(0, m_bench->nFit());
 		if (minorVersion == 0)
 			parseXml10(root);
-		else if (minorVersion == 1)
+		else if (minorVersion >= 1)
 			parseXml(root);
 	}
 	else
@@ -158,30 +158,56 @@ void GaussianBeamWindow::parseBench(const QDomElement& element)
 
 void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 {
-	QDomElement child = element.firstChildElement();
-	TargetBeam targetBeam = *m_bench->targetBeam();
+	Beam targetBeam = *m_bench->targetBeam();
+	m_bench->setTargetOrientation(Spherical); // Default for compatibility with old file versions
+	parseBeam(element, targetBeam);
+	m_bench->setTargetBeam(targetBeam);
+}
 
-	// Alternative names are for the 1.0 file version
+void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)
+{
+	QDomElement child = element.firstChildElement();
+
+	// Alternative names are for the 1.0 or 1.1 file version
 	while (!child.isNull())
 	{
-		/// @todo waistTolerance, positionTolerance, overlap and showTargetBeam(/Waist) are missing
-		if ((child.tagName() == "position") || (child.tagName() == "targetPosition"))
-			targetBeam.setWaistPosition(child.text().toDouble());
-		else if ((child.tagName() == "waist") || (child.tagName() == "targetWaist"))
-			targetBeam.setWaist(child.text().toDouble());
-		else if (child.tagName() == "positionTolerance")
-			targetBeam.setPositionTolerance(child.text().toDouble());
-		else if (child.tagName() == "waistTolerance")
-			targetBeam.setWaistTolerance(child.text().toDouble());
-		else if (child.tagName() == "minOverlap")
-			targetBeam.setMinOverlap(child.text().toDouble());
+		/// @todo showTargetBeam is missing
+		if (child.tagName() == "horizontalWaist")
+			beam.setWaist(child.text().toDouble(), Horizontal);
+		else if (child.tagName() == "verticalWaist")
+			beam.setWaist(child.text().toDouble(), Vertical);
+		else if ((child.tagName() == "waist") || (child.tagName() == "targetWaist")) // Old file version
+			beam.setWaist(child.text().toDouble(), Spherical);
+		else if (child.tagName() == "horizontalPosition")
+			beam.setWaistPosition(child.text().toDouble(), Horizontal);
+		else if (child.tagName() == "verticalPosition")
+			beam.setWaistPosition(child.text().toDouble(), Vertical);
+		else if ((child.tagName() == "position") || (child.tagName() == "waistPosition") ||(child.tagName() == "targetPosition")) // Old file version
+			beam.setWaistPosition(child.text().toDouble(), Spherical);
+		else if (child.tagName() == "wavelength")
+			beam.setWavelength(child.text().toDouble());
+		/// @todo should we load angle and origin ?
+//		else if (child.tagName() == "angle")
+//			beam.setAngle(child.text().toDouble());
+		else if (child.tagName() == "index")
+			beam.setIndex(child.text().toDouble());
+		else if (child.tagName() == "M2")
+			beam.setM2(child.text().toDouble());
+		// The next tags are specific to target beams
+		else if ((child.tagName() == "targetOverlap") || (child.tagName() == "minOverlap"))
+			m_bench->setTargetOverlap(child.text().toDouble());
+		else if (child.tagName() == "targetOrientation")
+			m_bench->setTargetOrientation(Orientation(child.text().toInt()));
 		else if (child.tagName() == "overlapCriterion")
-			targetBeam.setOverlapCriterion(child.text().toDouble());
+			; // Deprecated
+		else if (child.tagName() == "positionTolerance")
+			; // Deprecated
+		else if (child.tagName() == "waistTolerance")
+			; // Deprecated
 		else
 			qDebug() << " -> Unknown tag: " << child.tagName();
 		child = child.nextSiblingElement();
 	}
-	m_bench->setTargetBeam(targetBeam);
 }
 
 void GaussianBeamWindow::parseFit(const QDomElement& element)
@@ -198,6 +224,8 @@ void GaussianBeamWindow::parseFit(const QDomElement& element)
 			fit->setDataType(FitDataType(child.text().toInt()));
 		else if (child.tagName() == "color")
 			fit->setColor(child.text().toUInt());
+		else if (child.tagName() == "orientation")
+			fit->setOrientation(Orientation(child.text().toUInt()));
 		else if ((child.tagName() == "data") || (child.tagName() == "fitData"))
 		{
 			QDomElement dataElement = child.firstChildElement();
@@ -258,6 +286,8 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 			optics->setPosition(child.text().toDouble());
 		else if (child.tagName() == "angle")
 			optics->setAngle(child.text().toDouble());
+		else if (child.tagName() == "orientation")
+			optics->setOrientation(Orientation(child.text().toInt()));
 		else if (child.tagName() == "name")
 			optics->setName(child.text().toUtf8().data());
 		else if (child.tagName() == "absoluteLock")
@@ -266,14 +296,6 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 			lockTree.back() = child.text();
 		else if (child.tagName() == "width")
 			optics->setWidth(child.text().toDouble());
-		else if (child.tagName() == "waist")
-			dynamic_cast<CreateBeam*>(optics)->setWaist(child.text().toDouble());
-		else if (child.tagName() == "index")
-			dynamic_cast<CreateBeam*>(optics)->setIndex(child.text().toDouble());
-		else if (child.tagName() == "M2")
-			dynamic_cast<CreateBeam*>(optics)->setM2(child.text().toDouble());
-		else if (child.tagName() == "waistPosition") // For compatibility with very old 1.0 files
-			optics->setPosition(child.text().toDouble());
 		else if (child.tagName() == "focal")
 			dynamic_cast<Lens*>(optics)->setFocal(child.text().toDouble());
 		else if (child.tagName() == "curvatureRadius")
@@ -297,6 +319,14 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 	}
 
 	m_bench->addOptics(optics, m_bench->nOptics());
+
+	if (optics->type() == CreateBeamType)
+	{
+		Beam inputBeam;
+		parseBeam(element.firstChildElement(), inputBeam);
+		m_bench->setInputBeam(inputBeam);
+	}
+
 }
 
 void GaussianBeamWindow::parseView(const QDomElement& element)
@@ -306,15 +336,15 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 	while (!child.isNull())
 	{
 		if (child.tagName() == "horizontalRange")
-			m_opticsView->setHorizontalRange(child.text().toDouble());
+			m_hOpticsView->setHorizontalRange(child.text().toDouble());
 		else if (child.tagName() == "verticalRange")
-			m_opticsView->setVerticalRange(child.text().toDouble());
+			m_hOpticsView->setVerticalRange(child.text().toDouble());
 		else if (child.tagName() == "origin")
-			m_opticsView->setOrigin(child.text().toDouble());
+			m_hOpticsView->setOrigin(child.text().toDouble());
 		else if (child.tagName() == "showTargetBeam")
 		{
 			bool value = child.text().toInt();
-			m_opticsScene->showTargetBeam(value);
+			m_hOpticsScene->showTargetBeam(value);
 			/// @todo incorporate in OpticsView
 			m_widget->displayShowTargetBeam(value);
 		}
@@ -350,7 +380,7 @@ void GaussianBeamWindow::parseXml10(const QDomElement& element)
 		else if (child.tagName() == "HRange")
 			hRange = child.text().toDouble();
 		else if (child.tagName() == "VRange")
-			m_opticsView->setVerticalRange(child.text().toDouble());
+			m_hOpticsView->setVerticalRange(child.text().toDouble());
 		else if (child.tagName() == "HOffset")
 			hOffset = child.text().toDouble();
 		else if (m_opticsElements.values().contains(child.tagName()))
@@ -365,8 +395,8 @@ void GaussianBeamWindow::parseXml10(const QDomElement& element)
 	{
 		m_bench->setLeftBoundary(hOffset);
 		m_bench->setRightBoundary(hOffset + hRange);
-		m_opticsView->setOrigin(hOffset);
-		m_opticsView->setHorizontalRange(hOffset + hRange);
+		m_hOpticsView->setOrigin(hOffset);
+		m_hOpticsView->setHorizontalRange(hOffset + hRange);
 	}
 
 	if (m_bench->nFit() > 0)

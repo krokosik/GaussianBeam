@@ -173,7 +173,7 @@ public:
 	StatusWidget(QStatusBar* statusBar);
 
 public:
-	void showBeamInfo(const Beam* beam, double z);
+	void showBeamInfo(const Beam* beam, double z, Orientation orientation);
 
 private:
 	QStatusBar* m_statusBar;

@@ -61,6 +61,7 @@ protected slots:
 	void wavelengthSpinBox_valueChanged(double wavelength);
 	void openRecentFile();
 
+	void onOpticsBenchSphericityChanged();
 	void onOpticsBenchWavelengthChanged();
 
 protected:
@@ -84,11 +85,13 @@ private:
 	void parseXml(const QDomElement& element);
 	void parseBench(const QDomElement& element);
 	void parseTargetBeam(const QDomElement& element);
+	void parseBeam(const QDomElement& element, Beam& beam);
 	void parseFit(const QDomElement& element);
 	void parseOptics(const QDomElement& element, QList<QString>& lockTree);
 	void parseView(const QDomElement& element);
 	bool writeFile(const QString& path = QString());
 	void writeBench(QXmlStreamWriter& xmlWriter);
+	void writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam);
 	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics);
 	void writeView(QXmlStreamWriter& xmlWriter);
 	// Compatibility functions
@@ -109,8 +112,10 @@ private:
 	QTableView* m_table;
 	TablePropertySelector* m_tableConfigWidget;
 	CornerWidget* m_tableCornerWidget;
-	OpticsView* m_opticsView;
-	OpticsScene* m_opticsScene;
+	OpticsView* m_hOpticsView;
+	OpticsView* m_vOpticsView;
+	OpticsScene* m_hOpticsScene;
+	OpticsScene* m_vOpticsScene;
 	QMap<OpticsType, QString> m_opticsElements;
 
 	QString m_currentFile;

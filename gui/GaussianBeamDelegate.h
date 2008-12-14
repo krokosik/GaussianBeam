@@ -31,7 +31,7 @@ class GaussianBeamModel;
 class EditorProperty
 {
 public:
-	EditorProperty(double a_minimum, double a_maximum, QString a_prefix, QString a_suffix = "")
+	EditorProperty(double a_minimum, double a_maximum, QString a_prefix = "", QString a_suffix = "")
 		: minimum(a_minimum), maximum(a_maximum), prefix(a_prefix), suffix(a_suffix) {}
 
 public:

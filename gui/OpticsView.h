@@ -20,6 +20,7 @@
 #define OPTICSVIEW_H
 
 #include "src/GaussianBeam.h"
+#include "src/Optics.h"
 
 #include <QPoint>
 #include <QPainterPath>
@@ -45,11 +46,14 @@ class OpticsScene : public QGraphicsScene
 Q_OBJECT
 
 public:
-	OpticsScene(OpticsBench* bench, QObject* parent = 0);
+	OpticsScene(OpticsBench* bench, Orientation orientation = Horizontal, QObject* parent = 0);
 
 public:
+	Orientation orientation() const { return m_orientation; }
 	void showTargetBeam(bool show = true);
-	bool targetBeamVisible();
+	bool targetBeamVisible() const;
+	double beamScale() const { return m_beamScale; }
+	void setBeamScale(double scale);
 
 private slots:
 	void onOpticsBenchDataChanged(int startOptics, int endOptics);
@@ -65,6 +69,8 @@ private:
 
 private:
 	OpticsBench* m_bench;
+	Orientation m_orientation;
+	double m_beamScale;
 
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
@@ -166,7 +172,6 @@ private:
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;
-	double m_scale;
 };
 
 #endif

@@ -56,14 +56,15 @@ protected slots:
 	void on_pushButton_MagicWaist_clicked();
 	void on_pushButton_LocalOptimum_clicked();
 	void on_checkBox_ShowTargetBeam_toggled(bool checked);
-	void on_doubleSpinBox_TargetWaist_valueChanged(double value);
-	void on_doubleSpinBox_TargetPosition_valueChanged(double value);
-	void on_doubleSpinBox_WaistTolerance_valueChanged(double value);
-	void on_doubleSpinBox_PositionTolerance_valueChanged(double value);
+	void on_comboBox_TargetOrientation_currentIndexChanged(int dataIndex);
+	void on_doubleSpinBox_HTargetWaist_valueChanged(double value);
+	void on_doubleSpinBox_HTargetPosition_valueChanged(double value);
+	void on_doubleSpinBox_VTargetWaist_valueChanged(double value);
+	void on_doubleSpinBox_VTargetPosition_valueChanged(double value);
 	void on_doubleSpinBox_MinOverlap_valueChanged(double value);
-	void on_radioButton_Tolerance_toggled(bool checked);
 	// Waist fit
 	void on_comboBox_Fit_currentIndexChanged(int index);
+	void on_comboBox_FitOrientation_currentIndexChanged(int dataIndex);
 	void on_comboBox_FitData_currentIndexChanged(int dataIndex);
 	void on_pushButton_AddFit_clicked();
 	void on_pushButton_RemoveFit_clicked();
@@ -90,6 +91,7 @@ private:
 	void displayOverlap();
 	void updateUnits();
 	void insertOptics(OpticsType opticsType);
+	void updateTargetInformation();
 	void updateCavityInformation();
 	void updateFitInformation(int index);
 	void readSettings();
@@ -103,7 +105,7 @@ private:
 	QItemSelectionModel* fitSelectionModel;
 	GaussianBeamPlot* plot;
 
-	bool m_updatingFit;
+	bool m_updatingFit, m_updatingTarget;
 };
 
 #endif

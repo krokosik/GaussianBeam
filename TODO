@@ -34,6 +34,8 @@ BUGS:
 	Update all data when chaging the delegate
 	Really find local optimum, not 100% local optimum
 	Angle is editable even for non rotable optics
+	Save all views information
+	Check that the initial waist position is well loaded from old files (optics position -> beam position)
 
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength

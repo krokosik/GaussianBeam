@@ -114,9 +114,10 @@ void initNames(QApplication* app)
 	OpticsName::fullName.insert(ThermalLensType,     app->translate("Names", "Thermal lens"));
 	OpticsName::fullName.insert(GenericABCDType,     app->translate("Names", "Generic ABCD"));
 
-	OrientationName::fullName.insert(Horizontal, app->translate("Names", "Horizontal"));
-	OrientationName::fullName.insert(Vertical,   app->translate("Names", "Vertical"));
-	OrientationName::fullName.insert(Spherical,  app->translate("Names", "Spherical"));
+	OrientationName::fullName.insert(Horizontal,  app->translate("Names", "Horizontal"));
+	OrientationName::fullName.insert(Vertical,    app->translate("Names", "Vertical"));
+	OrientationName::fullName.insert(Spherical,   app->translate("Names", "Spherical"));
+	OrientationName::fullName.insert(Ellipsoidal, app->translate("Names", "Ellipsoidal"));
 }
 
 QString breakString(QString string)

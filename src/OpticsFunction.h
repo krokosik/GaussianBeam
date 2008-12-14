@@ -26,7 +26,7 @@ class Optics;
 class OpticsBench;
 
 /**
-* Optics function is a function which vaue is the overlap between a Gaussian beam
+* Optics function is a function which value is the overlap between a Gaussian beam
 * produced by a set of optics and a given beam. Its arguments is the set of positions
 * of all the optics.
 */

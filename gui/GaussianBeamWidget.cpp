@@ -45,6 +45,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsSc
 	, m_opticsScene(opticsScene)
 {
 	m_updatingFit = false;
+	m_updatingTarget = false;
 	setupUi(this);
 
 	// Bench connections
@@ -89,10 +90,6 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsSc
 	        this, SLOT(fitModelChanged(const QModelIndex&, const QModelIndex&)));
 
 	// Set up default values
-	/// @todo index = 1. ? target = 1.
-	/// @todo values for overlap and targetbeam
-	m_bench->setTargetBeam(TargetBeam(0.000150, 0.6, m_bench->wavelength(), 1., 1.));
-	on_radioButton_Tolerance_toggled(radioButton_Tolerance->isChecked());
 	on_checkBox_ShowTargetBeam_toggled(checkBox_ShowTargetBeam->isChecked());
 	updateUnits();
 	readSettings();
@@ -105,6 +102,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsSc
 		onOpticsBenchFitAdded(i);
 
 	updateFitInformation(comboBox_Fit->currentIndex());
+	updateTargetInformation();
 }
 
 GaussianBeamWidget::~GaussianBeamWidget()
@@ -126,8 +124,10 @@ void GaussianBeamWidget::readSettings()
 
 void GaussianBeamWidget::updateUnits()
 {
-	doubleSpinBox_TargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
-	doubleSpinBox_TargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
+	doubleSpinBox_HTargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
+	doubleSpinBox_HTargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
+	doubleSpinBox_VTargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
+	doubleSpinBox_VTargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
 	doubleSpinBox_LeftBoundary->setSuffix(Units::getUnit(UnitPosition).string());
 	doubleSpinBox_RightBoundary->setSuffix(Units::getUnit(UnitPosition).string());
 	/// @todo update table headers and status bar and wavelength
@@ -185,75 +185,108 @@ void GaussianBeamWidget::displayOverlap()
 		label_OverlapResult->setText("");
 }
 
-void GaussianBeamWidget::on_doubleSpinBox_TargetWaist_valueChanged(double value)
+void GaussianBeamWidget::updateTargetInformation()
 {
-	Q_UNUSED(value);
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setWaist(doubleSpinBox_TargetWaist->value()*Units::getUnit(UnitWaist).multiplier());
+	m_updatingTarget = true;
+
+	if (m_bench->targetOrientation() == Ellipsoidal)
+	{
+		comboBox_TargetOrientation->setCurrentIndex(1);
+		doubleSpinBox_VTargetWaist->setVisible(true);
+		doubleSpinBox_VTargetPosition->setVisible(true);
+	}
+	else
+	{
+		comboBox_TargetOrientation->setCurrentIndex(0);
+		doubleSpinBox_VTargetWaist->setVisible(false);
+		doubleSpinBox_VTargetPosition->setVisible(false);
+	}
+
+	doubleSpinBox_HTargetWaist->setValue(m_bench->targetBeam()->waist(Horizontal)*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_HTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Horizontal)*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_VTargetWaist->setValue(m_bench->targetBeam()->waist(Vertical)*Units::getUnit(UnitWaist).divider());
+	doubleSpinBox_VTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Vertical)*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_MinOverlap->setValue(m_bench->targetOverlap()*100.);
+	displayOverlap();
+
+	m_updatingTarget = false;
+}
+
+void GaussianBeamWidget::on_comboBox_TargetOrientation_currentIndexChanged(int dataIndex)
+{
+	if (m_updatingTarget)
+		return;
+
+	if (dataIndex == 0)
+		m_bench->setTargetOrientation(Spherical);
+	else
+		m_bench->setTargetOrientation(Ellipsoidal);
+}
+
+void GaussianBeamWidget::on_doubleSpinBox_HTargetWaist_valueChanged(double value)
+{
+	if (m_updatingTarget)
+		return;
+
+	Orientation orientation = Horizontal;
+	if (m_bench->targetOrientation() == Spherical)
+		orientation = Spherical;
+
+	Beam beam = *m_bench->targetBeam();
+	beam.setWaist(value*Units::getUnit(UnitWaist).multiplier(), orientation);
 	m_bench->setTargetBeam(beam);
 }
 
-void GaussianBeamWidget::on_doubleSpinBox_TargetPosition_valueChanged(double value)
+void GaussianBeamWidget::on_doubleSpinBox_HTargetPosition_valueChanged(double value)
 {
-	Q_UNUSED(value);
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setWaistPosition(doubleSpinBox_TargetPosition->value()*Units::getUnit(UnitPosition).multiplier());
+	if (m_updatingTarget)
+		return;
+
+	Orientation orientation = Horizontal;
+	if (m_bench->targetOrientation() == Spherical)
+		orientation = Spherical;
+
+	Beam beam = *m_bench->targetBeam();
+	beam.setWaistPosition(value*Units::getUnit(UnitPosition).multiplier(), orientation);
 	m_bench->setTargetBeam(beam);
 }
 
-void GaussianBeamWidget::on_doubleSpinBox_WaistTolerance_valueChanged(double value)
+void GaussianBeamWidget::on_doubleSpinBox_VTargetWaist_valueChanged(double value)
 {
-	Q_UNUSED(value);
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setWaistTolerance(doubleSpinBox_WaistTolerance->value()*0.01);
+	if (m_updatingTarget)
+		return;
+
+	Beam beam = *m_bench->targetBeam();
+	beam.setWaist(value*Units::getUnit(UnitWaist).multiplier(), Vertical);
 	m_bench->setTargetBeam(beam);
 }
 
-void GaussianBeamWidget::on_doubleSpinBox_PositionTolerance_valueChanged(double value)
+void GaussianBeamWidget::on_doubleSpinBox_VTargetPosition_valueChanged(double value)
 {
-	Q_UNUSED(value);
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setPositionTolerance(doubleSpinBox_PositionTolerance->value()*0.01);
+	if (m_updatingTarget)
+		return;
+
+	Beam beam = *m_bench->targetBeam();
+	beam.setWaistPosition(value*Units::getUnit(UnitPosition).multiplier(), Vertical);
 	m_bench->setTargetBeam(beam);
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_MinOverlap_valueChanged(double value)
 {
-	Q_UNUSED(value);
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setMinOverlap(doubleSpinBox_MinOverlap->value()*0.01);
-	m_bench->setTargetBeam(beam);
+	if (m_updatingTarget)
+		return;
+
+	m_bench->setTargetOverlap(value*0.01);
 }
 
 void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 {
+	if (m_updatingTarget)
+		return;
+
+	/// @todo
+//	dynamic_cast<GaussianBeamWindow*>(parent)->showTargetBeam();
 	m_opticsScene->showTargetBeam(checked);
-}
-
-void GaussianBeamWidget::on_radioButton_Tolerance_toggled(bool checked)
-{
-	if (checked)
-	{
-		label_MinOverlap->setVisible(false);
-		doubleSpinBox_MinOverlap->setVisible(false);
-		label_WaistTolerance->setVisible(true);
-		doubleSpinBox_WaistTolerance->setVisible(true);
-		label_PositionTolerance->setVisible(true);
-		doubleSpinBox_PositionTolerance->setVisible(true);
-	}
-	else
-	{
-		label_WaistTolerance->setVisible(false);
-		doubleSpinBox_WaistTolerance->setVisible(false);
-		label_PositionTolerance->setVisible(false);
-		doubleSpinBox_PositionTolerance->setVisible(false);
-		label_MinOverlap->setVisible(true);
-		doubleSpinBox_MinOverlap->setVisible(true);
-	}
-
-	TargetBeam beam = *m_bench->targetBeam();
-	beam.setOverlapCriterion(!checked);
-	m_bench->setTargetBeam(beam);
 }
 
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()
@@ -276,13 +309,7 @@ void GaussianBeamWidget::on_pushButton_LocalOptimum_clicked()
 
 void GaussianBeamWidget::onOpticsBenchTargetBeamChanged()
 {
-	doubleSpinBox_TargetWaist->setValue(m_bench->targetBeam()->waist()*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_TargetPosition->setValue(m_bench->targetBeam()->waistPosition()*Units::getUnit(UnitPosition).divider());
-	doubleSpinBox_WaistTolerance->setValue(m_bench->targetBeam()->waistTolerance()*100.);
-	doubleSpinBox_PositionTolerance->setValue(m_bench->targetBeam()->positionTolerance()*100.);
-	doubleSpinBox_MinOverlap->setValue(m_bench->targetBeam()->minOverlap()*100.);
-	radioButton_Overlap->setChecked(m_bench->targetBeam()->overlapCriterion());
-	displayOverlap();
+	updateTargetInformation();
 }
 
 ///////////////////////////////////////////////////////////
@@ -302,6 +329,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 		pushButton_FitAddRow->setEnabled(false);
 		pushButton_FitRemoveRow->setEnabled(false);
 		comboBox_FitData->setEnabled(false);
+		comboBox_FitOrientation->setEnabled(false);
 		fitTable->setEnabled(false);
 
 		pushButton_SetInputBeam->setEnabled(false);
@@ -316,6 +344,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 		pushButton_FitAddRow->setEnabled(true);
 		pushButton_FitRemoveRow->setEnabled(true);
 		comboBox_FitData->setEnabled(true);
+		comboBox_FitOrientation->setEnabled(true);
 		fitTable->setEnabled(true);
 	}
 
@@ -325,6 +354,7 @@ void GaussianBeamWidget::updateFitInformation(int index)
 	comboBox_Fit->setItemText(index, QString::fromUtf8(fit->name().c_str()));
 	pushButton_FitColor->setPalette(QPalette(QColor(fit->color())));
 	comboBox_FitData->setCurrentIndex(int(fit->dataType()));
+	comboBox_FitOrientation->setCurrentIndex(int(fit->orientation()));
 
 	// Resize rows to match the number of elements in the fit
 	for (; fit->size() > fitModel->rowCount();)
@@ -353,10 +383,11 @@ void GaussianBeamWidget::updateFitInformation(int index)
 	}
 	else
 	{
-		Beam fitBeam = fit->beam(m_bench->wavelength());
-		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist()*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
-					tr("Position") + " = " + QString::number(fitBeam.waistPosition()*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n" +
-					tr("Residue") + " = " + QString::number(fit->residue(m_bench->wavelength()));
+		Beam fitBeam(m_bench->wavelength());
+		double residue = fit->applyFit(fitBeam);
+		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist(fit->orientation())*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
+					tr("Position") + " = " + QString::number(fitBeam.waistPosition(fit->orientation())*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n" +
+					tr("Residue") + " = " + QString::number(residue);
 		label_FitResult->setText(text);
 		pushButton_SetInputBeam->setEnabled(true);
 		pushButton_SetTargetBeam->setEnabled(true);
@@ -409,6 +440,16 @@ void GaussianBeamWidget::on_pushButton_FitColor_clicked()
 
 	QColor color = QColorDialog::getColor(Qt::black, this);
 	m_bench->fit(index)->setColor(color.rgb());
+}
+
+void GaussianBeamWidget::on_comboBox_FitOrientation_currentIndexChanged(int dataIndex)
+{
+	int index = comboBox_Fit->currentIndex();
+	if ((index < 0) || m_updatingFit)
+		return;
+
+	Fit* fit = m_bench->fit(index);
+	fit->setOrientation(Orientation(dataIndex));
 }
 
 void GaussianBeamWidget::on_comboBox_FitData_currentIndexChanged(int dataIndex)
@@ -468,7 +509,9 @@ void GaussianBeamWidget::on_pushButton_SetInputBeam_clicked()
 	if (index < 0)
 		return;
 
-	m_bench->setInputBeam(m_bench->fit(index)->beam(m_bench->wavelength()));
+	Beam inputBeam = *m_bench->inputBeam();
+	m_bench->fit(index)->applyFit(inputBeam);
+	m_bench->setInputBeam(inputBeam);
 }
 
 void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
@@ -477,10 +520,8 @@ void GaussianBeamWidget::on_pushButton_SetTargetBeam_clicked()
 	if (index < 0)
 		return;
 
-	TargetBeam targetBeam = *m_bench->targetBeam();
-	Beam fitBeam = m_bench->fit(index)->beam(m_bench->wavelength());
-	targetBeam.setWaist(fitBeam.waist());
-	targetBeam.setWaistPosition(fitBeam.waistPosition());
+	Beam targetBeam = *m_bench->targetBeam();
+	m_bench->fit(index)->applyFit(targetBeam);
 	m_bench->setTargetBeam(targetBeam);
 }
 

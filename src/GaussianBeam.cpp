@@ -33,106 +33,208 @@ Beam::Beam()
 Beam::Beam(double wavelength)
 {
 	init();
-	m_wavelength = wavelength;
+	setWavelength(wavelength);
 }
 
 Beam::Beam(double waist, double waistPosition, double wavelength, double index, double M2)
 {
 	init();
-	m_waist = waist;
-	m_waistPosition = waistPosition;
-	m_wavelength = wavelength;
-	m_index = index;
-	m_M2 = M2;
+	setWavelength(wavelength);
+	setIndex(index);
+	setM2(M2);
+	setWaist(waist);
+	setWaistPosition(waistPosition);
 }
 
 Beam::Beam(const complex<double>& q, double z, double wavelength, double index, double M2)
-	: m_wavelength(wavelength)
-	, m_index(index)
-	, m_M2(M2)
 {
 	init();
-	m_wavelength = wavelength;
-	m_index = index;
-	m_M2 = M2;
+	setWavelength(wavelength);
+	setIndex(index);
+	setM2(M2);
 	setQ(q, z);
 }
 
 void Beam::init()
 {
-	m_wavelength = 0.;
-	m_waist = 0.;
-	m_waistPosition = 0.;
+	m_wavelength = 461e-9;
 	m_index = 1.;
 	m_M2 = 1.;
+	setWaist(1e-4);
+	setWaistPosition(0.);
 	m_angle = 0.;
 	m_start = 0.;
 	m_stop = 0.;
 	m_origin = vector<double>(2, 0.);
 }
 
-double Beam::divergence() const
+/////////////
+// Properties
+
+double Beam::waistPosition(Orientation orientation) const
 {
-	if (m_waist == 0.)
+	if (orientation == Vertical)
+		return m_waistPosition.second;
+
+	return m_waistPosition.first;
+}
+
+void Beam::setWaistPosition(double waistPosition, Orientation orientation)
+{
+	if (orientation != Vertical)
+		m_waistPosition.first = waistPosition;
+
+	if (orientation != Horizontal)
+		m_waistPosition.second = waistPosition;
+}
+
+double Beam::waist(Orientation orientation) const
+{
+	if (orientation == Vertical)
+		return m_waist.second;
+
+	return m_waist.first;
+}
+
+void Beam::setWaist(double waist, Orientation orientation)
+{
+	if (orientation != Vertical)
+		m_waist.first = waist;
+
+	if (orientation != Horizontal)
+		m_waist.second = waist;
+}
+
+double Beam::divergence(Orientation orientation) const
+{
+	if (waist(orientation) == 0.)
 		return 0.;
 
-	return atan(m_wavelength*m_M2/(m_index*M_PI*m_waist));
+	return atan(m_wavelength*m_M2/(m_index*M_PI*waist(orientation)));
 }
 
-void Beam::setDivergence(double divergence)
+void Beam::setDivergence(double divergence, Orientation orientation)
 {
 	if ((divergence > 0.) && (divergence < M_PI/2.))
-		m_waist = m_wavelength*m_M2/(m_index*M_PI*tan(divergence));
+		setWaist(m_wavelength*m_M2/(m_index*M_PI*tan(divergence)), orientation);
 }
 
-double Beam::rayleigh() const
+double Beam::rayleigh(Orientation orientation) const
 {
 	if (m_wavelength == 0.)
 		return 0.;
 
-	return m_index*M_PI*sqr(m_waist)/(m_wavelength*m_M2);
+	return m_index*M_PI*sqr(waist(orientation))/(m_wavelength*m_M2);
 }
 
-void Beam::setRayleigh(double rayleigh)
+void Beam::setRayleigh(double rayleigh, Orientation orientation)
 {
 	if (rayleigh > 0.)
-		m_waist = sqrt(rayleigh*m_wavelength*m_M2/(m_index*M_PI));
+		setWaist(sqrt(rayleigh*m_wavelength*m_M2/(m_index*M_PI)), orientation);
 }
 
-double Beam::radius(double z) const
+double Beam::wavelength() const
 {
-	return waist()*sqrt(1. + sqr(zred(z)));
+	return m_wavelength;
 }
 
-double Beam::radiusDerivative(double z) const
+void Beam::setWavelength(double wavelength)
 {
-	return waist()/rayleigh()/sqrt(1. + 1./sqr(zred(z)));
+	m_wavelength = wavelength;
 }
 
-double Beam::radiusSecondDerivative(double z) const
+double Beam::index() const
 {
-	return waist()/sqr(rayleigh())/pow(1. + sqr(zred(z)), 1.5);
+	return m_index;
 }
 
-double Beam::curvature(double z) const
+void Beam::setIndex(double index)
 {
-	return (z - waistPosition())*(1. + 1./sqr(zred(z)));
+	if (index > 0.)
+		m_index = index;
 }
 
-double Beam::gouyPhase(double z) const
+double Beam::M2() const
 {
-	return atan(zred(z));
+	return m_M2;
 }
 
-void Beam::setQ(complex<double> q, double z)
+void Beam::setM2(double M2)
 {
-	setRayleigh(q.imag());
-	setWaistPosition(z - q.real());
+	if (M2 >= 1.)
+		m_M2 = M2;
 }
 
-complex<double> Beam::q(double z) const
+////////////////////////////////
+// Position dependent properties
+
+double Beam::radius(double z, Orientation orientation) const
 {
-	return complex<double>(z - waistPosition(), rayleigh());
+	return waist(orientation)*sqrt(1. + sqr(zred(z, orientation)));
+}
+
+double Beam::radiusDerivative(double z, Orientation orientation) const
+{
+	return waist(orientation)/rayleigh(orientation)/sqrt(1. + 1./sqr(zred(z, orientation)));
+}
+
+double Beam::radiusSecondDerivative(double z, Orientation orientation) const
+{
+	return waist(orientation)/sqr(rayleigh(orientation))/pow(1. + sqr(zred(z, orientation)), 1.5);
+}
+
+double Beam::curvature(double z, Orientation orientation) const
+{
+	return (z - waistPosition(orientation))*(1. + 1./sqr(zred(z, orientation)));
+}
+
+double Beam::gouyPhase(double z, Orientation orientation) const
+{
+	return atan(zred(z, orientation));
+}
+
+void Beam::setQ(complex<double> q, double z, Orientation orientation)
+{
+	setRayleigh(q.imag(), orientation);
+	setWaistPosition(z - q.real(), orientation);
+}
+
+complex<double> Beam::q(double z, Orientation orientation) const
+{
+	return complex<double>(z - waistPosition(orientation), rayleigh(orientation));
+}
+
+/////////////////////////
+// Geometrical properties
+
+double Beam::start() const
+{
+	return m_start;
+}
+
+void Beam::setStart(double start)
+{
+	m_start = start;
+}
+
+double Beam::stop() const
+{
+	return m_stop;
+}
+
+void Beam::setStop(double stop)
+{
+	m_stop = stop;
+}
+
+vector<double> Beam::origin() const
+{
+	return m_origin;
+}
+
+double Beam::angle() const
+{
+	return m_angle;
 }
 
 void Beam::rotate(double pivot, double angle)
@@ -142,9 +244,7 @@ void Beam::rotate(double pivot, double angle)
 	m_origin[0] += l*sin(m_angle + angle/2.);
 	m_origin[1] -= l*cos(m_angle + angle/2.);
 
-
 	m_angle = fmodPos(m_angle + angle, 2.*M_PI);
-
 }
 
 vector<double> Beam::beamCoordinates(const vector<double>& point) const
@@ -155,11 +255,11 @@ vector<double> Beam::beamCoordinates(const vector<double>& point) const
 	return result;
 }
 
-vector<double> Beam::absoluteCoordinates(double position) const
+vector<double> Beam::absoluteCoordinates(double position, double distance) const
 {
 	vector<double> result = m_origin;
-	result[0] += position*cos(m_angle);
-	result[1] += position*sin(m_angle);
+	result[0] += position*cos(m_angle) - distance*sin(m_angle);
+	result[1] += position*sin(m_angle) + distance*cos(m_angle);
 	return result;
 }
 
@@ -186,27 +286,38 @@ vector<double> Beam::rectangleIntersection(vector<double> p1, vector<double> p2)
 	return intersections;
 }
 
-double Beam::overlap(const Beam& beam1, const Beam& beam2, double z)
+//////////////////////
+// static computations
+
+/// @todo 2D overlap
+double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation orientation)
 {
-//	double w1 = beam1.radius(z);
-//	double w2 = beam2.radius(z);
-//	double w12 = sqr(beam1.radius(z));
-//	double w22 = sqr(beam2.radius(z));
-//	double k1 = 2.*M_PI/beam1.wavelength();
-//	double k2 = 2.*M_PI/beam2.wavelength();
-//	double R1 = beam1.curvature(z);
-//	double R2 = beam2.curvature(z);
-	double zred1 = beam1.zred(z);
-	double zred2 = beam2.zred(z);
-	double rho = sqr(beam1.radius(z)/beam2.radius(z));
+	if (orientation == Spherical)
+		return overlap(beam1, beam2, z, Horizontal);
+	else if (orientation == Ellipsoidal)
+		return sqrt(overlap(beam1, beam2, z, Horizontal)*overlap(beam1, beam2, z, Vertical));
+	else if ((orientation == Horizontal) || (orientation == Vertical))
+	{
+	//	double w1 = beam1.radius(z);
+	//	double w2 = beam2.radius(z);
+	//	double w12 = sqr(beam1.radius(z));
+	//	double w22 = sqr(beam2.radius(z));
+	//	double k1 = 2.*M_PI/beam1.wavelength();
+	//	double k2 = 2.*M_PI/beam2.wavelength();
+	//	double R1 = beam1.curvature(z);
+	//	double R2 = beam2.curvature(z);
+		double zred1 = beam1.zred(z, Horizontal);
+		double zred2 = beam2.zred(z, Horizontal);
+		double rho = sqr(beam1.radius(z, Horizontal)/beam2.radius(z, Horizontal));
 
-	//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
-	//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
-	double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
+		//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
+		//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
+		double eta = 4.*rho/(sqr(1. + rho) + sqr(zred1 - zred2*rho));
 
-//	cerr << "Coupling = " << eta << " // " << zred1 << " " << zred2 << " " << rho << endl;
+		return eta;
+	}
 
-	return eta;
+	return 0.;
 }
 
 bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
@@ -228,6 +339,16 @@ bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
 
 ostream& operator<<(ostream& out, const Beam& beam)
 {
-	out << "Waist = " << beam.waist() << " Waist position = " << beam.waistPosition();
+	out << "Waist = (" << beam.waist(Horizontal) << "," << beam.waist(Vertical)
+	    << ")  Waist position = (" << beam.waistPosition(Horizontal) << "," << beam.waistPosition(Vertical) << ")";
 	return out;
 }
+
+//////////
+// Private
+
+inline double Beam::zred(double z, Orientation orientation) const
+{
+	return (z - waistPosition(orientation))/rayleigh(orientation);
+}
+

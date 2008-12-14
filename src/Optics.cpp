@@ -148,51 +148,39 @@ void Optics::eraseLockingTree()
 // CreateBeam class
 
 CreateBeam::CreateBeam(double waist, double waistPosition, double index, string name)
-	: Optics(CreateBeamType, waistPosition, name)
-	, m_waist(waist)
-	, m_index(index)
+	: Optics(CreateBeamType, 0., name)
 {
+	m_beam.setWaist(waist);
+	m_beam.setWaistPosition(waistPosition);
+	m_beam.setIndex(index);
+
 	setRotable();
 	setOrientable();
-	m_M2 = 1.;
 }
 
-void CreateBeam::setWaist(double waist)
+const Beam* CreateBeam::beam() const
 {
-	if (waist > 0.)
-		m_waist = waist;
+	return &m_beam;
 }
 
-void CreateBeam::setIndex(double index)
-{
-	if (index > 0.)
-		m_index = index;
-}
-
-void CreateBeam::setM2(double M2)
-{
-	if (M2 >= 1.)
-		m_M2 = M2;
-}
-
-Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/, Orientation /*orientation*/) const
-{
-	return Beam(m_waist, position(), inputBeam.wavelength(), m_index, m_M2);
-}
-
-Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& /*oopticalAxis*/, Orientation /*orientation*/) const
-{
-	return Beam(m_waist, position(), outputBeam.wavelength(), m_index, m_M2);
-}
 
 void CreateBeam::setBeam(const Beam& beam)
 {
-	setPosition(beam.waistPosition());
-	setWaist(beam.waist());
-	setIndex(beam.index());
-	setM2(beam.M2());
+	m_beam = beam;
 }
 
+Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
+{
+	Beam outputBeam = m_beam;
+	outputBeam.setWavelength(inputBeam.wavelength());
+	outputBeam.rotate(0, angle());
+	return outputBeam;
+}
+
+Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& opticalAxis) const
+{
+	return image(outputBeam, opticalAxis);
+}
 
 /////////////////////////////////////////////////
 // Lens class
@@ -206,11 +194,8 @@ void Lens::setFocal(double focal)
 /////////////////////////////////////////////////
 // FlatMirror class
 
-Beam FlatMirror::image(const Beam& inputBeam, const Beam& opticalAxis, Orientation orientation) const
+Beam FlatMirror::image(const Beam& inputBeam, const Beam& opticalAxis) const
 {
-	if (!isAligned(orientation))
-		return inputBeam;
-
 	double relativeAngle = angle() + opticalAxis.angle() - inputBeam.angle();
 
 	if ((relativeAngle > M_PI/2.) && (relativeAngle < 3.*M_PI/2.))
@@ -223,11 +208,8 @@ Beam FlatMirror::image(const Beam& inputBeam, const Beam& opticalAxis, Orientati
 	return result;
 }
 
-Beam FlatMirror::antecedent(const Beam& outputBeam, const Beam& opticalAxis, Orientation orientation) const
+Beam FlatMirror::antecedent(const Beam& outputBeam, const Beam& opticalAxis) const
 {
-	if (!isAligned(orientation))
-		return outputBeam;
-
 	Beam result = ABCD::antecedent(outputBeam, opticalAxis);
 
 	/// @bug rotate this beam
@@ -265,32 +247,34 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 /////////////////////////////////////////////////
 // ABCD class
 
-Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/, Orientation orientation) const
+Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 {
-	if (!isAligned(orientation))
-		return inputBeam;
-
-	const complex<double> qIn = inputBeam.q(position());
-	const complex<double> qOut = (A()*qIn + B()) / (C()*qIn + D());
-
 	Beam outputBeam = inputBeam;
 	outputBeam.setIndex(inputBeam.index()*indexJump());
-	outputBeam.setQ(qOut, position() + width());
+
+	for (Orientation orientation = Horizontal; orientation <= Vertical; orientation = Orientation(orientation+1))
+		if (isAligned(orientation))
+		{
+			complex<double> q = inputBeam.q(position(), orientation);
+			q = (A()*q + B()) / (C()*q + D());
+			outputBeam.setQ(q, position() + width(), orientation);
+		}
 
 	return outputBeam;
 }
 
-Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/, Orientation orientation) const
+Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
 {
-	if (!isAligned(orientation))
-		return outputBeam;
-
-	const complex<double> qOut = outputBeam.q(position() + width());
-	const complex<double> qIn = (B() - D()*qOut) / (C()*qOut - A());
-
 	Beam inputBeam = outputBeam;
 	inputBeam.setIndex(outputBeam.index()/indexJump());
-	inputBeam.setQ(qIn, position());
+
+	for (Orientation orientation = Horizontal; orientation <= Vertical; orientation = Orientation(orientation+1))
+		if (isAligned(orientation))
+		{
+			complex<double> q = outputBeam.q(position() + width(), orientation);
+			q = (B() - D()*q) / (C()*q - A());
+			inputBeam.setQ(q, position(), orientation);
+		}
 
 	return inputBeam;
 }

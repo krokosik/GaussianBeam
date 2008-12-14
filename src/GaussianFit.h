@@ -56,6 +56,10 @@ public:
 	FitDataType dataType() const { return m_dataType; }
 	/// Set the type of mesured data
 	void setDataType(FitDataType dataType);
+	/// @return the orientation of the fit
+	Orientation orientation() const { return m_orientation; }
+	/// Set the orientation of the fit
+	void setOrientation(Orientation orientation);
 	/// @return the RGB color associated to the fit
 	unsigned int color() const { return m_color; }
 	/// Set the RGB color accociated to the fit
@@ -74,10 +78,12 @@ public:
 	void removeData(unsigned int index);
 	/// Remove all data in the fit
 	void clear();
-	/// @return the best beam adjusted to the data points
-	const Beam& beam(double wavelength) const;
-	/// @return the residue of the non-linear fit
-	double residue(double wavelength) const;
+	/**
+	* Apply the fit result to beam @p beam
+	* @return the fit residue
+	* @note the given bema wavelength chosen as the fit wavelength
+	*/
+	double applyFit(Beam& beam) const;
 
 signals:
 	void changed();
@@ -99,6 +105,7 @@ private:
 	std::vector<double> m_positions;
 	std::vector<double> m_values;
 	unsigned int m_color;
+	Orientation m_orientation;
 
 	mutable bool m_dirty;
 	mutable Beam m_beam;
