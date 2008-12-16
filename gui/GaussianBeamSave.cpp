@@ -117,7 +117,11 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 	xmlWriter.writeAttribute("id", QString::number(optics->id()));
 
 	if (optics->type() == CreateBeamType)
+	{
+		xmlWriter.writeStartElement("beam");
 		writeBeam(xmlWriter, dynamic_cast<const CreateBeam*>(optics)->beam());
+		xmlWriter.writeEndElement();
+	}
 	else if (optics->type() == LensType)
 		xmlWriter.writeTextElement("focal", QString::number(dynamic_cast<const Lens*>(optics)->focal()));
 	else if (optics->type() == CurvedMirrorType)

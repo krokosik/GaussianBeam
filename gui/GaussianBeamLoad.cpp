@@ -29,7 +29,7 @@
 void GaussianBeamWindow::initSaveVariables()
 {
 	m_opticsElements.clear();
-	m_opticsElements.insert(CreateBeamType, "inputBeam");
+	m_opticsElements.insert(CreateBeamType, "createBeam");
 	m_opticsElements.insert(LensType, "lens");
 	m_opticsElements.insert(FlatMirrorType, "flatMirror");
 	m_opticsElements.insert(CurvedMirrorType, "curvedMirror");
@@ -164,6 +164,9 @@ void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 	m_bench->setTargetBeam(targetBeam);
 }
 
+#include <iostream>
+using namespace std;
+
 void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)
 {
 	QDomElement child = element.firstChildElement();
@@ -179,7 +182,10 @@ void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)
 		else if ((child.tagName() == "waist") || (child.tagName() == "targetWaist")) // Old file version
 			beam.setWaist(child.text().toDouble(), Spherical);
 		else if (child.tagName() == "horizontalPosition")
+		{
+			cerr << "horizontalPosition " << beam << endl;
 			beam.setWaistPosition(child.text().toDouble(), Horizontal);
+		}
 		else if (child.tagName() == "verticalPosition")
 			beam.setWaistPosition(child.text().toDouble(), Vertical);
 		else if ((child.tagName() == "position") || (child.tagName() == "waistPosition") ||(child.tagName() == "targetPosition")) // Old file version
@@ -205,7 +211,7 @@ void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)
 		else if (child.tagName() == "waistTolerance")
 			; // Deprecated
 		else
-			qDebug() << " -> Unknown tag: " << child.tagName();
+			qDebug() << " -> Unknown tag in parseBeam: " << child.tagName();
 		child = child.nextSiblingElement();
 	}
 }
@@ -270,8 +276,13 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 		optics = new DielectricSlab(1., 1., 1., "");
 	else if (element.tagName() == m_opticsElements[GenericABCDType])
 		optics = new GenericABCD(1., 1., 1., 1., 1., 1., "");
+	else if (element.tagName() == "inputBeam")
+	{
+		parseInputBeam11(element, lockTree);
+		return;
+	}
 	else
-		qDebug() << " -> Unknown tag: " << element.tagName();
+		qDebug() << " -> Unknown tag in parseOptics: " << element.tagName();
 
 	if (!optics)
 		return;
@@ -312,21 +323,20 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QList<QString>&
 			dynamic_cast<GenericABCD*>(optics)->setC(child.text().toDouble());
 		else if (child.tagName() == "D")
 			dynamic_cast<GenericABCD*>(optics)->setD(child.text().toDouble());
+		else if (child.tagName() == "beam")
+		{
+			Beam inputBeam;
+			parseBeam(child, inputBeam);
+			dynamic_cast<CreateBeam*>(optics)->setBeam(inputBeam);
+			std::cerr << "Loaded createBeam " << inputBeam << endl;
+		}
 		else
-			qDebug() << " -> Unknown tag: " << child.tagName();
+			qDebug() << " -> Unknown tag in parseOptics: " << child.tagName();
 
 		child = child.nextSiblingElement();
 	}
 
 	m_bench->addOptics(optics, m_bench->nOptics());
-
-	if (optics->type() == CreateBeamType)
-	{
-		Beam inputBeam;
-		parseBeam(element.firstChildElement(), inputBeam);
-		m_bench->setInputBeam(inputBeam);
-	}
-
 }
 
 void GaussianBeamWindow::parseView(const QDomElement& element)
@@ -342,12 +352,7 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 		else if (child.tagName() == "origin")
 			m_hOpticsView->setOrigin(child.text().toDouble());
 		else if (child.tagName() == "showTargetBeam")
-		{
-			bool value = child.text().toInt();
-			m_hOpticsScene->showTargetBeam(value);
-			/// @todo incorporate in OpticsView
-			m_widget->displayShowTargetBeam(value);
-		}
+			showTargetBeam(child.text().toInt());
 		else
 			qDebug() << " -> Unknown tag: " << element.tagName();
 
@@ -356,7 +361,39 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 }
 
 /////////////////////////////////////////////////
-// Compatibility with 1.0 file version
+// Compatibility with old file version
+
+void GaussianBeamWindow::parseInputBeam11(const QDomElement& element, QList<QString>& lockTree)
+{
+	CreateBeam* createBeam = new CreateBeam(1., 1., 1., "");
+	Beam inputBeam;
+
+ 	createBeam->setId(element.attribute("id").toInt());
+	QDomElement child = element.firstChildElement();
+	lockTree.push_back(QString());
+
+	while (!child.isNull())
+	{
+		if (child.tagName() == "position")
+			inputBeam.setWaistPosition(child.text().toDouble(), Spherical);
+		else if (child.tagName() == "waist")
+			inputBeam.setWaist(child.text().toDouble(), Spherical);
+		else if (child.tagName() == "name")
+			createBeam->setName(child.text().toUtf8().data());
+		else if (child.tagName() == "absoluteLock")
+			createBeam->setAbsoluteLock(child.text().toInt() == 1 ? true : false);
+		else if (child.tagName() == "relativeLockParent")
+			lockTree.back() = child.text();
+		else
+			qDebug() << " -> Unknown tag in parseOptics: " << child.tagName();
+
+		child = child.nextSiblingElement();
+	}
+
+	createBeam->setBeam(inputBeam);
+	m_bench->addOptics(createBeam, m_bench->nOptics());
+
+}
 
 void GaussianBeamWindow::parseXml10(const QDomElement& element)
 {
@@ -383,6 +420,8 @@ void GaussianBeamWindow::parseXml10(const QDomElement& element)
 			m_hOpticsView->setVerticalRange(child.text().toDouble());
 		else if (child.tagName() == "HOffset")
 			hOffset = child.text().toDouble();
+		else if (child.tagName() == "inputBeam")
+			parseInputBeam11(child, lockTree);
 		else if (m_opticsElements.values().contains(child.tagName()))
 			parseOptics(child, lockTree);
 		else

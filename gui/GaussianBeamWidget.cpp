@@ -21,11 +21,7 @@
 
 #include "gui/GaussianBeamWidget.h"
 #include "gui/GaussianBeamWindow.h"
-#include "gui/OpticsView.h"
 #include "gui/Unit.h"
-#ifdef GBPLOT
-	#include "gui/GaussianBeamPlot.h"
-#endif
 
 #include <QApplication>
 #include <QPushButton>
@@ -39,10 +35,10 @@
 
 #include <cmath>
 
-GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsScene, QWidget* parent)
-	: QWidget(parent)
+GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, GaussianBeamWindow* window)
+	: QWidget(window)
 	, m_bench(bench)
-	, m_opticsScene(opticsScene)
+	, m_window(window)
 {
 	m_updatingFit = false;
 	m_updatingTarget = false;
@@ -284,9 +280,7 @@ void GaussianBeamWidget::on_checkBox_ShowTargetBeam_toggled(bool checked)
 	if (m_updatingTarget)
 		return;
 
-	/// @todo
-//	dynamic_cast<GaussianBeamWindow*>(parent)->showTargetBeam();
-	m_opticsScene->showTargetBeam(checked);
+	m_window->showTargetBeam(checked);
 }
 
 void GaussianBeamWidget::on_pushButton_MagicWaist_clicked()

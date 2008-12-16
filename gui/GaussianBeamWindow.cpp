@@ -77,7 +77,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_vOpticsView->setVerticalRange(0.002);
 
 	// Widget
-	m_widget = new GaussianBeamWidget(m_bench, m_hOpticsScene, this);
+	m_widget = new GaussianBeamWidget(m_bench, this);
 
 	// Wavelength widget
 	QWidget* wavelengthWidget = new QWidget(this);
@@ -336,6 +336,12 @@ void GaussianBeamWindow::updateWidget(const QModelIndex& /*topLeft*/, const QMod
 
 /////////////////////////////////////////////////
 // Views
+
+void GaussianBeamWindow::showTargetBeam(bool visible)
+{
+	m_hOpticsScene->showTargetBeam(visible);
+	m_vOpticsScene->showTargetBeam(visible);
+}
 
 void GaussianBeamWindow::onOpticsBenchSphericityChanged()
 {

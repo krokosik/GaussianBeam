@@ -41,6 +41,9 @@ Q_OBJECT
 public:
 	GaussianBeamWindow(const QString& fileName = QString());
 
+public:
+	void showTargetBeam(bool visible = true);
+
 public slots:
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
 
@@ -96,6 +99,7 @@ private:
 	void writeView(QXmlStreamWriter& xmlWriter);
 	// Compatibility functions
 	void parseXml10(const QDomElement& element);
+	void parseInputBeam11(const QDomElement& element, QList<QString>& lockTree);
 
 private:
 	OpticsBench* m_bench;

@@ -30,17 +30,14 @@ class QDomElement;
 class QAction;
 
 class OpticsBench;
-class OpticsScene;
-class GaussianBeamPlot;
-class GaussianBeamDelegate;
-class GaussianBeamModel;
+class GaussianBeamWindow;
 
 class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamWidget
 {
 Q_OBJECT
 
 public:
-	GaussianBeamWidget(OpticsBench* bench, OpticsScene* opticsScene, QWidget* parent = 0);
+	GaussianBeamWidget(OpticsBench* bench, GaussianBeamWindow* window);
 	~GaussianBeamWidget();
 
 public:
@@ -99,11 +96,10 @@ private:
 
 private:
 	OpticsBench* m_bench;
+	GaussianBeamWindow* m_window;
 
-	OpticsScene* m_opticsScene;
 	QStandardItemModel* fitModel;
 	QItemSelectionModel* fitSelectionModel;
-	GaussianBeamPlot* plot;
 
 	bool m_updatingFit, m_updatingTarget;
 };
