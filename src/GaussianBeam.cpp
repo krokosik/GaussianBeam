@@ -306,9 +306,9 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation
 	//	double k2 = 2.*M_PI/beam2.wavelength();
 	//	double R1 = beam1.curvature(z);
 	//	double R2 = beam2.curvature(z);
-		double zred1 = beam1.zred(z, Horizontal);
-		double zred2 = beam2.zred(z, Horizontal);
-		double rho = sqr(beam1.radius(z, Horizontal)/beam2.radius(z, Horizontal));
+		double zred1 = beam1.zred(z, orientation);
+		double zred2 = beam2.zred(z, orientation);
+		double rho = sqr(beam1.radius(z, orientation)/beam2.radius(z, orientation));
 
 		//double eta = 4./sqr(w1*w2)/(sqr(1./sqr(w1) + 1./sqr(w2)) + sqr((k1/R1 - k2/R2)/2.));
 		//double eta = 4./(w12*w22)/(sqr(1./w12 + 1./w22) + sqr(zred1/w12 - zred2/w22));
