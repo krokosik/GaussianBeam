@@ -80,7 +80,7 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 
 	if (column == Property::OpticsType)
 		return OpticsName::fullName[m_bench->optics(row)->type()];
-	else if (column == Property::OpticsPosition)
+	else if ((column == Property::OpticsPosition) && (optics->type() != CreateBeamType))
 		values << optics->position()*Units::getUnit(UnitPosition).divider();
 	else if ((column == Property::OpticsRelativePosition) && (row > 0))
 		values << (optics->position() - m_bench->optics(row-1)->position())*Units::getUnit(UnitPosition).divider();
@@ -356,36 +356,32 @@ Qt::ItemFlags GaussianBeamModel::flags(const QModelIndex& index) const
 
 	Qt::ItemFlags flags = Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 
+	const Optics* optics = m_bench->optics(row);
+
 	if ((column == Property::OpticsName) ||
 		(column == Property::OpticsLock) ||
-		(column == Property::OpticsAngle) ||
 		(column == Property::BeamWaist) ||
 		(column == Property::BeamWaistPosition) ||
 		(column == Property::BeamRayleigh) ||
 		(column == Property::BeamDivergence) ||
-		((column == Property::OpticsProperties)  && (m_bench->optics(row)->type() != FlatMirrorType)) ||
-		((column == Property::OpticsAngle)       && (m_bench->optics(row)->isRotable())) ||
-		((column == Property::OpticsOrientation) && (m_bench->optics(row)->isOrientable())))
+		((column == Property::OpticsProperties)  && (optics->type() != FlatMirrorType)) ||
+		((column == Property::OpticsAngle)       && (optics->isRotable())) ||
+		((column == Property::OpticsOrientation) && (optics->isOrientable())))
 			flags |= Qt::ItemIsEditable;
 
 	if (column == Property::OpticsPosition)
-	{
-		if (row == 0)
+		if (!optics->relativeLockTreeAbsoluteLock() && (optics->type() != CreateBeamType))
 			flags |= Qt::ItemIsEditable;
-
-		const Optics* optics = m_bench->optics(row);
-		if (!optics->relativeLockTreeAbsoluteLock())
-			flags |= Qt::ItemIsEditable;
-	}
 
 	if ((column == Property::OpticsRelativePosition) && (row != 0))
 	{
-		const Optics* optics = m_bench->optics(row);
 		const Optics* preceedingOptics = m_bench->optics(row-1);
 		if (!optics->relativeLockedTo(preceedingOptics) &&
 		    !optics->relativeLockTreeAbsoluteLock())
 			flags |= Qt::ItemIsEditable;
 	}
+
+
 	return flags;
 }
 

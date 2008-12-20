@@ -289,7 +289,6 @@ vector<double> Beam::rectangleIntersection(vector<double> p1, vector<double> p2)
 //////////////////////
 // static computations
 
-/// @todo 2D overlap
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation orientation)
 {
 	if (orientation == Spherical)
