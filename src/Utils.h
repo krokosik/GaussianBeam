@@ -62,7 +62,51 @@ namespace Utils
 {
 	double scalar(const std::vector<double>& v1, const std::vector<double>& v2);
 	double norm(const std::vector<double>& v1);
-	double distance(const std::vector<double>& v1, const std::vector<double>& v2);
+//	double distance(const std::vector<double>& v1, const std::vector<double>& v2);
+
+	class Point
+	{
+	public:
+		/// Constructors
+		Point() { m_x = m_y = 0.; }
+		Point(double x, double y) { m_x = x; m_y = y; }
+
+	public:
+		double x() const { return m_x; }
+		double y() const { return m_y; }
+		void translate(const Point& point) { m_x += point.x(); m_y += point.y(); }
+
+	private:
+		double m_x, m_y;
+	};
+
+	Point& operator+=(Point& p1, const Point& p2);
+	Point operator+(const Point& p1, const Point& p2);
+	double distance(const Point& p1, const Point& p2);
+
+	class Rect
+	{
+	public:
+		/// Constructors
+		Rect() { m_x1 = m_y1 = m_x2 = m_y2 = 0.; }
+		Rect(double x1, double y1, double x2, double y2) { m_x1 = x1; m_y1 = y1; m_x2 = x2; m_y2 = y2; }
+
+	public:
+		double x1() const { return m_x1; }
+		double y1() const { return m_y1; }
+		double x2() const { return m_x2; }
+		double y2() const { return m_y2; }
+		void setX1(double x1) { m_x1 = x1; }
+		void setY1(double y1) { m_y1 = y1; }
+		void setX2(double x2) { m_x2 = x2; }
+		void setY2(double y2) { m_y2 = y2; }
+		double width() const { return fabs(m_x2 - m_x1); }
+		double height() const { return fabs(m_y2 - m_y1); }
+
+	private:
+		double m_x1, m_y1, m_x2, m_y2;
+	};
+
 }
 
 #endif

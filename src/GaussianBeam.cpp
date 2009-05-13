@@ -24,6 +24,7 @@
 #include <cmath>
 
 using namespace std;
+using namespace Utils;
 
 Beam::Beam()
 {
@@ -65,7 +66,8 @@ void Beam::init()
 	m_angle = 0.;
 	m_start = 0.;
 	m_stop = 0.;
-	m_origin = vector<double>(2, 0.);
+	m_sphericalWaist = true;
+	m_sphericalPosition = true;
 }
 
 /////////////
@@ -86,6 +88,8 @@ void Beam::setWaistPosition(double waistPosition, Orientation orientation)
 
 	if (orientation != Horizontal)
 		m_waistPosition.second = waistPosition;
+
+	m_sphericalPosition = (Beam::waistPosition(Horizontal) == Beam::waistPosition(Vertical));
 }
 
 double Beam::waist(Orientation orientation) const
@@ -103,6 +107,8 @@ void Beam::setWaist(double waist, Orientation orientation)
 
 	if (orientation != Horizontal)
 		m_waist.second = waist;
+
+	m_sphericalWaist = (Beam::waist(Horizontal) == Beam::waist(Vertical));
 }
 
 double Beam::divergence(Orientation orientation) const
@@ -163,6 +169,20 @@ void Beam::setM2(double M2)
 {
 	if (M2 >= 1.)
 		m_M2 = M2;
+}
+
+////////////////////////////////
+// Aspect
+
+bool Beam::isSpherical() const
+{
+	return (m_sphericalWaist && m_sphericalPosition);
+}
+
+void Beam::makeSpherical(Orientation orientation)
+{
+	setWaist(waist(orientation), Spherical);
+	setWaistPosition(waistPosition(orientation), Spherical);
 }
 
 ////////////////////////////////
@@ -227,7 +247,7 @@ void Beam::setStop(double stop)
 	m_stop = stop;
 }
 
-vector<double> Beam::origin() const
+Point Beam::origin() const
 {
 	return m_origin;
 }
@@ -241,42 +261,36 @@ void Beam::rotate(double pivot, double angle)
 {
 	double l = 2.*pivot*sin(angle/2.);
 
-	m_origin[0] += l*sin(m_angle + angle/2.);
-	m_origin[1] -= l*cos(m_angle + angle/2.);
-
+	m_origin += Point(l*sin(m_angle + angle/2.), -l*cos(m_angle + angle/2.));
 	m_angle = fmodPos(m_angle + angle, 2.*M_PI);
 }
 
-vector<double> Beam::beamCoordinates(const vector<double>& point) const
+Point Beam::beamCoordinates(const Point& point) const
 {
-	vector<double> result(2, 0.);
-	result[0] =  cos(m_angle)*(point[0] - m_origin[0]) + sin(m_angle)*(point[1] - m_origin[1]);
-	result[1] = -sin(m_angle)*(point[0] - m_origin[0]) + cos(m_angle)*(point[1] - m_origin[1]);
-	return result;
+	return Point(
+		 cos(m_angle)*(point.x() - m_origin.x()) + sin(m_angle)*(point.y() - m_origin.y()),
+		-sin(m_angle)*(point.x() - m_origin.x()) + cos(m_angle)*(point.y() - m_origin.y()));
 }
 
-vector<double> Beam::absoluteCoordinates(double position, double distance) const
+Point Beam::absoluteCoordinates(double position, double distance) const
 {
-	vector<double> result = m_origin;
-	result[0] += position*cos(m_angle) - distance*sin(m_angle);
-	result[1] += position*sin(m_angle) + distance*cos(m_angle);
-	return result;
+	return m_origin + Point(
+		position*cos(m_angle) - distance*sin(m_angle),
+		position*sin(m_angle) + distance*cos(m_angle));
 }
 
-vector<double> Beam::rectangleIntersection(vector<double> p1, vector<double> p2)
+vector<double> Beam::rectangleIntersection(const Utils::Rect& rect) const
 {
 	static const double infinity = 1e100;
-	p1 -= m_origin;
-	p2 -= m_origin;
 	vector<double> intersections;
 
 	if (cos(m_angle) != 0.)
-		intersections << p1[0]/cos(m_angle) << p2[0]/cos(m_angle);
+		intersections << (rect.x1() - m_origin.x())/cos(m_angle) << (rect.x2() - m_origin.x())/cos(m_angle);
 	else
 		intersections << -infinity << +infinity;
 
 	if (sin(m_angle) != 0.)
-		intersections << p1[1]/sin(m_angle) << p2[1]/sin(m_angle);
+		intersections << (rect.y1() - m_origin.y())/sin(m_angle) << (rect.y2() - m_origin.y())/sin(m_angle);
 	else
 		intersections << -infinity << +infinity;
 
@@ -291,11 +305,7 @@ vector<double> Beam::rectangleIntersection(vector<double> p1, vector<double> p2)
 
 double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation orientation)
 {
-	if (orientation == Spherical)
-		return overlap(beam1, beam2, z, Horizontal);
-	else if (orientation == Ellipsoidal)
-		return sqrt(overlap(beam1, beam2, z, Horizontal)*overlap(beam1, beam2, z, Vertical));
-	else if ((orientation == Horizontal) || (orientation == Vertical))
+	if ((orientation != Ellipsoidal) || (beam1.isSpherical() && beam2.isSpherical()))
 	{
 	//	double w1 = beam1.radius(z);
 	//	double w2 = beam2.radius(z);
@@ -315,6 +325,8 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation
 
 		return eta;
 	}
+	else
+		return sqrt(overlap(beam1, beam2, z, Horizontal)*overlap(beam1, beam2, z, Vertical));
 
 	return 0.;
 }
@@ -322,15 +334,16 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation
 bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
 {
 	static const double epsilon = 1e-7;
-	vector<double> deltaOrigin = beam1.origin() - beam2.origin();
+	double deltaX = beam1.origin().x() - beam2.origin().x();
+	double deltaY = beam1.origin().y() - beam2.origin().y();
 	double deltaAngle = fmodPos(beam1.angle() - beam2.angle(), 2.*M_PI);
 
-	cerr << " angles = " << beam1.angle() << " " << beam2.angle() << " " << deltaAngle << endl;
-	cerr << " criterion = " << deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0] << endl;
+//	cerr << " angles = " << beam1.angle() << " " << beam2.angle() << " " << deltaAngle << endl;
+//	cerr << " criterion = " << deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0] << endl;
 
 	if (   (   (deltaAngle < epsilon)
 		    || (deltaAngle > (2.*M_PI - epsilon)))
-		&& (fabs(deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0]) < epsilon))
+		&& (fabs(deltaY - tan(beam1.angle())*deltaX) < epsilon))
 		return true;
 
 	return false;

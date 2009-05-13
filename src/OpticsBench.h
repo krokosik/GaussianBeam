@@ -23,6 +23,7 @@
 #include "GaussianBeam.h"
 #include "GaussianFit.h"
 #include "Cavity.h"
+#include "Utils.h"
 
 #include <vector>
 #include <list>
@@ -74,16 +75,22 @@ public:
 	double wavelength() const { return m_wavelength; }
 	/// Set the bench wavelength to @p wavelength
 	void setWavelength(double wavelength);
+	/// @return true if the bench contains only spherical optics, i.e. if horizontal beams are identical to vertical beams
+	bool isSpherical() const;
+
+	// Boundaries
+	Utils::Rect boundary() const { return m_boundary; }
+
+	/// @todo remove all these functions
+
 	/// @return the bench left boundary
-	double leftBoundary() const { return m_leftBottomBoundary[0]; }
+	double leftBoundary() const { return m_boundary.x1(); }
 	/// Set the bench left boundary to @p leftBoundary
 	void setLeftBoundary(double leftBoundary);
 	/// @return the bench right boundary
-	double rightBoundary() const { return m_rightTopBoundary[0]; }
+	double rightBoundary() const { return m_boundary.x2(); }
 	/// Set the bench right boundary to @p leftBoundary
 	void setRightBoundary(double rightBoundary);
-	/// @return true if the bench contains only spherical optics, i.e. if horizontal beams are identical to vertical beams
-	bool isSpherical() const;
 
 	// Optics
 
@@ -130,7 +137,7 @@ public:
 	const Beam* inputBeam() const { return m_beams[0]; }
 	void setInputBeam(const Beam& beam);
 	const Beam* axis(int index) const;
-	std::pair<Beam*, double> closestPosition(const std::vector<double>& point, int preferedSide = 1) const;
+	std::pair<Beam*, double> closestPosition(const Utils::Point& point, int preferedSide = 1) const;
 	double sensitivity(int index) const;
 
 	/// Cavity
@@ -188,8 +195,7 @@ private:
 //	std::vector<OpticsTreeItem> m_opticsTree;
 
 	/// Exclusion area
-	std::vector<double> m_leftBottomBoundary;
-	std::vector<double> m_rightTopBoundary;
+	Utils::Rect m_boundary;
 
 	/// Waist fit
 	std::vector<Fit*> m_fits;

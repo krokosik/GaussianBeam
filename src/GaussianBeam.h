@@ -22,6 +22,8 @@
 #include <complex>
 #include <vector>
 
+#include "Utils.h"
+
 namespace Property
 {
 enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyPhase, BeamDistanceToWaist,
@@ -37,8 +39,9 @@ enum  Orientation {Spherical = 0, Horizontal = 1,  Vertical = 2, Ellipsoidal = 3
 * A beam is defined by an origin (2 coordinates in the plane) and the angle between the wave vector
 * and the canonical basis of the plane. All varying beam properties are defined according to a single coordinate
 * that corresponds to the algebraic distance between the origin and a point on the beam axis.
-* The Gaussian properties of the beam are defined by its wavelength, waist and waist positionon the vertical
-* and horizontal axis
+* The Gaussian properties of the beam are defined by its wavelength, waist and waist position on the vertical
+* and horizontal axis. In all get function, the default orientation is Horizontal and in all set function the default
+* orientation is Spherical ("default" means "no argment given" or "irrelevant argument given")
 */
 class Beam
 {
@@ -84,6 +87,12 @@ public:
 	/// Set the beam quality factor M² to @p M2
 	void setM2(double M2);
 
+	// Aspect functions
+	/// @return true if the beam is spherical
+	bool isSpherical() const;
+	/// Make the beam spherical according to properties on orientation @p orientation
+	void makeSpherical(Orientation orientation = Horizontal);
+
 	// Position dependent properties
 	/// @return the beam radius at 1/e² at position @p z
 	double radius(double z, Orientation orientation = Horizontal) const;
@@ -112,7 +121,7 @@ public:
 	/// Rotate the beam by an angle @p angle around position @p pivot
 	void rotate(double pivot, double angle);
 	/// @return the position for the origin of this beam in the plane
-	std::vector<double> origin() const;
+	Utils::Point origin() const;
 	/// @return the angle between the wave vector and a common basis axis.
 	double angle() const;
 	/**
@@ -120,11 +129,11 @@ public:
 	* The first beam coordinate is the position of the orthogonal projection of @p point on the beam axis
 	* The second beam coordinate is the algebraic distance of @p point to the beam (negative if on the right, positive if on the left
 	*/
-	std::vector<double> beamCoordinates(const std::vector<double>& point) const;
+	Utils::Point beamCoordinates(const Utils::Point& point) const;
 	/// @return the absolute coordinates of beam coordiantes ( @p position , @p distance )
-	std::vector<double> absoluteCoordinates(double position, double distance = 0) const;
+	Utils::Point absoluteCoordinates(double position, double distance = 0) const;
 	/// @return the extreme positions of the intersection of the beam and a rectangle of given diagonal
-	std::vector<double> rectangleIntersection(std::vector<double> p1, std::vector<double> p2);
+	std::vector<double> rectangleIntersection(const Utils::Rect& rect) const;
 
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
@@ -150,10 +159,12 @@ private:
 	double m_index;
 	double m_M2;
 	// Geometrical properties
-	std::vector<double> m_origin;
+	Utils::Point m_origin;
 	double m_angle;
 	double m_start;
 	double m_stop;
+	// Aspect cache
+	bool m_sphericalWaist, m_sphericalPosition;
 };
 
 std::ostream& operator<<(std::ostream& out, const Beam& beam);

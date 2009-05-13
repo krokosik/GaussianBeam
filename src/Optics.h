@@ -230,6 +230,10 @@ public:
 	bool stabilityCriterion1() const;
 	bool stabilityCriterion2() const;
 	Beam eigenMode(double wavelength) const;
+
+private:
+	inline void forward(const Beam& inputBeam, Beam& outputBeam, Orientation orientation) const;
+	inline void backward(const Beam& outputBeam, Beam& inputBeam, Orientation orientation) const;
 };
 
 /**

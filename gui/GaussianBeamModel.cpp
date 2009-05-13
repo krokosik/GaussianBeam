@@ -107,27 +107,27 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		}
 		else if (optics->type() == CurvedInterfaceType)
 		{
-			const CurvedInterface* optics = dynamic_cast<const CurvedInterface*>(optics);
-			return QString("n2/n1 = ") + QString::number(optics->indexRatio()) +
-			       QString("\nR = ") + QString::number(optics->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
+			const CurvedInterface* interface = dynamic_cast<const CurvedInterface*>(optics);
+			return QString("n2/n1 = ") + QString::number(interface->indexRatio()) +
+			       QString("\nR = ") + QString::number(interface->surfaceRadius()*Units::getUnit(UnitCurvature).divider())
 			                       + Units::getUnit(UnitCurvature).string();
 		}
 		else if (optics->type() == DielectricSlabType)
 		{
-			const DielectricSlab* optics = dynamic_cast<const DielectricSlab*>(optics);
-			return QString("n2/n1 = ") + QString::number(optics->indexRatio()) +
+			const DielectricSlab* slab = dynamic_cast<const DielectricSlab*>(optics);
+			return QString("n2/n1 = ") + QString::number(slab->indexRatio()) +
 			       QString("\n") + tr("width") + " = " + QString::number(optics->width()*Units::getUnit(UnitWidth).divider())
 			                       + Units::getUnit(UnitWidth).string();
 		}
 		else if (optics->type() == GenericABCDType)
 		{
-			const ABCD* optics = dynamic_cast<const ABCD*>(optics);
-			return QString("A = ") + QString::number(optics->A()) +
-			       QString("\nB = ") + QString::number(optics->B()*Units::getUnit(UnitABCD).divider())
+			const ABCD* abcd = dynamic_cast<const ABCD*>(optics);
+			return QString("A = ") + QString::number(abcd->A()) +
+			       QString("\nB = ") + QString::number(abcd->B()*Units::getUnit(UnitABCD).divider())
 			                         + Units::getUnit(UnitABCD).string() +
-			       QString("\nC = ") + QString::number(optics->C()/Units::getUnit(UnitABCD).divider())
+			       QString("\nC = ") + QString::number(abcd->C()/Units::getUnit(UnitABCD).divider())
 			                         + " /" + Units::getUnit(UnitABCD).string(false) +
-			       QString("\nD = ") + QString::number(optics->D()) +
+			       QString("\nD = ") + QString::number(abcd->D()) +
 			       QString("\n") + tr("width") + " = " + QString::number(optics->width()*Units::getUnit(UnitWidth).divider())
 			                       + Units::getUnit(UnitWidth).string();
 		}

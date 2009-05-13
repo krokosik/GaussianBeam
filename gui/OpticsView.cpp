@@ -77,6 +77,7 @@ OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* p
 {
 	m_orientation = orientation;
 	m_beamScale = 100.;
+	m_opticsHeight = 0.06;
 
 	// Bench connections
 	m_bench = bench;
@@ -100,7 +101,7 @@ OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* p
 	m_cavityBeamItem->setPlainStyle(false);
 	m_cavityBeamItem->setAuxiliary(true);
 	m_cavityBeamItem->setPos(0., 0.);
-	m_cavityBeamItem->setVisible(true);
+	m_cavityBeamItem->setVisible(false);
 //	addItem(m_cavityBeamItem);
 
 	// Sync with bench
@@ -119,9 +120,6 @@ bool OpticsScene::targetBeamVisible() const
 	return m_targetBeamItem->isVisible();
 }
 
-/// @todo get rid of this trick
-#define SCENEHALFHEIGHT 0.005
-
 void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 {
 	foreach (QGraphicsItem* graphicsItem, items())
@@ -133,8 +131,8 @@ void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 			{
 				opticsItem->setUpdate(false);
 				const Beam* axis = m_bench->axis(opticsIndex);
-				std::vector<double> coord = axis->absoluteCoordinates(opticsItem->optics()->position());
-				opticsItem->setPos(coord[0], -coord[1]);
+				Utils::Point coord = axis->absoluteCoordinates(opticsItem->optics()->position());
+				opticsItem->setPos(coord.x(), -coord.y());
 				opticsItem->resetTransform();
 				opticsItem->rotate(-(axis->angle() + opticsItem->optics()->angle())*180./M_PI);
 				opticsItem->setUpdate(true);
@@ -153,7 +151,9 @@ void OpticsScene::onOpticsBenchTargetBeamChanged()
 
 void OpticsScene::onOpticsBenchBoundariesChanged()
 {
-	setSceneRect(m_bench->leftBoundary(), -SCENEHALFHEIGHT, m_bench->rightBoundary() - m_bench->leftBoundary(), 2.*SCENEHALFHEIGHT);
+	Utils::Rect benchRect = m_bench->boundary();
+
+	setSceneRect(QRectF(QPointF(benchRect.x1(), -benchRect.y2()), QPointF(benchRect.x2(), -benchRect.y1())));
 
 	m_targetBeamItem->updateTransform();
 	m_cavityBeamItem->updateTransform();
@@ -175,8 +175,8 @@ void OpticsScene::onOpticsBenchOpticsAdded(int index)
 
 	BeamItem* beamItem = new BeamItem(m_bench->beam(index));
 	m_beamItems.insert(index, beamItem);
-	beamItem->updateTransform();
 	addItem(beamItem);
+	beamItem->updateTransform();
 }
 
 void OpticsScene::onOpticsBenchOpticsRemoved(int index, int count)
@@ -249,7 +249,7 @@ OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 	m_horizontalRuller = new RullerSlider(this);
-	m_verticalRuller = new RullerSlider(this, true);
+	m_verticalRuller = new RullerSlider(this);
 	setHorizontalScrollBar(m_horizontalRuller);
 	setVerticalScrollBar(m_verticalRuller);
 
@@ -284,7 +284,7 @@ void OpticsView::adjustRange()
 	m_opticsViewProperties->setViewWidth(m_horizontalRange);
 	m_opticsViewProperties->setViewHeight(m_verticalRange);
 	m_opticsViewProperties->setViewOrigin(origin());
-	verticalScrollBar()->setValue((verticalScrollBar()->maximum() + verticalScrollBar()->minimum())/2);
+//	verticalScrollBar()->setValue((verticalScrollBar()->maximum() + verticalScrollBar()->minimum())/2);
 }
 
 void OpticsView::showProperties(bool show)
@@ -347,8 +347,20 @@ void OpticsView::resizeEvent(QResizeEvent* event)
 
 void OpticsView::wheelEvent(QWheelEvent* event)
 {
-	/// @todo this does not work
-	QApplication::sendEvent(m_horizontalRuller, event);
+	qDebug() << "Wheel event";
+	scaleView(pow(2., -event->delta()/480.0));
+}
+
+void OpticsView::scaleView(double scaleFactor)
+{
+	double factor = matrix().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
+	qDebug() << "Scale" << factor;
+	if (factor < 0.07 || factor > 10000.)
+		return;
+
+	qDebug() << "Scaling";
+
+	scale(scaleFactor, scaleFactor);
 }
 
 void OpticsView::mouseMoveEvent(QMouseEvent* event)
@@ -356,9 +368,7 @@ void OpticsView::mouseMoveEvent(QMouseEvent* event)
 	if (m_statusWidget)
 	{
 		QPointF position = mapToScene(event->pos());
-		std::vector<double> pos(2);
-		pos[0] = position.x();
-		pos[1] = -position.y();
+		Utils::Point pos(position.x(), -position.y());
 		std::pair<Beam*, double> p = m_bench->closestPosition(pos);
 
 		m_statusWidget->showBeamInfo(p.first, p.second, dynamic_cast<OpticsScene*>(scene())->orientation());
@@ -371,6 +381,17 @@ void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 {
 	Q_UNUSED(painter);
 	Q_UNUSED(rect);
+
+	QBrush backgroundBrush(QColor(255,157,132,135));
+	painter->fillRect(rect, backgroundBrush);
+	painter->fillRect(scene()->sceneRect(), QBrush(Qt::white));
+
+	QPen opticalAxisPen(Qt::darkGray, 0, Qt::DashDotLine, Qt::FlatCap, Qt::RoundJoin);
+	painter->setPen(opticalAxisPen);
+	painter->drawLine(QPointF(rect.left(), 0.), QPointF(rect.right(), 0.));
+	painter->drawLine(QPointF(0., rect.top()),  QPointF(0., rect.bottom()));
+
+
 
 /*	/// @todo if drawing a grid and rullers, set background cache
 	const double pixel = scene()->width()/width();
@@ -407,9 +428,6 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench* bench)
 	else
 		setZValue(-1);
 
-	if (m_optics->width() == 0.)
-		setFlag(QGraphicsItem::ItemIgnoresTransformations);
-
 	m_update = true;
 }
 
@@ -417,11 +435,19 @@ QRectF OpticsItem::boundingRect() const
 {
 	QRectF bounding;
 
-	/// @todo this can be improved
+	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
+	if (!opticsScene)
+	{
+		qDebug() << "OpticsItem::boundingRect() without scene";
+		return QRectF();
+	}
+
+	const double h = opticsScene->opticsHeight();
+
 	if (m_optics->width() == 0.)
-		bounding = QRectF(QPointF(-10., -66.), QSizeF(2.*10., 2.*66.));
+		bounding = QRectF(QPointF(-0.15*h, -h), QSizeF(0.30*h, 2.*h));
 	else
-		bounding = QRectF(QPointF(0., -SCENEHALFHEIGHT), QSizeF(m_optics->width(), 2.*SCENEHALFHEIGHT));
+		bounding = QRectF(QPointF(0., -h), QSizeF(m_optics->width(), 2.*h));
 
 	return bounding;
 }
@@ -431,9 +457,7 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 	if ((change == ItemPositionChange && scene()) && m_update)
 	{
 		QPointF newPos = value.toPointF();
-		std::vector<double> benchPosition(2);
-		benchPosition[0] = newPos.x();
-		benchPosition[1] = -newPos.y();
+		Utils::Point benchPosition(newPos.x(), -newPos.y());
 		std::pair<Beam*, double> p = m_bench->closestPosition(benchPosition);
 
 		// Propose the new position
@@ -561,51 +585,49 @@ void BeamItem::updateTransform()
 	if (!opticsScene)
 		return;
 
+	// Update the beam bounding rect
+	/// @todo angle at beam start/stop, intersection with scene rect
+	prepareGeometryChange();
+	m_orientationCache = opticsScene->orientation();
+	double maxRadius = qMax(m_beam->radius(m_beam->start(), m_orientationCache),
+	                        m_beam->radius(m_beam->stop(),  m_orientationCache));
+	m_boundingRectCache = QRectF(QPointF(m_beam->start(), -maxRadius), QPointF(m_beam->stop(), maxRadius));
+
+	// Position the beam
 	resetTransform();
-	setPos(beam()->origin()[0], -beam()->origin()[1]);
+	setPos(beam()->origin().x(), -beam()->origin().y());
 	rotate(-beam()->angle()*180./M_PI);
 	scale(1., opticsScene->beamScale());
-	prepareGeometryChange();
 }
 
 QRectF BeamItem::boundingRect() const
 {
-	/// @bug this is incorrect
-
-	QRectF result = scene()->sceneRect();
-	result.setLeft(m_beam->start());
-	result.setRight(m_beam->stop());
-	return result;
+	return m_boundingRectCache;
 }
 
 void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
 {
-	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
-	if (!opticsScene)
-		return;
-
-	if (start < m_beam->start())
-		start = m_beam->start();
-
-	if (stop > m_beam->stop())
-		stop = m_beam->stop();
+	start = qMax(start, m_beam->start());
+	stop  = qMin(stop,  m_beam->stop());
 
 	if (start >= stop)
 		return;
 
 	// "pixel" is added to avoid overlong iterations due to very small steps caused by rounding errors
-	double step = (stop - start)/double(nStep) + pixel;
-	if (step < pixel)
-		step = pixel;
+	double step = qMax((stop - start)/double(nStep) + pixel, pixel);
 
 	for (double z = start; z <= stop; z += step)
-		polygon.append(QPointF(z, m_beam->radius(z, opticsScene->orientation())));
+		polygon.append(QPointF(z, m_beam->radius(z, m_orientationCache)));
 }
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
 	Q_UNUSED(widget);
 
+/*	painter->setPen(QPen(Qt::red));
+	painter->setBrush(QBrush(Qt::red, Qt::Dense7Pattern));
+	painter->drawRect(boundingRect());
+*/
 	QColor beamColor = wavelengthColor(m_beam->wavelength());
 	beamColor.setAlpha(200);
 
@@ -617,23 +639,18 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 
 	QPen textPen(Qt::black);
 
-	const Orientation orientation = dynamic_cast<OpticsScene*>(scene())->orientation();
+	const Orientation orientation = m_orientationCache;
 	const double waist = m_beam->waist(orientation);
 	const double waistPosition = m_beam->waistPosition(orientation);
 	const double rayleigh = m_beam->rayleigh(orientation);
 	const double start = m_beam->start();
 	const double stop = m_beam->stop();
 
-	if (m_style == false)
-	{
-		qDebug() << "Drawing empty beam" << waist << waistPosition << rayleigh << start << stop;
-	}
-
 	double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
 	double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
 
 	// The waist is pixel reoslved
-	if (waist/verticalScale > 1.)
+	if (waist > verticalScale)
 	{
 		QPolygonF beamPolygonUp, beamPolygonDown;
 

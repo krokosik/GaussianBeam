@@ -114,4 +114,22 @@ double distance(const std::vector<double>& v1, const std::vector<double>& v2)
 	return norm(v2 - v1);
 }
 
+Point& operator+=(Point& p1, const Point& p2)
+{
+	p1.translate(p2);
+	return p1;
+}
+
+Point operator+(const Point& p1, const Point& p2)
+{
+	Point result = p1;
+	result.translate(p2);
+	return result;
+}
+
+double distance(const Point& p1, const Point& p2)
+{
+	return sqrt(sqr(p2.x() - p1.x()) + sqr(p2.y() - p1.y()));
+}
+
 } // namespace Utils

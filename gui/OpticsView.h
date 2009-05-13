@@ -54,6 +54,8 @@ public:
 	bool targetBeamVisible() const;
 	double beamScale() const { return m_beamScale; }
 	void setBeamScale(double scale);
+	double opticsHeight() const { return m_opticsHeight; }
+	void setOpticsHeight(double height);
 
 private slots:
 	void onOpticsBenchDataChanged(int startOptics, int endOptics);
@@ -71,6 +73,7 @@ private:
 	OpticsBench* m_bench;
 	Orientation m_orientation;
 	double m_beamScale;
+	double m_opticsHeight;
 
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
@@ -105,6 +108,7 @@ protected:
 
 private:
 	void adjustRange();
+	void scaleView(double scaleFactor);
 
 private slots:
 	void scrollUpdated(int value);
@@ -172,6 +176,8 @@ private:
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;
+	QRectF m_boundingRectCache;
+	Orientation m_orientationCache;
 };
 
 #endif

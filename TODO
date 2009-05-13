@@ -37,6 +37,9 @@ BUGS:
 	Save all views information
 	Check that the initial waist position is well loaded from old files (optics position -> beam position)
 
+	H/V target beam does not trigger 2D UI
+	H/V fit does not resize table boxes
+
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength
 	Check initial values

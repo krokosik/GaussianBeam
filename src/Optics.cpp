@@ -40,7 +40,6 @@ Optics::Optics(OpticsType type, double position, string name)
 	, m_absoluteLock(false)
 	, m_relativeLockParent(0)
 {
-//	cerr << "Creating optics with id " << m_id << endl;
 }
 
 Optics::~Optics()
@@ -167,6 +166,8 @@ const Beam* CreateBeam::beam() const
 void CreateBeam::setBeam(const Beam& beam)
 {
 	m_beam = beam;
+	if (!m_beam.isSpherical())
+		setOrientation(Ellipsoidal);
 }
 
 Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
@@ -174,6 +175,9 @@ Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 	Beam outputBeam = m_beam;
 	outputBeam.setWavelength(inputBeam.wavelength());
 	outputBeam.rotate(0, angle());
+	if (orientation() == Spherical)
+		outputBeam.makeSpherical();
+
 	return outputBeam;
 }
 
@@ -247,20 +251,40 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 /////////////////////////////////////////////////
 // ABCD class
 
+void ABCD::forward(const Beam& inputBeam, Beam& outputBeam, Orientation orientation) const
+{
+	if (isAligned(orientation))
+	{
+		complex<double> q = inputBeam.q(position(), orientation);
+		q = (A()*q + B()) / (C()*q + D());
+		outputBeam.setQ(q, position() + width(), orientation);
+	}
+}
+
 Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 {
 	Beam outputBeam = inputBeam;
 	outputBeam.setIndex(inputBeam.index()*indexJump());
 
-	for (Orientation orientation = Horizontal; orientation <= Vertical; orientation = Orientation(orientation+1))
-		if (isAligned(orientation))
-		{
-			complex<double> q = inputBeam.q(position(), orientation);
-			q = (A()*q + B()) / (C()*q + D());
-			outputBeam.setQ(q, position() + width(), orientation);
-		}
+	if ((orientation() == Spherical) && (inputBeam.isSpherical()))
+		forward(inputBeam, outputBeam, Spherical);
+	else
+	{
+		forward(inputBeam, outputBeam, Horizontal);
+		forward(inputBeam, outputBeam, Vertical);
+	}
 
 	return outputBeam;
+}
+
+void ABCD::backward(const Beam& outputBeam, Beam& inputBeam, Orientation orientation) const
+{
+	if (isAligned(orientation))
+	{
+		complex<double> q = outputBeam.q(position() + width(), orientation);
+		q = (B() - D()*q) / (C()*q - A());
+		inputBeam.setQ(q, position(), orientation);
+	}
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
@@ -268,13 +292,13 @@ Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
 	Beam inputBeam = outputBeam;
 	inputBeam.setIndex(outputBeam.index()/indexJump());
 
-	for (Orientation orientation = Horizontal; orientation <= Vertical; orientation = Orientation(orientation+1))
-		if (isAligned(orientation))
-		{
-			complex<double> q = outputBeam.q(position() + width(), orientation);
-			q = (B() - D()*q) / (C()*q - A());
-			inputBeam.setQ(q, position(), orientation);
-		}
+	if ((orientation() == Spherical) && (outputBeam.isSpherical()))
+		backward(outputBeam, inputBeam, Spherical);
+	else
+	{
+		backward(outputBeam, inputBeam, Horizontal);
+		backward(outputBeam, inputBeam, Vertical);
+	}
 
 	return inputBeam;
 }

@@ -28,6 +28,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace Utils;
 
 /*
 OpticsTreeItem::OpticsTreeItem(Optics* optics, OpticsTreeItem* parent)
@@ -107,12 +108,8 @@ OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
 	m_wavelength = 461e-9;
 	m_beamSpherical = true;
 	m_fitSpherical = true;
-	m_leftBottomBoundary = vector<double>(2);
-	m_leftBottomBoundary[0] = -0.1;
-	m_leftBottomBoundary[1] = -1.; /// @bug change
-	m_rightTopBoundary = vector<double>(2);
-	m_rightTopBoundary[0] = 0.7;
-	m_rightTopBoundary[1] = 1.; /// @bug change
+	/// @todo better vertical boundaries
+	m_boundary = Rect(-0.1, -0.2, 0.7, 0.2);
 
 	m_targetOverlap = 0.95;
 	m_targetOrientation = Spherical;
@@ -162,11 +159,11 @@ void OpticsBench::detectCavities()
 		{
 			Beam* beam = m_beams[i];
 			Optics* optics = m_optics[j];
-			vector<double> opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
+			Point opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
 			//cerr << "Checking cavity " << i << " and " << j << endl;
-			if (   (fabs(opticsCoordinates[1]) < epsilon)
-			    && (opticsCoordinates[0] >= beam->start())
-			    && (opticsCoordinates[0] <= beam->stop())
+			if (   (fabs(opticsCoordinates.y()) < epsilon)
+			    && (opticsCoordinates.x() >= beam->start())
+			    && (opticsCoordinates.x() <= beam->stop())
 			    && !Beam::copropagating(*beam, *m_beams[j-1])
 			    && Beam::copropagating(optics->image(*beam, *m_beams[j-1]), *m_beams[j]))
 				cerr << " Detected cavity around beams " << i << " and " << j << endl;
@@ -258,8 +255,8 @@ void OpticsBench::setWavelength(double wavelength)
 
 void OpticsBench::setLeftBoundary(double leftBoundary)
 {
-	if (leftBoundary < m_rightTopBoundary[0])
-		m_leftBottomBoundary[0] = leftBoundary;
+	if (leftBoundary < m_boundary.x2())
+		m_boundary.setX1(leftBoundary);
 
 	updateExtremeBeams();
 
@@ -268,8 +265,8 @@ void OpticsBench::setLeftBoundary(double leftBoundary)
 
 void OpticsBench::setRightBoundary(double rightBoundary)
 {
-	if (rightBoundary > m_leftBottomBoundary[0])
-		m_rightTopBoundary[0] = rightBoundary;
+	if (rightBoundary > m_boundary.x1())
+		m_boundary.setX2(rightBoundary);
 
 	updateExtremeBeams();
 
@@ -456,11 +453,11 @@ void OpticsBench::updateExtremeBeams()
 {
 	if (nOptics() > 0)
 	{
-		m_beams[0]->setStart(m_beams[0]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[0]);
-		m_beams[nOptics()-1]->setStop(m_beams[nOptics()-1]->rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary)[1]);
+		m_beams[0]->setStart(m_beams[0]->rectangleIntersection(m_boundary)[0]);
+		m_beams[nOptics()-1]->setStop(m_beams[nOptics()-1]->rectangleIntersection(m_boundary)[1]);
 	}
 
-	vector<double> targetBoundaries = m_targetBeam.rectangleIntersection(m_leftBottomBoundary, m_rightTopBoundary);
+	vector<double> targetBoundaries = m_targetBeam.rectangleIntersection(m_boundary);
 	m_targetBeam.setStart(targetBoundaries[0]);
 	m_targetBeam.setStop(targetBoundaries[1]);
 }
@@ -527,7 +524,7 @@ void OpticsBench::computeBeams(int changedIndex, bool backwards)
 		emit(dataChanged(changedIndex, nOptics()-1));
 }
 
-pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, int preferedSide) const
+pair<Beam*, double> OpticsBench::closestPosition(const Point& point, int preferedSide) const
 {
 	const double epsilon = 1e-5;
 	double bestPosition = 0.;
@@ -536,22 +533,22 @@ pair<Beam*, double> OpticsBench::closestPosition(const vector<double>& point, in
 
 	for (int i = 0; i < nOptics(); i++)
 	{
-		vector<double> coord = m_beams[i]->beamCoordinates(point);
-		double newDistance = coord[1];
+		Point coord = m_beams[i]->beamCoordinates(point);
+		double newDistance = coord.y();
 
 //		if (newDistance > bestDistance)
 //			continue;
 
-		if (coord[0] < m_beams[i]->start())
+		if (coord.x() < m_beams[i]->start())
 			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->start()));
-		else if (coord[0] > m_beams[i]->stop())
+		else if (coord.x() > m_beams[i]->stop())
 			newDistance = Utils::distance(point, m_beams[i]->absoluteCoordinates(m_beams[i]->stop()));
 
 		double rho = fabs(newDistance/bestDistance) - 1.;
 		if ((rho < -epsilon) ||
-			((fabs(rho) < epsilon) && (intSign(coord[1])*preferedSide > 0)))
+			((fabs(rho) < epsilon) && (intSign(coord.y())*preferedSide > 0)))
 		{
-			bestPosition = coord[0];
+			bestPosition = coord.x();
 			bestDistance = newDistance;
 			bestBeam = m_beams[i];
 		}
@@ -609,8 +606,8 @@ bool OpticsBench::magicWaist()
 	bool found = false;
 
 	/// @bug this has to change !
-	const double minPos = m_leftBottomBoundary[0];
-	const double maxPos = m_rightTopBoundary[0];
+	const double minPos = m_boundary.x1();
+	const double maxPos = m_boundary.x2();
 
 	vector<double> positions = function.currentPosition();
 
@@ -624,7 +621,6 @@ bool OpticsBench::magicWaist()
 //		positions = function.localMaximum(positions);
 
 		/// @bug 2D magic waist
-		/// @todo remove this old tolerance stuff...
 		// Check waist
 		Beam beam = function.beam(positions);
 		if (Beam::overlap(beam, m_targetBeam) > m_targetOverlap)
