@@ -79,8 +79,8 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	{
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
 		editor->setAccelerated(true);
-		editor->setMinimum(-Unit::infinity);
-		editor->setMaximum(Unit::infinity);
+		editor->setMinimum(-Utils::infinity);
+		editor->setMaximum(Utils::infinity);
 		return editor;
 	}
 	case Property::BeamWaist:
@@ -88,43 +88,43 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 	case Property::BeamDivergence:
 	{
 		QList<EditorProperty> properties;
-		properties << EditorProperty(0., Unit::infinity);
+		properties << EditorProperty(0., Utils::infinity);
 		if (!m_bench->isSpherical())
-			properties << EditorProperty(0., Unit::infinity);
+			properties << EditorProperty(0., Utils::infinity);
 		return new PropertyEditor(properties, parent);
 	}
 	case Property::BeamWaistPosition:
 	{
 		QList<EditorProperty> properties;
-		properties << EditorProperty(-Unit::infinity, Unit::infinity);
+		properties << EditorProperty(-Utils::infinity, Utils::infinity);
 		if (!m_bench->isSpherical())
-			properties << EditorProperty(-Unit::infinity, Unit::infinity);
+			properties << EditorProperty(-Utils::infinity, Utils::infinity);
 		return new PropertyEditor(properties, parent);
 	}
 	case Property::OpticsProperties:
 	{
 		QList<EditorProperty> properties;
 		if (optics->type() == CreateBeamType)
-			properties << EditorProperty(0., Unit::infinity, "n = ")
-			           << EditorProperty(1., Unit::infinity, tr("M²") + " = ");
+			properties << EditorProperty(0., Utils::infinity, "n = ")
+			           << EditorProperty(1., Utils::infinity, tr("M²") + " = ");
 		else if (optics->type() == LensType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "f = ", Units::getUnit(UnitFocal).string());
+			properties << EditorProperty(-Utils::infinity, Utils::infinity, "f = ", Units::getUnit(UnitFocal).string());
 		else if (optics->type() == CurvedMirrorType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
+			properties << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == FlatInterfaceType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ");
+			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ");
 		else if (optics->type() == CurvedInterfaceType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ")
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "R = ", Units::getUnit(UnitCurvature).string());
+			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ")
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Units::getUnit(UnitCurvature).string());
 		else if (optics->type() == DielectricSlabType)
-			properties << EditorProperty(0., Unit::infinity, "n2/n1 = ")
-			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
+			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ")
+			           << EditorProperty(0., Utils::infinity, "width = ", Units::getUnit(UnitWidth).string());
 		else if (optics->type() == GenericABCDType)
-			properties << EditorProperty(-Unit::infinity, Unit::infinity, "A = ")
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "B = ", Units::getUnit(UnitABCD).string())
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string(false))
-			           << EditorProperty(-Unit::infinity, Unit::infinity, "D = ")
-			           << EditorProperty(0., Unit::infinity, "width = ", Units::getUnit(UnitWidth).string());
+			properties << EditorProperty(-Utils::infinity, Utils::infinity, "A = ")
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "B = ", Units::getUnit(UnitABCD).string())
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string(false))
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "D = ")
+			           << EditorProperty(0., Utils::infinity, "width = ", Units::getUnit(UnitWidth).string());
 
 		return new PropertyEditor(properties, parent);
 	}

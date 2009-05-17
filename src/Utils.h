@@ -60,6 +60,10 @@ std::vector<double>& operator<<(std::vector<double>& v, double r);
 
 namespace Utils
 {
+	static const double infinity = 1e100;
+	static const double epsilon  = 1e-10;
+
+
 	double scalar(const std::vector<double>& v1, const std::vector<double>& v2);
 	double norm(const std::vector<double>& v1);
 //	double distance(const std::vector<double>& v1, const std::vector<double>& v2);

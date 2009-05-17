@@ -31,9 +31,6 @@ public:
 	double multiplier() const;
 	double divider() const;
 
-public:
-	static const double infinity;
-
 private:
 	QChar prefix() const;
 

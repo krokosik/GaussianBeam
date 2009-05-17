@@ -20,8 +20,6 @@
 
 #include <cmath>
 
-const double Unit::infinity = 1000000.;
-
 Unit::Unit(int power, QString unitString)
 {
 	m_power = power;

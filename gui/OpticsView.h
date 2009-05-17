@@ -162,20 +162,24 @@ public:
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 public:
-	void updateTransform();
+	void updateTransform(double startAngle = 0, double stopAngle = 0);
 	const Beam* beam() const { return m_beam; }
 	void setPlainStyle(bool style = true) { m_style = style; }
 	bool auxiliary() const { return m_auxiliary; }
 	void setAuxiliary(bool auxiliary) { m_auxiliary = auxiliary; }
 
 private:
-	void drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const;
+	void drawUpperBeamSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const;
+	void drawLowerBeamSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const;
 
 private:
 	const Beam* m_beam;
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;
+
+	double m_startLowerCache, m_startUpperCache;
+	double m_stopLowerCache, m_stopUpperCache;
 	QRectF m_boundingRectCache;
 	Orientation m_orientationCache;
 };

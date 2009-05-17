@@ -281,23 +281,46 @@ Point Beam::absoluteCoordinates(double position, double distance) const
 
 vector<double> Beam::rectangleIntersection(const Utils::Rect& rect) const
 {
-	static const double infinity = 1e100;
 	vector<double> intersections;
 
 	if (cos(m_angle) != 0.)
 		intersections << (rect.x1() - m_origin.x())/cos(m_angle) << (rect.x2() - m_origin.x())/cos(m_angle);
 	else
-		intersections << -infinity << +infinity;
+		intersections << -Utils::infinity << +Utils::infinity;
 
 	if (sin(m_angle) != 0.)
 		intersections << (rect.y1() - m_origin.y())/sin(m_angle) << (rect.y2() - m_origin.y())/sin(m_angle);
 	else
-		intersections << -infinity << +infinity;
+		intersections << -Utils::infinity << +Utils::infinity;
 
 	sort(intersections.begin(), intersections.end());
 	intersections.pop_back();
 	intersections.erase(intersections.begin());
 	return intersections;
+}
+
+pair<double, double> Beam::angledBoundaries(double position, double slope, Orientation orientation) const
+{
+	pair<double, double> result = pair<double, double>(-Utils::infinity, Utils::infinity);
+
+	const double z0 = rayleigh(orientation);
+	const double w0 = waist(orientation);
+	double b = sqr(w0/(slope*z0));
+	double pr = zred(position, orientation);
+	double delta = b*(1. + sqr(pr) - b);
+
+	if (delta < 0.)
+		return result;
+
+	/// @todo case b = 1
+
+	double r = z0*sqrt(delta)/(1.-b);
+	double l = waistPosition() + z0*pr/(1.-b);
+
+	result.first = l + sign(slope)*r;
+	result.second = l - sign(slope)*r;
+
+	return result;
 }
 
 //////////////////////

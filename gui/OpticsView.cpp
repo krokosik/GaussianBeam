@@ -577,7 +577,7 @@ BeamItem::BeamItem(const Beam* beam)
 	setZValue(0.);
 }
 
-void BeamItem::updateTransform()
+void BeamItem::updateTransform(double startAngle, double stopAngle)
 {
 	Q_ASSERT(beam()->origin().size() == 2);
 
@@ -585,13 +585,36 @@ void BeamItem::updateTransform()
 	if (!opticsScene)
 		return;
 
-	// Update the beam bounding rect
-	/// @todo angle at beam start/stop, intersection with scene rect
+	// Update cached information about the beam geometry
 	prepareGeometryChange();
 	m_orientationCache = opticsScene->orientation();
-	double maxRadius = qMax(m_beam->radius(m_beam->start(), m_orientationCache),
-	                        m_beam->radius(m_beam->stop(),  m_orientationCache));
-	m_boundingRectCache = QRectF(QPointF(m_beam->start(), -maxRadius), QPointF(m_beam->stop(), maxRadius));
+	std::pair<double, double> bounds;
+	if (tan(startAngle) == 0.)
+		m_startUpperCache = m_startLowerCache = m_beam->start();
+	else
+	{
+		bounds = m_beam->angledBoundaries(m_beam->start(), -1./(tan(startAngle)*opticsScene->beamScale()), m_orientationCache);
+		m_startUpperCache = bounds.first;
+		m_startLowerCache = bounds.second;
+	}
+	if (tan(stopAngle) == 0.)
+		m_stopUpperCache = m_stopLowerCache = m_beam->stop();
+	else
+	{
+		bounds = m_beam->angledBoundaries(m_beam->stop(), -1./(tan(stopAngle)*opticsScene->beamScale()), m_orientationCache);
+		m_stopUpperCache = bounds.first;
+		m_stopLowerCache = bounds.second;
+	}
+
+	// Update the beam bounding rect
+	/// @todo intersection with scene rect
+	const double minStart = qMin(m_startLowerCache, m_startUpperCache);
+	const double maxStop  = qMax(m_stopLowerCache, m_stopUpperCache);
+	const double maxLowerRadius = qMax(m_beam->radius(m_startLowerCache, m_orientationCache),
+	                                   m_beam->radius(m_stopLowerCache,  m_orientationCache));
+	const double maxUpperRadius = qMax(m_beam->radius(m_startUpperCache, m_orientationCache),
+	                                   m_beam->radius(m_stopUpperCache,  m_orientationCache));
+	m_boundingRectCache = QRectF(QPointF(minStart, -maxUpperRadius), QPointF(maxStop, maxLowerRadius));
 
 	// Position the beam
 	resetTransform();
@@ -605,10 +628,10 @@ QRectF BeamItem::boundingRect() const
 	return m_boundingRectCache;
 }
 
-void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
+void BeamItem::drawUpperBeamSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
 {
-	start = qMax(start, m_beam->start());
-	stop  = qMin(stop,  m_beam->stop());
+	start = qMax(start, m_startUpperCache);
+	stop  = qMin(stop,  m_stopUpperCache);
 
 	if (start >= stop)
 		return;
@@ -616,8 +639,26 @@ void BeamItem::drawSegment(double start, double stop, double pixel, int nStep, Q
 	// "pixel" is added to avoid overlong iterations due to very small steps caused by rounding errors
 	double step = qMax((stop - start)/double(nStep) + pixel, pixel);
 
-	for (double z = start; z <= stop; z += step)
+	// minus sign for the upper beam because the Qt coordinates system points downwoards
+	for (double z = start; z < stop; z += step)
+		polygon.append(QPointF(z, -m_beam->radius(z, m_orientationCache)));
+	polygon.append(QPointF(stop, -m_beam->radius(stop, m_orientationCache)));
+}
+
+void BeamItem::drawLowerBeamSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const
+{
+	start = qMax(start, m_startLowerCache);
+	stop  = qMin(stop,  m_stopLowerCache);
+
+	if (start >= stop)
+		return;
+
+	// "pixel" is added to avoid overlong iterations due to very small steps caused by rounding errors
+	double step = qMax((stop - start)/double(nStep) + pixel, pixel);
+
+	for (double z = stop; z > start; z -= step)
 		polygon.append(QPointF(z, m_beam->radius(z, m_orientationCache)));
+	polygon.append(QPointF(start, m_beam->radius(start, m_orientationCache)));
 }
 
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
@@ -631,69 +672,50 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	QColor beamColor = wavelengthColor(m_beam->wavelength());
 	beamColor.setAlpha(200);
 
-	QPen beamPen(beamColor);
-	painter->setPen(beamPen);
+	painter->setPen(m_style ? Qt::NoPen : QPen(beamColor));
+	painter->setBrush(QBrush(beamColor, m_style ? Qt::SolidPattern : Qt::NoBrush));
 
-	QBrush beamBrush(beamColor, m_style ? Qt::SolidPattern : Qt::NoBrush);
-	painter->setBrush(beamBrush);
+	const double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
+	const double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
 
-	QPen textPen(Qt::black);
+	const double waist = m_beam->waist(m_orientationCache);
+	const double waistPosition = m_beam->waistPosition(m_orientationCache);
+	const double rayleigh = m_beam->rayleigh(m_orientationCache);
 
-	const Orientation orientation = m_orientationCache;
-	const double waist = m_beam->waist(orientation);
-	const double waistPosition = m_beam->waistPosition(orientation);
-	const double rayleigh = m_beam->rayleigh(orientation);
-	const double start = m_beam->start();
-	const double stop = m_beam->stop();
-
-	double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
-	double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
-
-	// The waist is pixel reoslved
-	if (waist > verticalScale)
+	// Construct the beam polygon
+	QPolygonF beamPolygon;
+	// Upper part
+	double nextPos, pos = m_startUpperCache;
+	if (waist > verticalScale) // The waist is pixel resolved
 	{
-		QPolygonF beamPolygonUp, beamPolygonDown;
-
-		// Construct the upper part of the beam
-		double nextLeft, left = start;
-		drawSegment(left, nextLeft = waistPosition - 5.*rayleigh, horizontalScale, 1,  beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = waistPosition - rayleigh,    horizontalScale, 10, beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = waistPosition + rayleigh,    horizontalScale, 20, beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = waistPosition + 5.*rayleigh, horizontalScale, 10, beamPolygonUp); left = nextLeft;
-		drawSegment(left, nextLeft = stop,                        horizontalScale, 1,  beamPolygonUp); left = nextLeft;
-		beamPolygonUp.append(QPointF(stop, m_beam->radius(stop, orientation)));
-
-		// Mirror the upper part to make the lower part
-		for (int i = beamPolygonUp.size() - 1; i >= 0; i--)
-			beamPolygonDown.append(QPointF(beamPolygonUp[i].x(), -beamPolygonUp[i].y()));
-
-		// Draw the beam
-		QPainterPath path;
-		path.moveTo(beamPolygonUp[0]);
-		path.addPolygon(beamPolygonUp);
-		path.lineTo(beamPolygonDown[0]);
-		path.addPolygon(beamPolygonDown);
-		path.lineTo(beamPolygonUp[0]);
-		painter->drawPath(path);
+		drawUpperBeamSegment(pos, nextPos = waistPosition - 5.*rayleigh, horizontalScale, 1,  beamPolygon); pos = nextPos;
+		drawUpperBeamSegment(pos, nextPos = waistPosition - rayleigh,    horizontalScale, 10, beamPolygon); pos = nextPos;
+		drawUpperBeamSegment(pos, nextPos = waistPosition + rayleigh,    horizontalScale, 20, beamPolygon); pos = nextPos;
+		drawUpperBeamSegment(pos, nextPos = waistPosition + 5.*rayleigh, horizontalScale, 10, beamPolygon); pos = nextPos;
+		drawUpperBeamSegment(pos, nextPos = m_stopUpperCache,            horizontalScale, 1,  beamPolygon); pos = nextPos;
 	}
-	// The waist is not pixel resolved
-	else
+	else                       // The waist is NOT pixel resolved
 	{
-		double sgn = sign((stop - waistPosition)*(start - waistPosition));
-		double rightRadius = m_beam->radius(stop, orientation);
-		double leftRadius = m_beam->radius(start, orientation);
-
-		QPolygonF ray;
-		ray << QPointF(start, leftRadius)
-			<< QPointF(stop,  sgn*rightRadius)
-			<< QPointF(stop,  -sgn*rightRadius)
-			<< QPointF(start, -leftRadius);
-		painter->drawConvexPolygon(ray);
+		drawUpperBeamSegment(pos, nextPos = waistPosition, horizontalScale, 1, beamPolygon); pos = nextPos;
 	}
-
-
+	// Lower part
+	pos = m_stopLowerCache;
+	if (waist > verticalScale) // The waist is pixel resolved
+	{
+		drawLowerBeamSegment(nextPos = waistPosition + 5.*rayleigh, pos, horizontalScale, 1,  beamPolygon); pos = nextPos;
+		drawLowerBeamSegment(nextPos = waistPosition + rayleigh,    pos, horizontalScale, 10, beamPolygon); pos = nextPos;
+		drawLowerBeamSegment(nextPos = waistPosition - rayleigh,    pos, horizontalScale, 20, beamPolygon); pos = nextPos;
+		drawLowerBeamSegment(nextPos = waistPosition - 5.*rayleigh, pos, horizontalScale, 10, beamPolygon); pos = nextPos;
+		drawLowerBeamSegment(nextPos = m_startLowerCache,           pos, horizontalScale, 1,  beamPolygon); pos = nextPos;
+	}
+	else                       // The waist is NOT pixel resolved
+	{
+		drawLowerBeamSegment(pos, nextPos = waistPosition, horizontalScale, 1, beamPolygon); pos = nextPos;
+	}
+	painter->drawConvexPolygon(beamPolygon);
+/*
 	// Waist label
-	/// @todo check if in view
+	QPen textPen(Qt::black);
 	if (m_drawText)
 	{
 		painter->setPen(textPen);
@@ -704,4 +726,5 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 		textRect.moveCenter(waistTop - QPointF(0., 15.));
 		painter->drawText(textRect, Qt::AlignHCenter | Qt::AlignBottom, text);
 	}
+*/
 }

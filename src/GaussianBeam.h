@@ -58,6 +58,10 @@ public:
 public:
 
 	// Intrinsic properties
+	/// @return the beam wavelength
+	double wavelength() const;
+	/// Set the beam wavelength to @p wavelength
+	void setWavelength(double wavelength);
 	/// @return the waist position
 	double waistPosition(Orientation orientation = Horizontal) const;
 	/// Set the waist position to @p waistPosition
@@ -74,10 +78,6 @@ public:
 	double rayleigh(Orientation orientation = Horizontal) const;
 	/// Set the rayleigh range to @p rayleigh
 	void setRayleigh(double rayleigh, Orientation orientation = Spherical);
-	/// @return the beam wavelength
-	double wavelength() const;
-	/// Set the beam wavelength to @p wavelength
-	void setWavelength(double wavelength);
 	/// @return the index of the medium in which the beam propagates
 	double index() const;
 	/// Set the index of the medium in which the beam propagates to @p index
@@ -122,7 +122,7 @@ public:
 	void rotate(double pivot, double angle);
 	/// @return the position for the origin of this beam in the plane
 	Utils::Point origin() const;
-	/// @return the angle between the wave vector and a common basis axis.
+	/// @return the angle between the wave vector and the plane abscissa
 	double angle() const;
 	/**
 	* @return the beam coordinates of absolute point @p point
@@ -132,9 +132,13 @@ public:
 	Utils::Point beamCoordinates(const Utils::Point& point) const;
 	/// @return the absolute coordinates of beam coordiantes ( @p position , @p distance )
 	Utils::Point absoluteCoordinates(double position, double distance = 0) const;
-	/// @return the extreme positions of the intersection of the beam and a rectangle of given diagonal
+	/// @return the extreme positions of the intersection of the beam and rectangle @p rect
 	std::vector<double> rectangleIntersection(const Utils::Rect& rect) const;
+	/// @return the abscissa (in beam coordinates) of the intersections of the 1/e² radius of the beam and
+	/// a line with origin @p position and slope @p slope. The upper intersection comes first.
+	std::pair<double, double> angledBoundaries(double position, double slope, Orientation orientation = Horizontal) const;
 
+	// Physical properties
 	/**
 	* Compute the intensity overlap between beams @p beam1 and @p beam2 at position @p z
 	* This overlap does not depend on @p z if both beams have the same wavelength,
