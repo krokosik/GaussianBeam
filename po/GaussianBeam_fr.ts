@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="1.1" language="fr">
+<!DOCTYPE TS>
+<TS version="2.0" language="fr_FR">
 <defaultcodec>UTF-8</defaultcodec>
 <context>
     <name>GaussianBeamDelegate</name>
@@ -12,7 +13,7 @@
         <translation>absolu</translation>
     </message>
     <message>
-        <source>M&#xc2;&#xb2;</source>
+        <source>MÂ²</source>
         <translation>M²</translation>
     </message>
 </context>
@@ -27,7 +28,7 @@
         <translation>aucun</translation>
     </message>
     <message>
-        <source>M&#xc2;&#xb2;</source>
+        <source>MÂ²</source>
         <translation>M²</translation>
     </message>
     <message>
@@ -35,18 +36,18 @@
         <translation>largeur</translation>
     </message>
     <message>
-        <source>&#xc2;&#xb2;</source>
+        <source>Â²</source>
         <translation>²</translation>
     </message>
 </context>
 <context>
     <name>GaussianBeamWidget</name>
     <message>
-        <source>Radius @ 1/e&#xc2;&#xb2;</source>
+        <source>Radius @ 1/eÂ²</source>
         <translation>Rayon @ 1/e²</translation>
     </message>
     <message>
-        <source>Diameter @ 1/e&#xc2;&#xb2;</source>
+        <source>Diameter @ 1/eÂ²</source>
         <translation>Diamètre @ 1/e²</translation>
     </message>
     <message>
@@ -58,8 +59,8 @@
         <translation>Position</translation>
     </message>
     <message>
-        <source>R&#xc2;&#xb2;</source>
-        <translation>R²</translation>
+        <source>RÂ²</source>
+        <translation type="obsolete">R²</translation>
     </message>
     <message>
         <source>Value</source>
@@ -111,15 +112,15 @@
     </message>
     <message>
         <source>Tolerance</source>
-        <translation>Tolérance</translation>
+        <translation type="obsolete">Tolérance</translation>
     </message>
     <message>
         <source>Overlap</source>
-        <translation>Recouvrement</translation>
+        <translation type="obsolete">Recouvrement</translation>
     </message>
     <message>
         <source>Tolerance on waist</source>
-        <translation>Tolérance sur le waist</translation>
+        <translation type="obsolete">Tolérance sur le waist</translation>
     </message>
     <message>
         <source> %</source>
@@ -127,11 +128,11 @@
     </message>
     <message>
         <source>Tolerance on position</source>
-        <translation>Tolérance sur la position</translation>
+        <translation type="obsolete">Tolérance sur la position</translation>
     </message>
     <message>
         <source> % Rayleigh</source>
-        <translation> % Rayleigh</translation>
+        <translation type="obsolete"> % Rayleigh</translation>
     </message>
     <message>
         <source>Show target beam</source>
@@ -191,11 +192,11 @@
     </message>
     <message>
         <source>Add row</source>
-        <translation>Ajouter une ligne</translation>
+        <translation type="obsolete">Ajouter une ligne</translation>
     </message>
     <message>
         <source>Remove row</source>
-        <translation>Enlever une ligne</translation>
+        <translation type="obsolete">Enlever une ligne</translation>
     </message>
     <message>
         <source>Set as input beam</source>
@@ -207,7 +208,7 @@
     </message>
     <message>
         <source>Local optimum not found !</source>
-        <translation>Optimum local non trouvé</translation>
+        <translation>Optimum local non trouvé !</translation>
     </message>
     <message>
         <source>Rename fit</source>
@@ -216,6 +217,51 @@
     <message>
         <source>Enter a new name for the current fit:</source>
         <translation>Saisissez un nouveau nom pour l&apos;ajustement :</translation>
+    </message>
+    <message>
+        <source>Cavity</source>
+        <translation>Cavité</translation>
+    </message>
+    <message>
+        <source>Unstable</source>
+        <translation>Instable</translation>
+    </message>
+    <message>
+        <source>Aspect</source>
+        <translation>Aspect</translation>
+    </message>
+    <message>
+        <source>Spherical</source>
+        <translation>Sphérique</translation>
+    </message>
+    <message>
+        <source>Ellipsoidal</source>
+        <translation>Ellipsoïdal</translation>
+    </message>
+    <message>
+        <source>Minimum overlap</source>
+        <translation>Recouvrement
+minimal</translation>
+    </message>
+    <message>
+        <source>Orientation:</source>
+        <translation>Orientation :</translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation>Horizontal</translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation>Vertical</translation>
+    </message>
+    <message>
+        <source>Row</source>
+        <translation>Ligne</translation>
+    </message>
+    <message>
+        <source>Residue</source>
+        <translation>Résidu</translation>
     </message>
 </context>
 <context>
@@ -332,7 +378,7 @@
     </message>
     <message>
         <source>This file does not contain any version information.</source>
-        <translation>Ce fichier ne contient pas d&apos;indication de version</translation>
+        <translation>Ce fichier ne contient pas d&apos;indication de version.</translation>
     </message>
     <message>
         <source>Wrong version format. Your file seems corrupted</source>
@@ -340,11 +386,43 @@
     </message>
     <message>
         <source>The file is not an GaussianBeam file.</source>
-        <translation>Ce fichier n&apos;est pas un fichier GaussianBeam</translation>
+        <translation>Ce fichier n&apos;est pas un fichier GaussianBeam.</translation>
     </message>
     <message>
         <source>Your version of GaussianBeam is too old.</source>
-        <translation>Votre version de GaussianBeam est trop ancienne</translation>
+        <translation>Votre version de GaussianBeam est trop ancienne.</translation>
+    </message>
+    <message>
+        <source>Ctrl+S</source>
+        <translation>Ctrl+S</translation>
+    </message>
+    <message>
+        <source>Ctrl+P</source>
+        <translation>Ctrl+P</translation>
+    </message>
+    <message>
+        <source>Ctrl+O</source>
+        <translation>Ctrl+O</translation>
+    </message>
+    <message>
+        <source>Ctrl+L</source>
+        <translation>Ctrl+L</translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation>Nouveau</translation>
+    </message>
+    <message>
+        <source>Ctrl+N</source>
+        <translation>Ctrl+N</translation>
+    </message>
+    <message>
+        <source>&amp;%1 %2</source>
+        <translation>&amp;%1 %2</translation>
+    </message>
+    <message>
+        <source>Open file </source>
+        <translation>Ouvrir</translation>
     </message>
 </context>
 <context>
@@ -438,7 +516,7 @@
         <translation>R</translation>
     </message>
     <message>
-        <source>&#xce;&#xb6;</source>
+        <source>Î¶</source>
         <translation>ζ</translation>
     </message>
     <message>
@@ -462,7 +540,7 @@
         <translation>Prop.</translation>
     </message>
     <message>
-        <source>w&#xe2;&#x82;&#x80;</source>
+        <source>wâ</source>
         <translation>w₀</translation>
     </message>
     <message>
@@ -470,11 +548,11 @@
         <translation>zw</translation>
     </message>
     <message>
-        <source>z&#xe2;&#x82;&#x80;</source>
+        <source>zâ</source>
         <translation>z₀</translation>
     </message>
     <message>
-        <source>&#xce;&#x98;&#xe2;&#x82;&#x80;</source>
+        <source>Îâ</source>
         <translation>Θ₀</translation>
     </message>
     <message>
@@ -521,6 +599,30 @@
         <source>Generic ABCD</source>
         <translation>ABCD générique</translation>
     </message>
+    <message>
+        <source>Angle</source>
+        <translation>Angle</translation>
+    </message>
+    <message>
+        <source>Aspect</source>
+        <translation>Aspect</translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation>Horizontal</translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation>Vertical</translation>
+    </message>
+    <message>
+        <source>Spherical</source>
+        <translation>Sphérique</translation>
+    </message>
+    <message>
+        <source>Ellipsoidal</source>
+        <translation>Ellipsoïdal</translation>
+    </message>
 </context>
 <context>
     <name>OpticsViewProperties</name>
@@ -532,7 +634,7 @@
         <source> mm</source>
         <translation>mm</translation>
     </message>
-    <message encoding="UTF-8">
+    <message>
         <source> µm</source>
         <translation> µm</translation>
     </message>

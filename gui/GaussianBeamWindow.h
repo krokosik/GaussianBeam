@@ -98,7 +98,6 @@ private:
 	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics);
 	void writeView(QXmlStreamWriter& xmlWriter);
 	// Compatibility functions
-	void parseXml10(const QDomElement& element);
 	void parseInputBeam11(const QDomElement& element, QList<QString>& lockTree);
 
 private:

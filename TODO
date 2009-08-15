@@ -1,5 +1,4 @@
 WISHLIST:
-	Artwork
 	Relative waist position
 	Lens selection
 	Sensitivity graph
@@ -17,17 +16,20 @@ WISHLIST:
 	grid
 	when moving an optics, display the optics position
 	make unit tests for saving/loading
-	undo framework
+	undo framework / file modified
 	reimplement paint items in view for optics painting in scene coordinates
 	Thick lens, thermal lens
 	Camera interfaces
 	Set view limits to bench limits button
-	Horizontal and vertical waists
 	TEMmn modes
 	more intrication between opticsbench bounds and view bounds
 	Warn when closing a modified file + modified status in window title
 
 BUGS:
+	Optics ID is strange in GaussianBeam 0.4
+	Check at which version we moved from name to id to lock
+	Deal with optics ID in XSLT
+	Problems where adding and removing fits: some are mysteriously disappearing
 	Problem with n > 1 and target beam
 	Problem in redraw when deleting an optics with non zero width
 	Implement ruller scale & vertical labels

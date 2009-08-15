@@ -23,6 +23,7 @@
 #include <QApplication>
 #include <QTextCodec>
 #include <QTranslator>
+#include <QLibraryInfo>
 
 int main(int argc, char *argv[])
 {
@@ -32,9 +33,15 @@ int main(int argc, char *argv[])
 	QCoreApplication::setApplicationName("GaussianBeam");
 
 	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
-	QTranslator translator;
+
 	QString locale = QLocale::system().name();
-	translator.load(QString("GaussianBeam_") + locale);
+	// Load translations for the qt library
+	QTranslator qtTranslator;
+	qtTranslator.load("qt_" + locale, QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+	app.installTranslator(&qtTranslator);
+	// Load translations for GaussianBeam
+	QTranslator translator;
+	translator.load(":/po/GaussianBeam_" + locale);
 	app.installTranslator(&translator);
 
 	initNames(&app);

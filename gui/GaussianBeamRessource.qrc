@@ -10,5 +10,6 @@
         <file>images/zoom-best-fit.png</file>
         <file>images/preferences-system.png</file>
         <file>images/gaussianbeam16.png</file>
+        <file>../po/GaussianBeam_fr.qm</file>
     </qresource>
 </RCC>

@@ -173,8 +173,16 @@ void OpticsScene::onOpticsBenchOpticsAdded(int index)
 	OpticsItem* opticsItem = new OpticsItem(m_bench->optics(index), m_bench);
 	addItem(opticsItem);
 
-	BeamItem* beamItem = new BeamItem(m_bench->beam(index));
+	const Beam* beam = m_bench->beam(index);
+	BeamItem* beamItem = new BeamItem(beam,                                                           // Added beam
+	                                  (index > 0) ? m_bench->beam(index-1) : 0,                       // Previous beam
+	                                  (index < m_bench->nOptics() - 1) ? m_bench->beam(index+1) : 0); // Next beam
 	m_beamItems.insert(index, beamItem);
+	if (index > 0)
+		m_beamItems[index-1]->setNextBeam(beam);
+	else if  (index < m_bench->nOptics() - 1)
+		m_beamItems[index+1]->setPreviousBeam(beam);
+
 	addItem(beamItem);
 	beamItem->updateTransform();
 }
@@ -188,6 +196,17 @@ void OpticsScene::onOpticsBenchOpticsRemoved(int index, int count)
 
 	for (int i = index + count - 1; i >= index; i--)
 		removeItem(m_beamItems.takeAt(i));
+
+	// Update neighbour beams
+	if (index > 0)
+		m_beamItems[index-1]->setNextBeam(0);
+	if (index < m_bench->nOptics())
+		m_beamItems[index]->setPreviousBeam(0);
+	if ((index > 0) && (index < m_bench->nOptics()))
+	{
+		m_beamItems[index-1]->setNextBeam(m_bench->beam(index));
+		m_beamItems[index]->setPreviousBeam(m_bench->beam(index-1));
+	}
 }
 
 void OpticsScene::addFitPoint(double position, double radius, QRgb color)
@@ -267,8 +286,8 @@ OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 
 void OpticsView::adjustRange()
 {
-	if ((m_horizontalRange > scene()->width()) || (m_horizontalRange == 0.))
-		m_horizontalRange = scene()->width();
+// 	if ((m_horizontalRange > scene()->width()) || (m_horizontalRange == 0.))
+// 		m_horizontalRange = scene()->width();
 
 //	if ((m_verticalRange > scene()->height()) || (m_verticalRange == 0.))
 //		m_verticalRange = scene()->height();
@@ -526,24 +545,22 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 	}
 	else if (m_optics->type() == FlatMirrorType)
 	{
-		QRectF mirrorRect = rect;
-		mirrorRect.setLeft(0.);
-
-		painter->setPen(QPen(Qt::NoPen));
-		painter->setBrush(QBrush(Qt::black, Qt::BDiagPattern));
-		painter->drawRect(mirrorRect);
-
-		mirrorRect.setRight(rect.right()/5.);
-		painter->setPen(QPen());
-		painter->setBrush(QBrush(Qt::black));
-		painter->drawRect(mirrorRect);
+		painter->setPen(QPen(Qt::black, rect.width()/10., Qt::SolidLine, Qt::RoundCap));
+		painter->drawLine(QLineF(0., rect.top(), 0., rect.bottom()));
+		const double dx = rect.width()/2.;
+		for (double pos = rect.top(); pos < rect.bottom() - dx; pos += dx)
+			painter->drawLine(QLineF(0., pos, rect.right(), pos + dx));
 	}
 	else if (m_optics->type() == CurvedMirrorType)
 	{
-		painter->drawRect(rect);
-		QBrush ABCDBrush(Qt::black, Qt::BDiagPattern);
-		painter->setBrush(ABCDBrush);
-		painter->drawRect(rect);
+		painter->setPen(QPen(Qt::black, rect.width()/10., Qt::SolidLine, Qt::RoundCap));
+		const double dx = rect.width()/2.;
+		if (dynamic_cast<const CurvedMirror*>(m_optics)->curvatureRadius() >= 0.)
+			painter->drawArc(rect.translated(-dx, 0.), 4320, 2880);
+		else
+			painter->drawArc(rect.translated(dx, 0.), 1440, 2880);
+		for (double pos = rect.top(); pos < rect.bottom() - dx; pos += dx)
+			painter->drawLine(QLineF(0., pos, rect.right(), pos + dx));
 	}
 	else if (m_optics->type() == GenericABCDType)
 	{
@@ -567,9 +584,11 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 /////////////////////////////////////////////////
 // BeamView class
 
-BeamItem::BeamItem(const Beam* beam)
+BeamItem::BeamItem(const Beam* beam, const Beam* previousBeam, const Beam* nextBeam)
 	: QGraphicsItem()
 	, m_beam(beam)
+	, m_previousBeam(previousBeam)
+	, m_nextBeam(nextBeam)
 {
 	m_drawText = true;
 	m_style = true;
@@ -577,13 +596,24 @@ BeamItem::BeamItem(const Beam* beam)
 	setZValue(0.);
 }
 
-void BeamItem::updateTransform(double startAngle, double stopAngle)
+void BeamItem::updateTransform()
 {
 	Q_ASSERT(beam()->origin().size() == 2);
 
 	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
 	if (!opticsScene)
 		return;
+
+	// Find beam start and stop angles
+	double startAngle = 0.;
+	double stopAngle  = 0.;
+	if (m_previousBeam && (fabs(m_previousBeam->angle() - m_beam->angle()) > Utils::epsilon))
+		startAngle = (M_PI - m_beam->angle() + m_previousBeam->angle())/2.;
+	if (m_nextBeam && (fabs(m_nextBeam->angle() - m_beam->angle()) > Utils::epsilon))
+		stopAngle  = (M_PI + m_nextBeam->angle() - m_beam->angle())/2.;
+
+	if (m_previousBeam && m_nextBeam)
+		qDebug() << m_beam->angle() << m_previousBeam->angle() << m_nextBeam->angle() << startAngle << stopAngle;
 
 	// Update cached information about the beam geometry
 	prepareGeometryChange();

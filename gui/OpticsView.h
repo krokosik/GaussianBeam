@@ -154,7 +154,7 @@ private:
 class BeamItem : public QGraphicsItem
 {
 public:
-	BeamItem(const Beam* beam);
+	BeamItem(const Beam* beam, const Beam* previousBeam = 0, const Beam* nextBeam = 0);
 
 /// Inherited public functions
 public:
@@ -162,11 +162,13 @@ public:
 	void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 
 public:
-	void updateTransform(double startAngle = 0, double stopAngle = 0);
+	void updateTransform();
 	const Beam* beam() const { return m_beam; }
 	void setPlainStyle(bool style = true) { m_style = style; }
 	bool auxiliary() const { return m_auxiliary; }
 	void setAuxiliary(bool auxiliary) { m_auxiliary = auxiliary; }
+	void setPreviousBeam(const Beam* previousBeam) { m_previousBeam = previousBeam; }
+	void setNextBeam(const Beam* nextBeam) { m_nextBeam = nextBeam; }
 
 private:
 	void drawUpperBeamSegment(double start, double stop, double pixel, int nStep, QPolygonF& polygon) const;
@@ -174,6 +176,9 @@ private:
 
 private:
 	const Beam* m_beam;
+	const Beam* m_previousBeam;
+	const Beam* m_nextBeam;
+
 	bool m_drawText;
 	bool m_style;
 	bool m_auxiliary;
