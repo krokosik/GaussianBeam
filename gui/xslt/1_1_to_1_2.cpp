@@ -9,9 +9,11 @@ QString xslt_1_1_to_1_2("\
 \
 <!-- Default -->\
 \
-<xsl:template  match=\"*\">\
-	<xsl:copy-of select=\"@*\"/>\
+<xsl:template match=\"*\">\
+	<xsl:copy-of select=\".\"/>\
 </xsl:template>\
+\
+<!-- TODO: flip mirrors, inputBeam -> createBeam -->\
 \
 <!-- Root -->\
 \

@@ -49,13 +49,16 @@ public:
 	OpticsScene(OpticsBench* bench, Orientation orientation = Horizontal, QObject* parent = 0);
 
 public:
+	void setOtherScene(OpticsScene* otherScene) { m_otherScene = otherScene; }
 	Orientation orientation() const { return m_orientation; }
 	void showTargetBeam(bool show = true);
 	bool targetBeamVisible() const;
 	double beamScale() const { return m_beamScale; }
-	void setBeamScale(double scale);
+	void setBeamScale(double beamScale);
 	double opticsHeight() const { return m_opticsHeight; }
-	void setOpticsHeight(double height);
+	void setOpticsHeight(double opticsHeight);
+	bool scenesLocked() const { return m_scenesLocked; }
+	void setScenesLocked(bool scenesLocked);
 
 private slots:
 	void onOpticsBenchDataChanged(int startOptics, int endOptics);
@@ -71,9 +74,11 @@ private:
 
 private:
 	OpticsBench* m_bench;
+	OpticsScene* m_otherScene;
 	Orientation m_orientation;
 	double m_beamScale;
 	double m_opticsHeight;
+	bool m_scenesLocked;
 
 	QList<BeamItem*> m_beamItems;
 	BeamItem* m_targetBeamItem;
@@ -90,14 +95,14 @@ public:
 
 public:
 	void setStatusWidget(StatusWidget* statusWidget) { m_statusWidget = statusWidget; }
-	double verticalRange() { return m_verticalRange; }
-	void setVerticalRange(double verticalRange);
-	double horizontalRange() { return m_horizontalRange; }
+	double horizontalRange() const { return m_horizontalRange; }
 	void setHorizontalRange(double horizontalRange);
-	double origin();
+	double origin() const;
 	void setOrigin(double origin);
 	void showProperties(bool show = true);
-	bool propertiesVisible();
+	bool propertiesVisible() const;
+	OpticsViewProperties* propertiesWidget() { return m_opticsViewProperties; }
+	void showFullBench();
 
 /// Inherited protected functions
 protected:
@@ -120,7 +125,7 @@ private:
 	RullerSlider* m_verticalRuller;
 	StatusWidget* m_statusWidget;
 	double m_horizontalRange;
-	double m_verticalRange;
+//	double m_verticalRange;
 
 friend class OpticsScene;
 };
@@ -144,6 +149,7 @@ public:
 	void setUpdate(bool update) { m_update = update; }
 	const Optics* optics() const { return m_optics; }
 	void setOptics(const Optics* optics) { m_optics = optics; }
+	void prepareHeightChange() { prepareGeometryChange(); }
 
 private:
 	const Optics* m_optics;

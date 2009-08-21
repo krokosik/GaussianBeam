@@ -43,6 +43,9 @@ public:
 
 public:
 	void showTargetBeam(bool visible = true);
+	void openFile(const QString& path = QString());
+	void saveFile(const QString& path = QString());
+	OpticsBench* bench() { return m_bench; }
 
 public slots:
 	void updateWidget(const QModelIndex& topLeft, const QModelIndex& bottomRight);
@@ -72,8 +75,6 @@ protected:
 
 private:
 	void newFile();
-	void openFile(const QString& path = QString());
-	void saveFile(const QString& path = QString());
 	void setCurrentFile(const QString& fileName);
 	void updateRecentFileActions();
 	void insertOptics(OpticsType opticsType);
@@ -93,10 +94,10 @@ private:
 	void parseOptics(const QDomElement& element, QList<QString>& lockTree);
 	void parseView(const QDomElement& element);
 	bool writeFile(const QString& path = QString());
-	void writeBench(QXmlStreamWriter& xmlWriter);
-	void writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam);
-	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics);
-	void writeView(QXmlStreamWriter& xmlWriter);
+	void writeBench(QXmlStreamWriter& xmlWriter) const;
+	void writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam) const;
+	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics) const;
+	void writeView(QXmlStreamWriter& xmlWriter) const;
 	// Compatibility functions
 	void parseInputBeam11(const QDomElement& element, QList<QString>& lockTree);
 

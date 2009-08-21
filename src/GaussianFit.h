@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#include <QObject>
+class OpticsBench;
 
 /**
 * Type of data measured by the user for beam fitting
@@ -35,13 +35,11 @@ enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 * It fits the given data with a linear fit, and finds the only hyperbola
 * that is tangent to the resulting line
 */
-class Fit : public QObject
+class Fit
 {
-Q_OBJECT
-
 public:
 	/// Constructor
-	Fit(int nData = 0, QObject* parent = 0);
+	Fit(OpticsBench* bench = 0, int nData = 0);
 
 public:
 	/// @return the number of points in the fit
@@ -84,9 +82,8 @@ public:
 	* @note the given bema wavelength chosen as the fit wavelength
 	*/
 	double applyFit(Beam& beam) const;
-
-signals:
-	void changed();
+	/// Compare the physical properties of two fits
+	bool operator==(const Fit& other) const;
 
 private:
 	/// Actually o the fit
@@ -100,6 +97,10 @@ private:
 
 
 private:
+	// The parent. may be 0 if none
+	OpticsBench* m_bench;
+
+	// State variables. Remember to update the == operator when changind this list
 	std::string m_name;
 	FitDataType m_dataType;
 	std::vector<double> m_positions;
@@ -107,12 +108,15 @@ private:
 	unsigned int m_color;
 	Orientation m_orientation;
 
+	// Mutables
 	mutable bool m_dirty;
 	mutable Beam m_beam;
 	mutable double m_lastWavelength;
 	mutable double m_residue;
 
+	// Statics
 	static int m_fitCount;
 };
+
 
 #endif

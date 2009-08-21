@@ -24,12 +24,21 @@ WISHLIST:
 	TEMmn modes
 	more intrication between opticsbench bounds and view bounds
 	Warn when closing a modified file + modified status in window title
+	New drawing for cylindrical lenses on the non lensing side
+	Scripting
+	Unittest
 
 BUGS:
+	Ellipsoidal fit
+
+
+	Hide lock button when there is only one scene
+	Don't allow for optics to exit the optical bench
+	Zoom full should only focus on the horizontal direction for 1D benches
 	Optics ID is strange in GaussianBeam 0.4
 	Check at which version we moved from name to id to lock
 	Deal with optics ID in XSLT
-	Problems where adding and removing fits: some are mysteriously disappearing
+	Problems when adding and removing fits: some are mysteriously disappearing
 	Problem with n > 1 and target beam
 	Problem in redraw when deleting an optics with non zero width
 	Implement ruller scale & vertical labels

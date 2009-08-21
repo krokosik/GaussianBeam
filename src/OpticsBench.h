@@ -163,6 +163,10 @@ public:
 	/// Debugging
 	void printTree();
 
+/// These functions are called by objects of the bench to notify that they have been changed
+public:
+	void notifyFitChanged(Fit* fit);
+
 signals:
 	void wavelengthChanged();
 	void opticsAdded(int index);
@@ -174,9 +178,6 @@ signals:
 	void fitsRemoved(int index, int count);
 	void fitDataChanged(int index);
 	void sphericityChanged();
-
-private slots:
-	void onFitChanged();
 
 private:
 	/// @todo on demand computing of beam, cavity and sensitity

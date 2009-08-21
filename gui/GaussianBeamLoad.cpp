@@ -110,13 +110,13 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	query.evaluateTo(&data_1_2);
 		buffer.close();
 
+//	qDebug() << data_1_2;
+
 	// Parse XML file
 	QString errorStr;
 	int errorLine;
 	int errorColumn;
 	QDomDocument domDocument;
-
-	qDebug() << data_1_2;
 
 	if (!domDocument.setContent(data_1_2, true, &errorStr, &errorLine, &errorColumn))
 	{
@@ -388,8 +388,8 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 	{
 		if (child.tagName() == "horizontalRange")
 			m_hOpticsView->setHorizontalRange(child.text().toDouble());
-		else if (child.tagName() == "verticalRange")
-			m_hOpticsView->setVerticalRange(child.text().toDouble());
+//		else if (child.tagName() == "verticalRange")
+//			m_hOpticsView->setVerticalRange(child.text().toDouble());
 		else if (child.tagName() == "origin")
 			m_hOpticsView->setOrigin(child.text().toDouble());
 		else if (child.tagName() == "showTargetBeam")

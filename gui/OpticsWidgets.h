@@ -69,15 +69,22 @@ public:
 	OpticsViewProperties(OpticsView* view);
 
 public:
-	void setViewWidth(double width);
-	void setViewHeight(double height);
-	void setViewOrigin(double origin);
+	void setOrigin(double origin);
+	void setHorizontalRange(double horizontalRange);
+	void setBeamScale(double beamScale);
+	void setOpticsHeight(double opticsHeight);
+	void setLock(bool locked);
 
 // UI slots
 protected slots:
-	void on_doubleSpinBox_Width_valueChanged(double value);
-	void on_doubleSpinBox_Height_valueChanged(double value);
+	void on_toolButton_ZoomIn_clicked(bool checked);
+	void on_toolButton_ZoomOut_clicked(bool checked);
+	void on_toolButton_ZoomFull_clicked(bool checked);
+	void on_toolButton_Lock_toggled(bool checked);
 	void on_doubleSpinBox_Origin_valueChanged(double value);
+	void on_doubleSpinBox_HorizontalRange_valueChanged(double value);
+	void on_doubleSpinBox_BeamScale_valueChanged(double value);
+	void on_doubleSpinBox_OpticsHeight_valueChanged(double value);
 
 private:
 	OpticsView* m_view;

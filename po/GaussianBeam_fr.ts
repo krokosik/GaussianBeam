@@ -382,7 +382,7 @@ minimal</translation>
     </message>
     <message>
         <source>Wrong version format. Your file seems corrupted</source>
-        <translation>Format de fichier non valide. Votre fichier est corrompu</translation>
+        <translation type="obsolete">Format de fichier non valide. Votre fichier est corrompu</translation>
     </message>
     <message>
         <source>The file is not an GaussianBeam file.</source>
@@ -636,7 +636,7 @@ minimal</translation>
     </message>
     <message>
         <source> µm</source>
-        <translation> µm</translation>
+        <translation type="obsolete"> µm</translation>
     </message>
     <message>
         <source>Width</source>
@@ -649,6 +649,18 @@ minimal</translation>
     <message>
         <source>Origin</source>
         <translation>Origine</translation>
+    </message>
+</context>
+<context>
+    <name>PropertySelector</name>
+    <message>
+        <source>Display full name</source>
+        <translation>Noms complets</translation>
+    </message>
+    <message>
+        <source>Check and sort properties:</source>
+        <translation>Sélectionner et trier
+les propriétés :</translation>
     </message>
 </context>
 <context>

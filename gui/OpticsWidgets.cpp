@@ -63,8 +63,8 @@ void RullerSlider::wheelEvent(QWheelEvent* event)
 		double zoomFactor = pow(1.2, numSteps);
 		if (orientation() == Qt::Horizontal)
 			m_view->setHorizontalRange(m_view->horizontalRange()*zoomFactor);
-		else
-			m_view->setVerticalRange(m_view->verticalRange()*zoomFactor);
+//		else
+//			m_view->setVerticalRange(m_view->verticalRange()*zoomFactor);
 	}
 	else
 		QScrollBar::wheelEvent(event);
@@ -131,16 +131,38 @@ OpticsViewProperties::OpticsViewProperties(OpticsView* view)
 	m_update = true;
 }
 
-void OpticsViewProperties::on_doubleSpinBox_Width_valueChanged(double value)
+void OpticsViewProperties::on_toolButton_ZoomIn_clicked(bool checked)
 {
+	Q_UNUSED(checked);
+
+	/// @todo use scaleview
+
 	if (m_update)
-		m_view->setHorizontalRange(value*Units::getUnit(UnitPosition).multiplier());
+		m_view->setHorizontalRange(m_view->horizontalRange()*1.2);
 }
 
-void OpticsViewProperties::on_doubleSpinBox_Height_valueChanged(double value)
+void OpticsViewProperties::on_toolButton_ZoomOut_clicked(bool checked)
+{
+	Q_UNUSED(checked);
+
+	/// @todo use scaleview
+
+	if (m_update)
+		m_view->setHorizontalRange(m_view->horizontalRange()/1.2);
+}
+
+void OpticsViewProperties::on_toolButton_ZoomFull_clicked(bool checked)
+{
+	Q_UNUSED(checked);
+
+	if (m_update)
+		m_view->showFullBench();
+}
+
+void OpticsViewProperties::on_toolButton_Lock_toggled(bool checked)
 {
 	if (m_update)
-		m_view->setVerticalRange(value*Units::getUnit(UnitWaist).multiplier());
+		dynamic_cast<OpticsScene*>(m_view->scene())->setScenesLocked(checked);
 }
 
 void OpticsViewProperties::on_doubleSpinBox_Origin_valueChanged(double value)
@@ -149,24 +171,56 @@ void OpticsViewProperties::on_doubleSpinBox_Origin_valueChanged(double value)
 		m_view->setOrigin(value*Units::getUnit(UnitPosition).multiplier());
 }
 
-void OpticsViewProperties::setViewWidth(double width)
+void OpticsViewProperties::on_doubleSpinBox_HorizontalRange_valueChanged(double value)
 {
-	m_update = false;
-	doubleSpinBox_Width->setValue(width*Units::getUnit(UnitPosition).divider());
-	m_update = true;
+	if (m_update)
+		m_view->setHorizontalRange(value*Units::getUnit(UnitPosition).multiplier());
 }
 
-void OpticsViewProperties::setViewHeight(double height)
+void OpticsViewProperties::on_doubleSpinBox_BeamScale_valueChanged(double value)
 {
-	m_update = false;
-	doubleSpinBox_Height->setValue(height*Units::getUnit(UnitWaist).divider());
-	m_update = true;
+	if (m_update)
+		dynamic_cast<OpticsScene*>(m_view->scene())->setBeamScale(value);
 }
 
-void OpticsViewProperties::setViewOrigin(double origin)
+void OpticsViewProperties::on_doubleSpinBox_OpticsHeight_valueChanged(double value)
+{
+	if (m_update)
+		dynamic_cast<OpticsScene*>(m_view->scene())->setOpticsHeight(value*Units::getUnit(UnitPosition).multiplier());
+}
+
+void OpticsViewProperties::setOrigin(double origin)
 {
 	m_update = false;
 	doubleSpinBox_Origin->setValue(origin*Units::getUnit(UnitPosition).divider());
+	m_update = true;
+}
+
+void OpticsViewProperties::setHorizontalRange(double horizontalRange)
+{
+	m_update = false;
+	doubleSpinBox_HorizontalRange->setValue(horizontalRange*Units::getUnit(UnitPosition).divider());
+	m_update = true;
+}
+
+void OpticsViewProperties::setBeamScale(double beamScale)
+{
+	m_update = false;
+	doubleSpinBox_BeamScale->setValue(beamScale);
+	m_update = true;
+}
+
+void OpticsViewProperties::setOpticsHeight(double opticsHeight)
+{
+	m_update = false;
+	doubleSpinBox_OpticsHeight->setValue(opticsHeight*Units::getUnit(UnitPosition).divider());
+	m_update = true;
+}
+
+void OpticsViewProperties::setLock(bool locked)
+{
+	m_update = false;
+	toolButton_Lock->setChecked(locked);
 	m_update = true;
 }
 
@@ -211,10 +265,10 @@ PropertySelector::PropertySelector(QWidget* parent)
 	m_propertyListWidget = new QListWidget;
 	m_propertyListWidget->setDragDropMode(QAbstractItemView::InternalMove);
 
-	m_symbolCheck = new QCheckBox("Display full name");
+	m_symbolCheck = new QCheckBox(tr("Display full name"));
 
 	QVBoxLayout* layout = new QVBoxLayout;
-	layout->addWidget(new QLabel("Check and sort properties:"));
+	layout->addWidget(new QLabel(tr("Check and sort properties:")));
 	layout->addWidget(m_propertyListWidget);
 	layout->addWidget(m_symbolCheck);
 	setLayout(layout);

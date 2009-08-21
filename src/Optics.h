@@ -24,8 +24,6 @@
 #include <list>
 #include <string>
 
-#include <QObject>
-
 enum OpticsType {CreateBeamType, FreeSpaceType,
                  LensType, FlatMirrorType, CurvedMirrorType,
                  FlatInterfaceType, CurvedInterfaceType,

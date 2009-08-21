@@ -45,7 +45,7 @@
 <gaussianBeam version="1.1">
 	<bench id="0">
 		<xsl:apply-templates select="wavelength"/>
-		<xsl:variable name="horizontalRange" select="display/HRange/.qq"/>
+		<xsl:variable name="horizontalRange" select="display/HRange/."/>
 		<leftBoundary><xsl:value-of select="display/HOffset"/></leftBoundary>
 		<rightBoundary><xsl:value-of select="display/HOffset + $horizontalRange"/></rightBoundary>
 		<xsl:apply-templates select="magicWaist"/>

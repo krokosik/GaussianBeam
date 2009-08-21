@@ -58,7 +58,7 @@ bool GaussianBeamWindow::writeFile(const QString& fileName)
 	return true;
 }
 
-void GaussianBeamWindow::writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam)
+void GaussianBeamWindow::writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam) const
 {
 	/// @bug make this available to loadBeam and alternative short names for horizontal properties for compatibility
 	xmlWriter.writeTextElement("horizontalWaist", QString::number(beam->waist(Horizontal)));
@@ -71,7 +71,7 @@ void GaussianBeamWindow::writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam
 	xmlWriter.writeTextElement("M2", QString::number(beam->M2()));
 }
 
-void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
+void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter) const
 {
 	xmlWriter.writeTextElement("wavelength", QString::number(m_bench->wavelength()));
 	xmlWriter.writeTextElement("leftBoundary", QString::number(m_bench->leftBoundary()));
@@ -111,7 +111,7 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter)
 	xmlWriter.writeEndElement();
 }
 
-void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics)
+void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics) const
 {
 	xmlWriter.writeStartElement(m_opticsElements[optics->type()]);
 	xmlWriter.writeAttribute("id", QString::number(optics->id()));
@@ -156,10 +156,10 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 	xmlWriter.writeEndElement();
 }
 
-void GaussianBeamWindow::writeView(QXmlStreamWriter& xmlWriter)
+void GaussianBeamWindow::writeView(QXmlStreamWriter& xmlWriter) const
 {
 	xmlWriter.writeTextElement("horizontalRange", QString::number(m_hOpticsView->horizontalRange()));
-	xmlWriter.writeTextElement("verticalRange", QString::number(m_hOpticsView->verticalRange()));
+//	xmlWriter.writeTextElement("verticalRange", QString::number(m_hOpticsView->verticalRange()));
 	xmlWriter.writeTextElement("origin", QString::number(m_hOpticsView->origin()));
 	xmlWriter.writeStartElement("showTargetBeam");
 	xmlWriter.writeAttribute("id", "0");

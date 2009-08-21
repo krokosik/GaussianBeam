@@ -69,12 +69,10 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	// View
 	m_hOpticsScene = new OpticsScene(m_bench, Horizontal, this);
 	m_vOpticsScene = new OpticsScene(m_bench, Vertical, this);
+	m_hOpticsScene->setOtherScene(m_vOpticsScene);
+	m_vOpticsScene->setOtherScene(m_hOpticsScene);
 	m_hOpticsView = new OpticsView(m_hOpticsScene, m_bench);
-	m_hOpticsView->setHorizontalRange(0.60);
-	m_hOpticsView->setVerticalRange(0.002);
 	m_vOpticsView = new OpticsView(m_vOpticsScene, m_bench);
-	m_vOpticsView->setHorizontalRange(0.60);
-	m_vOpticsView->setVerticalRange(0.002);
 
 	// Widget
 	m_widget = new GaussianBeamWidget(m_bench, this);

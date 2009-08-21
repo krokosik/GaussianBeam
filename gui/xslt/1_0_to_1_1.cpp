@@ -5,11 +5,11 @@ QString xslt_1_0_to_1_1("\
 \
 <!-- Convert GaussianBeam 1.0 files to 1.1 files -->\
 \
-<xsl:output  method=\"xml\" indent=\"yes\"/>\
+<xsl:output method=\"xml\" indent=\"yes\"/>\
 \
 <!-- Default -->\
 \
-<xsl:template  match=\"*\">\
+<xsl:template match=\"*\">\
 	<xsl:copy-of select=\".\"/>\
 </xsl:template>\
 \

@@ -75,9 +75,11 @@ QColor wavelengthColor(double wavelength)
 OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* parent)
 	: QGraphicsScene(parent)
 {
+	m_otherScene = 0;
 	m_orientation = orientation;
 	m_beamScale = 100.;
 	m_opticsHeight = 0.06;
+	m_scenesLocked = true;
 
 	// Bench connections
 	m_bench = bench;
@@ -108,6 +110,55 @@ OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* p
 	for (int i = 0; i < m_bench->nOptics(); i++)
 		onOpticsBenchOpticsAdded(i);
 	onOpticsBenchBoundariesChanged();
+}
+
+void OpticsScene::setBeamScale(double beamScale)
+{
+	if (beamScale == m_beamScale)
+		return;
+
+	m_beamScale = beamScale;
+
+	foreach (QGraphicsView* view, views())
+		dynamic_cast<OpticsView*>(view)->propertiesWidget()->setBeamScale(beamScale);
+
+	foreach (BeamItem* item, m_beamItems)
+		item->updateTransform();
+
+	if (m_scenesLocked && m_otherScene)
+		m_otherScene->setBeamScale(beamScale);
+}
+
+void OpticsScene::setOpticsHeight(double opticsHeight)
+{
+	if (opticsHeight == m_opticsHeight)
+		return;
+
+	foreach (QGraphicsItem* item, items())
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(item))
+			opticsItem->prepareHeightChange();
+
+	m_opticsHeight = opticsHeight;
+
+	foreach (QGraphicsView* view, views())
+		dynamic_cast<OpticsView*>(view)->propertiesWidget()->setOpticsHeight(opticsHeight);
+
+	if (m_scenesLocked && m_otherScene)
+		m_otherScene->setOpticsHeight(opticsHeight);
+}
+
+void OpticsScene::setScenesLocked(bool scenesLocked)
+{
+	if (scenesLocked == m_scenesLocked)
+		return;
+
+	m_scenesLocked = scenesLocked;
+
+	foreach (QGraphicsView* view, views())
+		dynamic_cast<OpticsView*>(view)->propertiesWidget()->setLock(scenesLocked);
+
+	if (m_otherScene)
+		m_otherScene->setScenesLocked(scenesLocked);
 }
 
 void OpticsScene::showTargetBeam(bool show)
@@ -261,8 +312,7 @@ OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 {
 	setRenderHint(QPainter::Antialiasing);
 	setBackgroundBrush(Qt::white);
-	m_horizontalRange = 0.;
-	m_verticalRange = 0.;
+	m_horizontalRange = 0.6;
 	m_statusWidget = 0;
 
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -273,6 +323,9 @@ OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 	setVerticalScrollBar(m_verticalRuller);
 
 	m_opticsViewProperties = new OpticsViewProperties(this);
+	m_opticsViewProperties->setLock(dynamic_cast<OpticsScene*>(scene)->scenesLocked());
+	m_opticsViewProperties->setBeamScale(dynamic_cast<OpticsScene*>(scene)->beamScale());
+	m_opticsViewProperties->setOpticsHeight(dynamic_cast<OpticsScene*>(scene)->opticsHeight());
 	m_opticsViewProperties->hide();
 
 	CornerWidget* cornerWidget = new CornerWidget(QColor(245, 245, 200),
@@ -286,13 +339,7 @@ OpticsView::OpticsView(QGraphicsScene* scene, OpticsBench* bench)
 
 void OpticsView::adjustRange()
 {
-// 	if ((m_horizontalRange > scene()->width()) || (m_horizontalRange == 0.))
-// 		m_horizontalRange = scene()->width();
-
-//	if ((m_verticalRange > scene()->height()) || (m_verticalRange == 0.))
-//		m_verticalRange = scene()->height();
-
-	if ((m_horizontalRange == 0.) /*|| (m_verticalRange == 0.)*/ || (width() == 0.) || (height() == 0.))
+	if (m_horizontalRange == 0.)
 		return;
 
 	double scale = width()/m_horizontalRange;
@@ -300,10 +347,8 @@ void OpticsView::adjustRange()
 	scaling.setMatrix(scale, scaling.m12(), scaling.m21(), scale, scaling.dx(), scaling.dy());
 	setMatrix(scaling);
 
-	m_opticsViewProperties->setViewWidth(m_horizontalRange);
-	m_opticsViewProperties->setViewHeight(m_verticalRange);
-	m_opticsViewProperties->setViewOrigin(origin());
-//	verticalScrollBar()->setValue((verticalScrollBar()->maximum() + verticalScrollBar()->minimum())/2);
+	m_opticsViewProperties->setOrigin(origin());
+	m_opticsViewProperties->setHorizontalRange(m_horizontalRange);
 }
 
 void OpticsView::showProperties(bool show)
@@ -311,7 +356,7 @@ void OpticsView::showProperties(bool show)
 	m_opticsViewProperties->setVisible(show);
 }
 
-bool OpticsView::propertiesVisible()
+bool OpticsView::propertiesVisible() const
 {
 	return m_opticsViewProperties->isVisible();
 }
@@ -319,10 +364,10 @@ bool OpticsView::propertiesVisible()
 void OpticsView::scrollUpdated(int value)
 {
 	Q_UNUSED(value);
-	m_opticsViewProperties->setViewOrigin(origin());
+	m_opticsViewProperties->setOrigin(origin());
 }
 
-double OpticsView::origin()
+double OpticsView::origin() const
 {
 	return mapToScene(viewport()->rect().topLeft()).x();
 }
@@ -332,28 +377,28 @@ void OpticsView::setOrigin(double origin)
 	if (origin == OpticsView::origin())
 		return;
 
-	if (origin < sceneRect().left())
-		origin = sceneRect().left();
-
-	if (origin > sceneRect().right() - m_horizontalRange)
-		origin = sceneRect().right() - m_horizontalRange;
+	/// @todo clip origin value to the scoll bar
 
 	int value = int(origin*m_horizontalRuller->rullerScale());
 	horizontalScrollBar()->setValue(value);
-	m_opticsViewProperties->setViewOrigin(origin);
+	origin = double(horizontalScrollBar()->value())/m_horizontalRuller->rullerScale();
+	m_opticsViewProperties->setOrigin(origin);
 }
 
 void OpticsView::setHorizontalRange(double horizontalRange)
 {
+	if (horizontalRange == m_horizontalRange)
+		return;
+
 	m_horizontalRange = horizontalRange;
-	m_opticsViewProperties->setViewWidth(m_horizontalRange);
 	adjustRange();
 }
 
-void OpticsView::setVerticalRange(double verticalRange)
+void OpticsView::showFullBench()
 {
-	m_verticalRange = verticalRange;
-	m_opticsViewProperties->setViewHeight(m_verticalRange);
+	setHorizontalRange(scene()->sceneRect().width());
+	setOrigin(scene()->sceneRect().left());
+
 	adjustRange();
 }
 
@@ -366,18 +411,14 @@ void OpticsView::resizeEvent(QResizeEvent* event)
 
 void OpticsView::wheelEvent(QWheelEvent* event)
 {
-	qDebug() << "Wheel event";
 	scaleView(pow(2., -event->delta()/480.0));
 }
 
 void OpticsView::scaleView(double scaleFactor)
 {
 	double factor = matrix().scale(scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width();
-	qDebug() << "Scale" << factor;
 	if (factor < 0.07 || factor > 10000.)
 		return;
-
-	qDebug() << "Scaling";
 
 	scale(scaleFactor, scaleFactor);
 }
@@ -461,7 +502,7 @@ QRectF OpticsItem::boundingRect() const
 		return QRectF();
 	}
 
-	const double h = opticsScene->opticsHeight();
+	const double h = 0.5*opticsScene->opticsHeight();
 
 	if (m_optics->width() == 0.)
 		bounding = QRectF(QPointF(-0.15*h, -h), QSizeF(0.30*h, 2.*h));
@@ -480,9 +521,7 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 		std::pair<Beam*, double> p = m_bench->closestPosition(benchPosition);
 
 		// Propose the new position
-		//qDebug() << "Old Pos" << x() << y();
 		m_bench->setOpticsPosition(m_bench->opticsIndex(m_optics), p.second);
-		//qDebug() << "New Pos" << x() << y();
 		return pos();
 	}
 
@@ -612,8 +651,8 @@ void BeamItem::updateTransform()
 	if (m_nextBeam && (fabs(m_nextBeam->angle() - m_beam->angle()) > Utils::epsilon))
 		stopAngle  = (M_PI + m_nextBeam->angle() - m_beam->angle())/2.;
 
-	if (m_previousBeam && m_nextBeam)
-		qDebug() << m_beam->angle() << m_previousBeam->angle() << m_nextBeam->angle() << startAngle << stopAngle;
+//	if (m_previousBeam && m_nextBeam)
+//		qDebug() << m_beam->angle() << m_previousBeam->angle() << m_nextBeam->angle() << startAngle << stopAngle;
 
 	// Update cached information about the beam geometry
 	prepareGeometryChange();

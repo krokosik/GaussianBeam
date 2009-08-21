@@ -197,9 +197,8 @@ int OpticsBench::nFit() const
 
 Fit* OpticsBench::addFit(unsigned int index, int nData)
 {
-	Fit* fit = new Fit(nData, this);
+	Fit* fit = new Fit(this, nData);
 	m_fits.insert(m_fits.begin() + index, fit);
-	connect(fit, SIGNAL(changed()), this, SLOT(onFitChanged()));
 	checkFitSpherical();
 	emit(fitAdded(index));
 	return fit;
@@ -225,12 +224,12 @@ void OpticsBench::removeFits(unsigned int startIndex, int n)
 	emit(fitsRemoved(startIndex, n));
 }
 
-void OpticsBench::onFitChanged()
+void OpticsBench::notifyFitChanged(Fit* fit)
 {
 	int index = 0;
 
 	for (vector<Fit*>::iterator it = m_fits.begin(); it != m_fits.end(); it++)
-		if ((*it) == sender())
+		if ((*it) == fit)
 		{
 			index = it - m_fits.begin();
 			break;

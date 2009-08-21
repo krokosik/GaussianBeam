@@ -17,6 +17,7 @@
 */
 
 #include "GaussianFit.h"
+#include "OpticsBench.h"
 #include "Statistics.h"
 #include "lmmin.h"
 
@@ -29,7 +30,7 @@ int Fit::m_fitCount = 0;
 
 using namespace std;
 
-Fit::Fit(int nData, QObject* parent) : QObject(parent)
+Fit::Fit(OpticsBench* bench, int nData) : m_bench(bench)
 {
 	stringstream stream;
 	stream << "Fit" << m_fitCount++ << ends;
@@ -38,7 +39,7 @@ Fit::Fit(int nData, QObject* parent) : QObject(parent)
 	m_dirty = true;
 	m_lastWavelength = 0.;
 	/// @todo change this default to Radius_e2 or remember from the last usage
-	m_dataType = Diameter_e2;
+	m_dataType = Radius_e2;
 	m_color = 0;
 	m_orientation = Spherical;
 
@@ -49,26 +50,26 @@ Fit::Fit(int nData, QObject* parent) : QObject(parent)
 void Fit::setName(std::string name)
 {
 	m_name = name;
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 void Fit::setColor(unsigned int color)
 {
 	m_color = color;
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 void Fit::setDataType(FitDataType dataType)
 {
 	m_dataType = dataType;
 	m_dirty = true;
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 void Fit::setOrientation(Orientation orientation)
 {
 	m_orientation = orientation;
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 int Fit::nonZeroSize() const
@@ -94,7 +95,7 @@ void Fit::setData(unsigned int index, double position, double value)
 	m_values[index] = value;
 	m_dirty = true;
 
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 void Fit::addData(double position, double value)
@@ -103,7 +104,7 @@ void Fit::addData(double position, double value)
 	m_values.push_back(value);
 	m_dirty = true;
 
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 void Fit::removeData(unsigned int index)
@@ -112,7 +113,7 @@ void Fit::removeData(unsigned int index)
 	m_values.erase(m_values.begin() + index);
 	m_dirty = true;
 
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 double Fit::radius(unsigned int index) const
@@ -137,7 +138,7 @@ void Fit::clear()
 	m_values.clear();
 	m_dirty = true;
 
-	emit(changed());
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
 double Fit::applyFit(Beam& beam) const
@@ -280,4 +281,14 @@ void Fit::fitBeam(double wavelength) const
 
 	m_residue = residue;
 	m_dirty = false;
+}
+
+bool Fit::operator==(const Fit& other) const
+{
+	return (m_name        == other.m_name       ) &&
+	       (m_dataType    == other.m_dataType   ) &&
+	       (m_positions   == other.m_positions  ) &&
+	       (m_values      == other.m_values     ) &&
+	       (m_color       == other.m_color      ) &&
+	       (m_orientation == other.m_orientation);
 }
