@@ -30,6 +30,8 @@
 using namespace std;
 using namespace Utils;
 
+#define emit(x) for (list<OpticsBenchEventListener*>::iterator it = m_listeners.begin(); it !=  m_listeners.end(); (*it++)->x)
+
 /*
 OpticsTreeItem::OpticsTreeItem(Optics* optics, OpticsTreeItem* parent)
 {
@@ -95,7 +97,7 @@ void OpticsTreeItem::sort()
 /////////////////////////////////////////////////
 // OpticsBench
 
-OpticsBench::OpticsBench(QObject* parent) : QObject(parent)
+OpticsBench::OpticsBench()
 {
 	m_opticsPrefix[LensType]            = "L";
 	m_opticsPrefix[FlatMirrorType]      = "M";
@@ -138,6 +140,12 @@ OpticsBench::~OpticsBench()
 bool OpticsBench::isSpherical() const
 {
 	return m_beamSpherical && m_fitSpherical;
+}
+
+void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
+{
+	m_listeners.push_back(listener);
+	cerr << "Register" << listener << endl;
 }
 
 /////////////////////////////////////////////////
@@ -187,7 +195,7 @@ void OpticsBench::checkFitSpherical()
 	bool changed = spherical ^ m_fitSpherical;
 	m_fitSpherical = spherical;
 	if (changed)
-		emit(sphericityChanged());
+		emit(onOpticsBenchSphericityChanged());
 }
 
 int OpticsBench::nFit() const
@@ -200,7 +208,7 @@ Fit* OpticsBench::addFit(unsigned int index, int nData)
 	Fit* fit = new Fit(this, nData);
 	m_fits.insert(m_fits.begin() + index, fit);
 	checkFitSpherical();
-	emit(fitAdded(index));
+	emit(onOpticsBenchFitAdded(index));
 	return fit;
 }
 
@@ -221,7 +229,7 @@ void OpticsBench::removeFits(unsigned int startIndex, int n)
 {
 	m_fits.erase(m_fits.begin() + startIndex, m_fits.begin() + startIndex + n);
 	checkFitSpherical();
-	emit(fitsRemoved(startIndex, n));
+	emit(onOpticsBenchFitsRemoved(startIndex, n));
 }
 
 void OpticsBench::notifyFitChanged(Fit* fit)
@@ -236,7 +244,7 @@ void OpticsBench::notifyFitChanged(Fit* fit)
 		}
 
 	checkFitSpherical();
-	emit(fitDataChanged(index));
+	emit(onOpticsBenchFitDataChanged(index));
 }
 
 /////////////////////////////////////////////////
@@ -249,7 +257,7 @@ void OpticsBench::setWavelength(double wavelength)
 	setTargetBeam(m_targetBeam);
 	computeBeams();
 
-	emit(wavelengthChanged());
+	emit(onOpticsBenchWavelengthChanged());
 }
 
 void OpticsBench::setLeftBoundary(double leftBoundary)
@@ -259,7 +267,7 @@ void OpticsBench::setLeftBoundary(double leftBoundary)
 
 	updateExtremeBeams();
 
-	emit(boundariesChanged());
+	emit(onOpticsBenchBoundariesChanged());
 }
 
 void OpticsBench::setRightBoundary(double rightBoundary)
@@ -269,7 +277,7 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 
 	updateExtremeBeams();
 
-	emit(boundariesChanged());
+	emit(onOpticsBenchBoundariesChanged());
 }
 
 /////////////////////////////////////////////////
@@ -294,7 +302,7 @@ void OpticsBench::addOptics(Optics* optics, int index)
 	m_optics.insert(m_optics.begin() + index,  optics);
 	m_beams.insert(m_beams.begin() + index, new Beam(wavelength()));
 
-	emit(opticsAdded(index));
+	emit(onOpticsBenchOpticsAdded(index));
 	computeBeams(index);
 }
 
@@ -339,7 +347,7 @@ void OpticsBench::removeOptics(int index, int count)
 		m_beams.erase(m_beams.begin() + index);
 	}
 
-	emit(opticsRemoved(index, count));
+	emit(onOpticsBenchOpticsRemoved(index, count));
 	computeBeams(index);
 }
 
@@ -365,7 +373,7 @@ void OpticsBench::lockTo(int index, string opticsName)
 			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	emit(dataChanged(0, nOptics()-1));
+	emit(onOpticsBenchDataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::lockTo(int index, int id)
@@ -376,7 +384,7 @@ void OpticsBench::lockTo(int index, int id)
 			m_optics[index]->relativeLockTo(*it);
 			break;
 		}
-	emit(dataChanged(0, nOptics()-1));
+	emit(onOpticsBenchDataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::printTree()
@@ -403,7 +411,7 @@ void OpticsBench::setOpticsName(int index, std::string name)
 			return;
 
 	m_optics[index]->setName(name);
-	emit(dataChanged(0, nOptics()-1));
+	emit(onOpticsBenchDataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::opticsPropertyChanged(int /*index*/)
@@ -515,12 +523,12 @@ void OpticsBench::computeBeams(int changedIndex, bool backwards)
 	detectCavities();
 
 	if (changed)
-		emit(sphericityChanged());
+		emit(onOpticsBenchSphericityChanged());
 
 	if (backwards)
-		emit(dataChanged(0, nOptics()-1));
+		emit(onOpticsBenchDataChanged(0, nOptics()-1));
 	else
-		emit(dataChanged(changedIndex, nOptics()-1));
+		emit(onOpticsBenchDataChanged(changedIndex, nOptics()-1));
 }
 
 pair<Beam*, double> OpticsBench::closestPosition(const Point& point, int preferedSide) const
@@ -563,13 +571,13 @@ void OpticsBench::setTargetBeam(const Beam& beam)
 {
 	m_targetBeam = beam;
 	m_targetBeam.setWavelength(m_wavelength);
-	emit(targetBeamChanged());
+	emit(onOpticsBenchTargetBeamChanged());
 }
 
 void OpticsBench::setTargetOverlap(double targetOverlap)
 {
 	m_targetOverlap = targetOverlap;
-	emit(targetBeamChanged());
+	emit(onOpticsBenchTargetBeamChanged());
 }
 
 void OpticsBench::setTargetOrientation(Orientation orientation)
@@ -584,7 +592,7 @@ void OpticsBench::setTargetOrientation(Orientation orientation)
 	}
 
 	m_targetOrientation = orientation;
-	emit(targetBeamChanged());
+	emit(onOpticsBenchTargetBeamChanged());
 }
 
 bool OpticsBench::magicWaist()

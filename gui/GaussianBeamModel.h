@@ -20,6 +20,7 @@
 #define GAUSSIANBEAMMODEL_H
 
 #include "src/Optics.h"
+#include "src/OpticsBench.h"
 
 #include <QAbstractTableModel>
 #include <QList>
@@ -27,7 +28,7 @@
 class TablePropertySelector;
 class OpticsBench;
 
-class GaussianBeamModel : public QAbstractTableModel
+class GaussianBeamModel : public QAbstractTableModel, protected OpticsBenchEventListener
 {
 Q_OBJECT
 
@@ -49,13 +50,12 @@ public:
 private slots:
 	void propertyWidgetModified();
 
-	void onOpticsBenchDataChanged(int startOptics, int endOptics);
-	void onOpticsBenchOpticsAdded(int index);
-	void onOpticsBenchOpticsRemoved(int index, int count);
+protected:
+	virtual void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	virtual void onOpticsBenchOpticsAdded(int index);
+	virtual void onOpticsBenchOpticsRemoved(int index, int count);
 
 private:
-	OpticsBench* m_bench;
-
 	QList<Property::Type> m_columns;
 	TablePropertySelector* m_propertySelector;
 };

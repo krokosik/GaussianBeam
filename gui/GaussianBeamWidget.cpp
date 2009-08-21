@@ -37,21 +37,14 @@
 
 GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, GaussianBeamWindow* window)
 	: QWidget(window)
-	, m_bench(bench)
 	, m_window(window)
 {
 	m_updatingFit = false;
 	m_updatingTarget = false;
 	setupUi(this);
 
-	// Bench connections
-	connect(m_bench, SIGNAL(dataChanged(int, int)), this, SLOT(onOpticsBenchDataChanged(int, int)));
-	connect(m_bench, SIGNAL(targetBeamChanged()),   this, SLOT(onOpticsBenchTargetBeamChanged()));
-	connect(m_bench, SIGNAL(boundariesChanged()),   this, SLOT(onOpticsBenchBoundariesChanged()));
-	connect(m_bench, SIGNAL(fitAdded(int)),         this, SLOT(onOpticsBenchFitAdded(int)));
-	connect(m_bench, SIGNAL(fitsRemoved(int, int)), this, SLOT(onOpticsBenchFitsRemoved(int, int)));
-	connect(m_bench, SIGNAL(fitDataChanged(int)),   this, SLOT(onOpticsBenchFitDataChanged(int)));
-	connect(m_bench, SIGNAL(wavelengthChanged()),   this, SLOT(onOpticsBenchWavelengthChanged()));
+	m_bench = bench;
+	m_bench->registerEventListener(this);
 
 	//toolBox->setSizeHint(100);
 	//toolBox->setSizePolicy(QSizePolicy(QSizePolicy::Maximum, QSizePolicy::Ignored));

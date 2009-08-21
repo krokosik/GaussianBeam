@@ -41,9 +41,8 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	setWindowIcon(QIcon(":/images/gaussianbeam16.png"));
 
 	// Bench
-	m_bench = new OpticsBench(this);
-	connect(m_bench, SIGNAL(wavelengthChanged()), this, SLOT(onOpticsBenchWavelengthChanged()));
-	connect(m_bench, SIGNAL(sphericityChanged()), this, SLOT(onOpticsBenchSphericityChanged()));
+	m_bench = new OpticsBench();
+	m_bench->registerEventListener(this);
 
 	// Table
 	m_tableConfigWidget = new TablePropertySelector(this);

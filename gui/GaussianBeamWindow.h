@@ -34,7 +34,7 @@
 class CornerWidget;
 class TablePropertySelector;
 
-class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow
+class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow, protected OpticsBenchEventListener
 {
 Q_OBJECT
 
@@ -67,8 +67,9 @@ protected slots:
 	void wavelengthSpinBox_valueChanged(double wavelength);
 	void openRecentFile();
 
-	void onOpticsBenchSphericityChanged();
-	void onOpticsBenchWavelengthChanged();
+protected:
+	virtual void onOpticsBenchSphericityChanged();
+	virtual void onOpticsBenchWavelengthChanged();
 
 protected:
 	virtual void closeEvent(QCloseEvent* event);
@@ -102,8 +103,6 @@ private:
 	void parseInputBeam11(const QDomElement& element, QList<QString>& lockTree);
 
 private:
-	OpticsBench* m_bench;
-
 	QToolBar* m_fileToolBar;
 	QMenu*    m_addOpticsMenu;
 	QMenu*    m_recentFilesMenu;

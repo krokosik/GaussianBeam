@@ -83,13 +83,7 @@ OpticsScene::OpticsScene(OpticsBench* bench, Orientation orientation, QObject* p
 
 	// Bench connections
 	m_bench = bench;
-	connect(m_bench, SIGNAL(dataChanged(int, int)),   this, SLOT(onOpticsBenchDataChanged(int, int)));
-	connect(m_bench, SIGNAL(targetBeamChanged()),     this, SLOT(onOpticsBenchTargetBeamChanged()));
-	connect(m_bench, SIGNAL(boundariesChanged()),     this, SLOT(onOpticsBenchBoundariesChanged()));
-	connect(m_bench, SIGNAL(opticsAdded(int)),        this, SLOT(onOpticsBenchOpticsAdded(int)));
-	connect(m_bench, SIGNAL(opticsRemoved(int, int)), this, SLOT(onOpticsBenchOpticsRemoved(int, int)));
-	connect(m_bench, SIGNAL(fitsRemoved(int, int)),   this, SLOT(onOpticsBenchFitsRemoved(int, int)));
-	connect(m_bench, SIGNAL(fitDataChanged(int)),     this, SLOT(onOpticsBenchFitDataChanged(int)));
+	m_bench->registerEventListener(this);
 
 	setItemIndexMethod(QGraphicsScene::NoIndex);
 

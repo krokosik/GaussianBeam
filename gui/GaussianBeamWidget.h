@@ -22,6 +22,7 @@
 #include "ui_GaussianBeamWidget.h"
 
 #include "src/Optics.h"
+#include "src/OpticsBench.h"
 
 #include <QWidget>
 
@@ -32,7 +33,9 @@ class QAction;
 class OpticsBench;
 class GaussianBeamWindow;
 
-class GaussianBeamWidget : public QWidget, private Ui::GaussianBeamWidget
+class GaussianBeamWidget : public QWidget,
+                           private Ui::GaussianBeamWidget,
+                           protected OpticsBenchEventListener
 {
 Q_OBJECT
 
@@ -43,6 +46,16 @@ public:
 public:
 	/// @todo transfer this logic to view properties
 	void displayShowTargetBeam(bool show);
+
+// OpticsBench notifications
+protected:
+	virtual void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	virtual void onOpticsBenchTargetBeamChanged();
+	virtual void onOpticsBenchBoundariesChanged();
+	virtual void onOpticsBenchFitAdded(int index);
+	virtual void onOpticsBenchFitsRemoved(int index, int count);
+	virtual void onOpticsBenchFitDataChanged(int index);
+	virtual void onOpticsBenchWavelengthChanged();
 
 // UI slots
 protected slots:
@@ -72,15 +85,6 @@ protected slots:
 	void on_pushButton_FitAddRow_clicked();
 	void on_pushButton_FitRemoveRow_clicked();
 
-	// OpticsBench notifications
-	void onOpticsBenchDataChanged(int startOptics, int endOptics);
-	void onOpticsBenchTargetBeamChanged();
-	void onOpticsBenchBoundariesChanged();
-	void onOpticsBenchFitAdded(int index);
-	void onOpticsBenchFitsRemoved(int index, int count);
-	void onOpticsBenchFitDataChanged(int index);
-	void onOpticsBenchWavelengthChanged();
-
 private slots:
 	void fitModelChanged(const QModelIndex& start = QModelIndex(), const QModelIndex& stop = QModelIndex());
 
@@ -95,7 +99,6 @@ private:
 	void writeSettings();
 
 private:
-	OpticsBench* m_bench;
 	GaussianBeamWindow* m_window;
 
 	QStandardItemModel* fitModel;

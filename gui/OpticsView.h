@@ -21,6 +21,7 @@
 
 #include "src/GaussianBeam.h"
 #include "src/Optics.h"
+#include "src/OpticsBench.h"
 
 #include <QPoint>
 #include <QPainterPath>
@@ -38,10 +39,7 @@ class RullerSlider;
 class OpticsViewProperties;
 class StatusWidget;
 
-class OpticsBench;
-class Optics;
-
-class OpticsScene : public QGraphicsScene
+class OpticsScene : public QGraphicsScene, protected OpticsBenchEventListener
 {
 Q_OBJECT
 
@@ -60,20 +58,19 @@ public:
 	bool scenesLocked() const { return m_scenesLocked; }
 	void setScenesLocked(bool scenesLocked);
 
-private slots:
-	void onOpticsBenchDataChanged(int startOptics, int endOptics);
-	void onOpticsBenchTargetBeamChanged();
-	void onOpticsBenchBoundariesChanged();
-	void onOpticsBenchOpticsAdded(int index);
-	void onOpticsBenchOpticsRemoved(int index, int count);
-	void onOpticsBenchFitDataChanged(int index);
-	void onOpticsBenchFitsRemoved(int index, int count);
+protected:
+	virtual void onOpticsBenchDataChanged(int startOptics, int endOptics);
+	virtual void onOpticsBenchTargetBeamChanged();
+	virtual void onOpticsBenchBoundariesChanged();
+	virtual void onOpticsBenchOpticsAdded(int index);
+	virtual void onOpticsBenchOpticsRemoved(int index, int count);
+	virtual void onOpticsBenchFitDataChanged(int index);
+	virtual void onOpticsBenchFitsRemoved(int index, int count);
 
 private:
 	void addFitPoint(double position, double radius, QRgb color);
 
 private:
-	OpticsBench* m_bench;
 	OpticsScene* m_otherScene;
 	Orientation m_orientation;
 	double m_beamScale;

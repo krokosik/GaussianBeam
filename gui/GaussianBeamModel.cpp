@@ -34,11 +34,9 @@ GaussianBeamModel::GaussianBeamModel(OpticsBench* bench, TablePropertySelector* 
 
 {
 	m_bench = bench;
-	m_columns = m_propertySelector->checkedItems();
+	m_bench->registerEventListener(this);
 
-	connect(m_bench, SIGNAL(dataChanged(int, int)), this, SLOT(onOpticsBenchDataChanged(int, int)));
-	connect(m_bench, SIGNAL(opticsAdded(int)), this, SLOT(onOpticsBenchOpticsAdded(int)));
-	connect(m_bench, SIGNAL(opticsRemoved(int, int)), this, SLOT(onOpticsBenchOpticsRemoved(int, int)));
+	m_columns = m_propertySelector->checkedItems();
 
 	connect(m_propertySelector, SIGNAL(propertyChanged()), this, SLOT(propertyWidgetModified()));
 

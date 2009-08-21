@@ -29,8 +29,6 @@
 #include <list>
 #include <map>
 
-#include <QObject>
-
 /*
 * OpticsTreeItem
 class OpticsTreeItem
@@ -56,18 +54,43 @@ private:
 	OpticsTreeItem* m_child;
 };
 */
+
+class OpticsBench;
+
+/**
+* @class OpticsBenchEvents
+* Inherit from this class, reimplement virtual functions and register to the bench
+* to receive events from the optics bench
+*/
+class OpticsBenchEventListener
+{
+public:
+	virtual void onOpticsBenchWavelengthChanged() {}
+	virtual void onOpticsBenchOpticsAdded(int /*index*/) {}
+	virtual void onOpticsBenchOpticsRemoved(int /*index*/, int /*count*/) {}
+	virtual void onOpticsBenchDataChanged(int /*startOptics*/, int /*endOptics*/) {}
+	virtual void onOpticsBenchTargetBeamChanged() {}
+	virtual void onOpticsBenchBoundariesChanged() {}
+	virtual void onOpticsBenchFitAdded(int /*index*/) {}
+	virtual void onOpticsBenchFitsRemoved(int /*index*/, int /*count*/) {}
+	virtual void onOpticsBenchFitDataChanged(int /*index*/) {}
+	virtual void onOpticsBenchSphericityChanged() {}
+
+protected:
+	OpticsBench* m_bench;
+};
+
 /**
 * OpticsBench
 */
-class OpticsBench : public QObject
+class OpticsBench
 {
-Q_OBJECT
-
 public:
-	OpticsBench(QObject* parent = 0);
+	OpticsBench();
 	~OpticsBench();
 
 public:
+	void registerEventListener(OpticsBenchEventListener* listener);
 
 	// Properties
 
@@ -79,6 +102,7 @@ public:
 	bool isSpherical() const;
 
 	// Boundaries
+
 	Utils::Rect boundary() const { return m_boundary; }
 
 	/// @todo remove all these functions
@@ -167,18 +191,6 @@ public:
 public:
 	void notifyFitChanged(Fit* fit);
 
-signals:
-	void wavelengthChanged();
-	void opticsAdded(int index);
-	void opticsRemoved(int index, int count);
-	void dataChanged(int startOptics, int endOptics);
-	void targetBeamChanged();
-	void boundariesChanged();
-	void fitAdded(int index);
-	void fitsRemoved(int index, int count);
-	void fitDataChanged(int index);
-	void sphericityChanged();
-
 private:
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backwards = false);
@@ -192,6 +204,7 @@ private:
 	std::vector<Beam*> m_beams;
 	std::vector<double> m_sensitivity;
 	bool m_beamSpherical, m_fitSpherical;
+	std::list<OpticsBenchEventListener*> m_listeners;
 
 //	std::vector<OpticsTreeItem> m_opticsTree;
 
