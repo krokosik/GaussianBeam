@@ -270,6 +270,7 @@ void OpticsScene::onOpticsBenchFitsRemoved(int index, int count)
 {
 	Q_UNUSED(count);
 	/// @todo with more houskeeping in OpticsScene::OpticsBenchFitDataChanged this will not work any more
+	/// @bug what 'index' has to do there ?
 	onOpticsBenchFitDataChanged(index);
 }
 
@@ -295,6 +296,12 @@ void OpticsScene::onOpticsBenchFitDataChanged(int index)
 					addFitPoint(fit->position(i),  fit->radius(i), fit->color());
 				}
 	}
+}
+
+void OpticsScene::onOpticsBenchSphericityChanged()
+{
+	foreach (QGraphicsView* view, views())
+		dynamic_cast<OpticsView*>(view)->propertiesWidget()->setLockVisible(!m_bench->isSpherical());
 }
 
 /////////////////////////////////////////////////

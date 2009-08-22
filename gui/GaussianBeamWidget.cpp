@@ -527,6 +527,7 @@ void GaussianBeamWidget::onOpticsBenchFitAdded(int index)
 
 void GaussianBeamWidget::onOpticsBenchFitsRemoved(int index, int count)
 {
+	/// @bug should be i >= index ?????
 	for (int i = index + count - 1; i >= 0; i--)
 		comboBox_Fit->removeItem(i);
 }

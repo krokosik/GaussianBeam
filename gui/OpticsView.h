@@ -66,6 +66,7 @@ protected:
 	virtual void onOpticsBenchOpticsRemoved(int index, int count);
 	virtual void onOpticsBenchFitDataChanged(int index);
 	virtual void onOpticsBenchFitsRemoved(int index, int count);
+	virtual void onOpticsBenchSphericityChanged();
 
 private:
 	void addFitPoint(double position, double radius, QRgb color);

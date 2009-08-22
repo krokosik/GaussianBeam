@@ -139,7 +139,7 @@ OpticsBench::~OpticsBench()
 
 bool OpticsBench::isSpherical() const
 {
-	return m_beamSpherical && m_fitSpherical;
+	return m_beamSpherical && m_fitSpherical && (m_targetOrientation == Spherical);
 }
 
 void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
@@ -569,6 +569,7 @@ pair<Beam*, double> OpticsBench::closestPosition(const Point& point, int prefere
 
 void OpticsBench::setTargetBeam(const Beam& beam)
 {
+	/// @todo check ellipticity and change target orientation
 	m_targetBeam = beam;
 	m_targetBeam.setWavelength(m_wavelength);
 	emit(onOpticsBenchTargetBeamChanged());
@@ -591,7 +592,11 @@ void OpticsBench::setTargetOrientation(Orientation orientation)
 		m_targetBeam.setWaistPosition(m_targetBeam.waistPosition(), Spherical);
 	}
 
+	bool changed = (orientation != m_targetOrientation);
 	m_targetOrientation = orientation;
+	if (changed)
+		emit(onOpticsBenchSphericityChanged());
+
 	emit(onOpticsBenchTargetBeamChanged());
 }
 

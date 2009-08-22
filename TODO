@@ -30,7 +30,7 @@ WISHLIST:
 
 BUGS:
 	Ellipsoidal fit
-	Loading an old file on an ellipsoidal banch does not go back to spherical
+	Loading an old file on an ellipsoidal bench does not go back to spherical
 	When loading a file, the old list of fits stays in the widget
 	Removing a fit does not remove it from the scene
 	Hide lock button when there is only one scene
@@ -48,9 +48,7 @@ BUGS:
 	Angle is editable even for non rotable optics
 	Save all views information
 	Check that the initial waist position is well loaded from old files (optics position -> beam position)
-
-	H/V target beam does not trigger 2D UI
-	H/V fit does not resize table boxes
+	Lock views does not work
 
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength

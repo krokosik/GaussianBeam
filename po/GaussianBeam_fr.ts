@@ -628,7 +628,7 @@ minimal</translation>
     <name>OpticsViewProperties</name>
     <message>
         <source>View properties</source>
-        <translation>Propriété de la vue</translation>
+        <translation>Propriétés de la vue</translation>
     </message>
     <message>
         <source> mm</source>
@@ -644,11 +644,43 @@ minimal</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation>Hauteur</translation>
+        <translation type="obsolete">Hauteur</translation>
     </message>
     <message>
         <source>Origin</source>
         <translation>Origine</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Zoom avant</translation>
+    </message>
+    <message>
+        <source>...</source>
+        <translation>...</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Zoom arrière</translation>
+    </message>
+    <message>
+        <source>View full bench</source>
+        <translation>Banc optique complet</translation>
+    </message>
+    <message>
+        <source>Lock views</source>
+        <translation>Vérouiller les vues</translation>
+    </message>
+    <message>
+        <source> x</source>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>Beam scale</source>
+        <translation>Échelle des faisceaux</translation>
+    </message>
+    <message>
+        <source>Optics height</source>
+        <translation>Hauteur des optiques</translation>
     </message>
 </context>
 <context>

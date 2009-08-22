@@ -74,6 +74,7 @@ public:
 	void setBeamScale(double beamScale);
 	void setOpticsHeight(double opticsHeight);
 	void setLock(bool locked);
+	void setLockVisible(bool visible);
 
 // UI slots
 protected slots:

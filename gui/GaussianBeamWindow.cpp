@@ -346,6 +346,8 @@ void GaussianBeamWindow::onOpticsBenchSphericityChanged()
 		m_vOpticsView->hide();
 	else
 		m_vOpticsView->show();
+
+	m_table->resizeRowsToContents();
 }
 
 
