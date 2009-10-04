@@ -99,7 +99,30 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter) const
 				xmlWriter.writeStartElement("data");
 				xmlWriter.writeAttribute("id", QString::number(j));
 					xmlWriter.writeTextElement("position", QString::number(fit->position(j)));
-					xmlWriter.writeTextElement("value",  QString::number(fit->value(j)));
+					if (fit->orientation() == Spherical)
+					{
+						xmlWriter.writeStartElement("value");
+						xmlWriter.writeAttribute("orientation", QString::number(Spherical));
+						xmlWriter.writeCharacters(QString::number(fit->value(j, Spherical)));
+						xmlWriter.writeEndElement();
+					}
+					else
+					{
+						if (fit->orientation() != Vertical)
+						{
+							xmlWriter.writeStartElement("value");
+							xmlWriter.writeAttribute("orientation", QString::number(Horizontal));
+							xmlWriter.writeCharacters(QString::number(fit->value(j, Horizontal)));
+							xmlWriter.writeEndElement();
+						}
+						if (fit->orientation() != Horizontal)
+						{
+							xmlWriter.writeStartElement("value");
+							xmlWriter.writeAttribute("orientation", QString::number(Vertical));
+							xmlWriter.writeCharacters(QString::number(fit->value(j, Vertical)));
+							xmlWriter.writeEndElement();
+						}
+					}
 				xmlWriter.writeEndElement();
 			}
 		xmlWriter.writeEndElement();

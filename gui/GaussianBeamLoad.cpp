@@ -278,18 +278,27 @@ void GaussianBeamWindow::parseFit(const QDomElement& element)
 		{
 			QDomElement dataElement = child.firstChildElement();
 			double position = 0.;
-			double value = 0.;
+			bool added = false;
 			while (!dataElement.isNull())
 			{
 				if (dataElement.tagName() == "position")
 					position = dataElement.text().toDouble();
 				else if (dataElement.tagName() == "value")
-					value = dataElement.text().toDouble();
+				{
+					double value = dataElement.text().toDouble();
+					Orientation orientation = Orientation(dataElement.attribute("orientation").toInt());
+					if (added)
+						fit->setData(fit->size() - 1, position, value, orientation);
+					else
+					{
+						fit->addData(position, value, orientation);
+						added = true;
+					}
+				}
 				else
 					qDebug() << " -> Unknown tag: " << dataElement.tagName();
 				dataElement = dataElement.nextSiblingElement();
 			}
-			fit->addData(position, value);
 		}
 		else
 			qDebug() << " -> Unknown tag: " << child.tagName();

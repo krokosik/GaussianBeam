@@ -26,6 +26,18 @@
 using namespace std;
 using namespace Utils;
 
+Orientation quadrature(Orientation orientation)
+{
+	if (orientation == Horizontal)
+		return Vertical;
+
+	if (orientation == Vertical)
+		return Horizontal;
+
+	cerr << "Invalid orientation in quadrature(" << orientation << ")" << endl;
+	return orientation;
+}
+
 Beam::Beam()
 {
 	init();
@@ -377,6 +389,19 @@ ostream& operator<<(ostream& out, const Beam& beam)
 	out << "Waist = (" << beam.waist(Horizontal) << "," << beam.waist(Vertical)
 	    << ")  Waist position = (" << beam.waistPosition(Horizontal) << "," << beam.waistPosition(Vertical) << ")";
 	return out;
+}
+
+bool Beam::operator==(const Beam& other) const
+{
+	return ((m_waist         == other.m_waist        ) &&
+	        (m_waistPosition == other.m_waistPosition) &&
+	        (m_wavelength    == other.m_wavelength   ) &&
+	        (m_index         == other.m_index        ) &&
+	        (m_M2            == other.m_M2           ) &&
+	        (m_origin        == other.m_origin       ) &&
+	        (m_angle         == other.m_angle        ) &&
+	        (m_start         == other.m_start        ) &&
+	        (m_stop          == other.m_stop         ));
 }
 
 //////////

@@ -145,7 +145,6 @@ bool OpticsBench::isSpherical() const
 void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
 {
 	m_listeners.push_back(listener);
-	cerr << "Register" << listener << endl;
 }
 
 /////////////////////////////////////////////////

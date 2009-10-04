@@ -31,9 +31,12 @@ class OpticsBench;
 enum FitDataType {Radius_e2 = 0, Diameter_e2, standardDeviation, FWHM, HWHM};
 
 /**
+* @class Fit
 * Find the waist radius and position for a given set of radii measurement of a Gaussian beam
 * It fits the given data with a linear fit, and finds the only hyperbola
-* that is tangent to the resulting line
+* that is tangent to the resulting line.
+* The fit orientation determines if the data are identical on both axis (Spherical),
+* taken on one particular axis (Horizontal or Vertical) or independantly on both axis (Ellispoidal)
 */
 class Fit
 {
@@ -44,8 +47,6 @@ public:
 public:
 	/// @return the number of points in the fit
 	int size() const { return m_positions.size(); }
-	/// @return the number of points with non zero measured value in the fit
-	int nonZeroSize() const;
 	/// @return the user name given to the fit
 	std::string name() const { return m_name; }
 	/// Set the user name of the fit
@@ -63,19 +64,23 @@ public:
 	/// Set the RGB color accociated to the fit
 	void setColor(unsigned int color);
 	/// @return the position of date number @p index
-	double position(unsigned int index) const { return m_positions[index]; }
+	double position(unsigned int index) const;
 	/// @return the measured value number @p index
-	double value(unsigned int index) const { return m_values[index]; }
+	double value(unsigned int index, Orientation orientation) const;
 	/// @return the measured beam radius at 1/e² computed from the measured data
-	double radius(unsigned int index) const;
+	double radius(unsigned int index, Orientation orientation) const;
 	/// Add a data point @p value , measured at position @p position to the fit
-	void addData(double position, double value);
+	void addData(double position, double value, Orientation orientation);
 	/// Set data point number @p index to @p value at position @p position
-	void setData(unsigned int index, double position, double value);
+	void setData(unsigned int index, double position, double value, Orientation orientation);
 	/// Remove data point number @p index
 	void removeData(unsigned int index);
 	/// Remove all data in the fit
 	void clear();
+	/// @return true if the entry @p index has at least a non zero value (H or V)
+	bool nonZeroEntry(int index) const;
+	/// @return true if a fit result is available on @p orientation
+	bool fitAvailable(Orientation orientation) const;
 	/**
 	* Apply the fit result to beam @p beam
 	* @return the fit residue
@@ -86,12 +91,14 @@ public:
 	bool operator==(const Fit& other) const;
 
 private:
+	/// @return the number of points with non zero measured value in the fit
+	int nonZeroSize(Orientation orientation) const;
 	/// Actually o the fit
 	void fitBeam(double wavelength) const;
+	double fitBeam(double wavelength, Orientation orientation) const;
 	/// Non linear fit functions
-	Beam nonLinearFit(const Beam& guessBeam, double* residue) const;
+	std::pair<Beam,double> nonLinearFit(const Beam& guessBeam) const;
 	static void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info);
-	void error(double* par, double* fvec) const;
 	/// Linear fit functions
 	Beam linearFit(const std::vector<double>& positions, const std::vector<double>& radii, double wavelength) const;
 
@@ -104,7 +111,7 @@ private:
 	std::string m_name;
 	FitDataType m_dataType;
 	std::vector<double> m_positions;
-	std::vector<double> m_values;
+	std::vector<std::pair<double, double> > m_values;
 	unsigned int m_color;
 	Orientation m_orientation;
 
@@ -113,6 +120,8 @@ private:
 	mutable Beam m_beam;
 	mutable double m_lastWavelength;
 	mutable double m_residue;
+	mutable std::vector<double> m_tmpPositions;
+	mutable std::vector<double> m_tmpRadii;
 
 	// Statics
 	static int m_fitCount;

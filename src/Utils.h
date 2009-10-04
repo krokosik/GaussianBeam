@@ -63,7 +63,6 @@ namespace Utils
 	static const double infinity = 1e100;
 	static const double epsilon  = 1e-10;
 
-
 	double scalar(const std::vector<double>& v1, const std::vector<double>& v2);
 	double norm(const std::vector<double>& v1);
 //	double distance(const std::vector<double>& v1, const std::vector<double>& v2);
@@ -79,6 +78,7 @@ namespace Utils
 		double x() const { return m_x; }
 		double y() const { return m_y; }
 		void translate(const Point& point) { m_x += point.x(); m_y += point.y(); }
+		bool operator==(const Point& other) const;
 
 	private:
 		double m_x, m_y;

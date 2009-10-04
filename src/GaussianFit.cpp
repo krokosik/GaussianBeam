@@ -44,18 +44,51 @@ Fit::Fit(OpticsBench* bench, int nData) : m_bench(bench)
 	m_orientation = Spherical;
 
 	for (int i = 0; i < nData; i++)
-		addData(0., 0.);
+		addData(0., 0., Spherical);
+}
+
+int Fit::nonZeroSize(Orientation orientation) const
+{
+	int result = 0;
+
+	for (int i = 0; i < size(); i++)
+		if (radius(i, orientation) > epsilon)
+			result++;
+
+	return result;
+}
+
+bool Fit::fitAvailable(Orientation orientation) const
+{
+	if (orientation == Spherical)
+		return (nonZeroSize(Spherical) > 1);
+
+	if ((orientation == Horizontal) || (orientation == Vertical))
+	{
+		if (m_orientation == quadrature(orientation))
+			return false;
+		return (nonZeroSize(orientation) > 1);
+	}
+
+	cerr << "Wrong orientation arguement in fitAvailable(" << orientation << ")" << endl;
+	return false;
+}
+
+bool Fit::nonZeroEntry(int index) const
+{
+	if (m_orientation == Spherical)
+		return value(index, Spherical) != 0.;
+	if ((m_orientation == Horizontal) || (m_orientation == Vertical))
+		return value(index, m_orientation) != 0.;
+	if (m_orientation == Ellipsoidal)
+		return ((value(index, Horizontal) != 0.) || (value(index, Vertical) != 0.));
+
+	return false;
 }
 
 void Fit::setName(std::string name)
 {
 	m_name = name;
-	if (m_bench) m_bench->notifyFitChanged(this);
-}
-
-void Fit::setColor(unsigned int color)
-{
-	m_color = color;
 	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
@@ -69,39 +102,109 @@ void Fit::setDataType(FitDataType dataType)
 void Fit::setOrientation(Orientation orientation)
 {
 	m_orientation = orientation;
+	m_dirty = true;
 	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
-int Fit::nonZeroSize() const
+void Fit::setColor(unsigned int color)
 {
-	int result = 0;
-
-	for (int i = 0; i < size(); i++)
-		if (radius(i) > epsilon)
-			result++;
-
-	return result;
+	m_color = color;
+	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
-void Fit::setData(unsigned int index, double position, double value)
+double Fit::position(unsigned int index) const
 {
+	return m_positions[index];
+}
+
+/*
+* Orientation table
+*  orientation in the argument in columns
+*  fit orientation in rows
+*    f\a S H V E
+*    -----------
+*    S | H H V X
+*    H | X H X X
+*    V | X X V X
+*    E | X H V X
+*/
+double Fit::value(unsigned int index, Orientation orientation) const
+{
+	if ((m_orientation == Spherical) &&
+	    (m_values[index].first != m_values[index].second))
+	{
+		cerr << "Fit mismatch in horizontal and vertical values " << m_values[index].first << " " << m_values[index].second << endl;
+		return 0;
+	}
+
+	if (((orientation == Spherical ) && (m_orientation == Spherical)) ||
+	    ((orientation == Horizontal) && (m_orientation != Vertical )))
+		return m_values[index].first;
+
+	if ((orientation == Vertical) && (m_orientation != Horizontal))
+		return m_values[index].second;
+
+	cerr << "Wrong orientation argument in Fit::value(" << index << "," << orientation << ")" << endl;
+	return 0.;
+}
+
+double Fit::radius(unsigned int index, Orientation orientation) const
+{
+	if (m_dataType == Radius_e2)
+		return value(index, orientation);
+	else if (m_dataType == Diameter_e2)
+		return value(index, orientation)/2.;
+	else  if (m_dataType == standardDeviation)
+		return value(index, orientation)*2.;
+	else  if (m_dataType == FWHM)
+		return value(index, orientation)/sqrt(2.*log(2.));
+	else  if (m_dataType == HWHM)
+		return value(index, orientation)*sqrt(2./log(2.));
+
+	return 0.;
+}
+
+void Fit::addData(double position, double value, Orientation orientation)
+{
+	setData(size(), position, value, orientation);
+}
+
+/*
+* Orientation table
+*  orientation in the argument in columns
+*  fit orientation in rows
+*    f\a S  H V E
+*    -----------
+*    S | HV X X X
+*    H | H  H X X
+*    V | V  X V X
+*    E | HV H V X
+*/
+void Fit::setData(unsigned int index, double position, double value, Orientation orientation)
+{
+	if ((orientation == Ellipsoidal) ||
+	    ((m_orientation == Spherical ) && (orientation != Spherical )) ||
+	    ((m_orientation == Horizontal) && (orientation == Vertical  )) ||
+	    ((m_orientation == Vertical  ) && (orientation == Horizontal)))
+	{
+		cerr << "Wrong orientation argument in Fit::setValue(" << index << "," << orientation << ")" << endl;
+		return;
+	}
+
+
 	if (m_positions.size() <= index)
 	{
 		m_positions.resize(index + 1);
 		m_values.resize(index + 1);
 	}
 
+	if (m_orientation != Vertical)
+		m_values[index].first = value;
+
+	if (m_orientation != Horizontal)
+		m_values[index].second = value;
+
 	m_positions[index] = position;
-	m_values[index] = value;
-	m_dirty = true;
-
-	if (m_bench) m_bench->notifyFitChanged(this);
-}
-
-void Fit::addData(double position, double value)
-{
-	m_positions.push_back(position);
-	m_values.push_back(value);
 	m_dirty = true;
 
 	if (m_bench) m_bench->notifyFitChanged(this);
@@ -116,22 +219,6 @@ void Fit::removeData(unsigned int index)
 	if (m_bench) m_bench->notifyFitChanged(this);
 }
 
-double Fit::radius(unsigned int index) const
-{
-	if (m_dataType == Radius_e2)
-		return m_values[index];
-	else if (m_dataType == Diameter_e2)
-		return m_values[index]/2.;
-	else  if (m_dataType == standardDeviation)
-		return m_values[index]*2.;
-	else  if (m_dataType == FWHM)
-		return m_values[index]/sqrt(2.*log(2.));
-	else  if (m_dataType == HWHM)
-		return m_values[index]*sqrt(2./log(2.));
-
-	return 0.;
-}
-
 void Fit::clear()
 {
 	m_positions.clear();
@@ -144,24 +231,22 @@ void Fit::clear()
 double Fit::applyFit(Beam& beam) const
 {
 	fitBeam(beam.wavelength());
-	beam.setWaist(m_beam.waist(m_orientation), m_orientation);
-	beam.setWaistPosition(m_beam.waistPosition(m_orientation), m_orientation);
+
+	if ((m_orientation != Vertical) && (nonZeroSize(Horizontal) >= 2))
+	{
+		beam.setWaist(m_beam.waist(Horizontal), Horizontal);
+		beam.setWaistPosition(m_beam.waistPosition(Horizontal), Horizontal);
+	}
+	if ((m_orientation != Horizontal) && (nonZeroSize(Vertical) >= 2))
+	{
+		beam.setWaist(m_beam.waist(Vertical), Vertical);
+		beam.setWaistPosition(m_beam.waistPosition(Vertical), Vertical);
+	}
 	return m_residue;
 }
 
 /////////////////////////////////////////////////
 // Non linear fit functions
-
-void Fit::error(double* par, double* fvec) const
-{
-	int j = 0;
-	/// @todo index = 1., M2 = 1. ?
-	Beam beam(par[0], par[1], m_lastWavelength, 1., 1.);
-
-	for (int i = 0; i < size(); i++)
-		if (radius(i) > epsilon)
-			fvec[j++] = radius(i) - beam.radius(position(i), m_orientation);
-}
 
 /**
 * @p par   input array. At the end of the minimization, it contains the approximate solution vector.
@@ -170,27 +255,32 @@ void Fit::error(double* par, double* fvec) const
 * @p data  user data. Here null
 * @p info  integer output variable. If set to a negative value, the minimization procedure will stop.
 */
-void Fit::lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info)
+void Fit::lm_evaluate_beam(double* par, int /*m_dat*/, double* fvec, void* data, int* /*info*/)
 {
 	const Fit* fit = static_cast<const Fit*>(data);
-	fit->error(par, fvec);
-	*info = *info; m_dat = m_dat;		// to prevent a 'unused variable' warning
+
+	int j = 0;
+	/// @todo index = 1., M2 = 1. ?
+	Beam beam(par[0], par[1], fit->m_lastWavelength, 1., 1.);
+
+	for (unsigned int i = 0; i < fit->m_tmpRadii.size(); i++)
+			fvec[j++] = fit->m_tmpRadii[i] - beam.radius(fit->m_tmpPositions[i]);
+
 	// if <parameters drifted away> { *info = -1; }
 }
 
-Beam Fit::nonLinearFit(const Beam& guessBeam, double* residue) const
+pair<Beam,double> Fit::nonLinearFit(const Beam& guessBeam) const
 {
 	const int nPar = 2;
-	double par[nPar] = {guessBeam.waist(m_orientation), guessBeam.waistPosition(m_orientation)};
+	double par[nPar] = {guessBeam.waist(), guessBeam.waistPosition()};
 
 	lm_control_type control;
 	lm_initialize_control(&control);
-	lm_minimize(nonZeroSize(), nPar, par, Fit::lm_evaluate_beam, NULL, (void*)(this), &control);
+	lm_minimize(m_tmpRadii.size(), nPar, par, Fit::lm_evaluate_beam, NULL, (void*)(this), &control);
 
-	Beam result = guessBeam;
-	result.setWaist(par[0], m_orientation);
-	result.setWaistPosition(par[1], m_orientation);
-	*residue = control.fnorm;
+	pair<Beam,double> result(guessBeam, control.fnorm);
+	result.first.setWaist(par[0]);
+	result.first.setWaistPosition(par[1]);
 
 	return result;
 }
@@ -212,7 +302,7 @@ Beam Fit::linearFit(const vector<double>& positions, const vector<double>& radii
 	const double alpha = M_PI*fz*fpz/wavelength;
 	/// @todo index = 1., M2 = 1. ?
 	Beam result(fz/sqrt(1. + sqr(alpha)), 0., wavelength, 1., 1.);
-	result.setWaistPosition(z - result.rayleigh(m_orientation)*alpha, m_orientation);
+	result.setWaistPosition(z - result.rayleigh()*alpha);
 
 	return result;
 }
@@ -222,65 +312,74 @@ Beam Fit::linearFit(const vector<double>& positions, const vector<double>& radii
 
 void Fit::fitBeam(double wavelength) const
 {
-	if ((!m_dirty && (wavelength == m_lastWavelength)) || (nonZeroSize() < 2))
+	if (!m_dirty && (wavelength == m_lastWavelength))
 		return;
 
 	m_lastWavelength = wavelength;
 
+	if (m_orientation != Ellipsoidal)
+		m_residue = fitBeam(wavelength, m_orientation);
+	else
+	{
+		double r1 = fitBeam(wavelength, Horizontal);
+		double r2 = fitBeam(wavelength, Vertical);
+		m_residue = sqrt(r1*r2);
+	}
+
+	m_dirty = false;
+}
+
+double Fit::fitBeam(double wavelength, Orientation orientation) const
+{
+	if (nonZeroSize(orientation) < 2)
+		return 1.;
+
 	// Gather all non zero data
-	vector<double> positions, radii;
+	m_tmpPositions.clear();
+	m_tmpRadii.clear();
 	for (int i = 0; i < size(); i++)
-		if (radius(i) > epsilon)
+		if (radius(i, orientation) > epsilon)
 		{
-			positions.push_back(position(i));
-			radii.push_back(radius(i));
+			m_tmpPositions.push_back(position(i));
+			m_tmpRadii.push_back(radius(i, orientation));
 		}
 
-	double residue, tmpResidue;
-	Beam tmpBeam;
+	pair<Beam, double> result, tmpResult;
 
 	// 1/ linear fit with all data
-	m_beam = linearFit(positions, radii, wavelength);
+	result.first = linearFit(m_tmpPositions, m_tmpRadii, wavelength);
 	// 2/ non linear fit with the linear fit result as initial guess
-	m_beam = nonLinearFit(m_beam, &residue);
+	result = nonLinearFit(result.first);
 	// 3/ Try a linear fit with the first two points + non linear fit on all points
-	positions.clear();
-	radii.clear();
+	vector<double> positions, radii;
 	for (int i = 0; (i < size()) && (positions.size() < 2); i++)
-		if (radius(i) > epsilon)
+		if (radius(i, orientation) > epsilon)
 		{
 			positions.push_back(position(i));
-			radii.push_back(radius(i));
+			radii.push_back(radius(i, orientation));
 		}
-	tmpBeam = linearFit(positions, radii, wavelength);
-	tmpBeam = nonLinearFit(tmpBeam, &tmpResidue);
-	if (tmpResidue < residue)
-	{
-		residue = tmpResidue;
-		m_beam = tmpBeam;
-	}
+	tmpResult.first = linearFit(positions, radii, wavelength);
+	tmpResult = nonLinearFit(tmpResult.first);
+	if (tmpResult.second < result.second)
+		result = tmpResult;
 	// 4/ Try a linear fit with the last two points + non linear fit on all points
 	positions.clear();
 	radii.clear();
 	for (int i = size()-1; (i >= 0) && (positions.size() < 2); i--)
-		if (radius(i) > epsilon)
+		if (radius(i, orientation) > epsilon)
 		{
 			positions.push_back(position(i));
-			radii.push_back(radius(i));
+			radii.push_back(radius(i, orientation));
 		}
-	tmpBeam = linearFit(positions, radii, wavelength);
-	tmpBeam = nonLinearFit(tmpBeam, &tmpResidue);
-	if (tmpResidue < residue)
-	{
-		residue = tmpResidue;
-		m_beam = tmpBeam;
-	}
+	tmpResult.first = linearFit(positions, radii, wavelength);
+	tmpResult = nonLinearFit(tmpResult.first);
+	if (tmpResult.second < result.second)
+		result = tmpResult;
 
-	///////////////
-	// Terminaison
+	m_beam.setWaist(result.first.waist(), orientation);
+	m_beam.setWaistPosition(result.first.waistPosition(), orientation);
 
-	m_residue = residue;
-	m_dirty = false;
+	return result.second;
 }
 
 bool Fit::operator==(const Fit& other) const

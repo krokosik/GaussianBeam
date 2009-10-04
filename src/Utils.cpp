@@ -127,6 +127,12 @@ Point operator+(const Point& p1, const Point& p2)
 	return result;
 }
 
+bool Point::operator==(const Point& other) const
+{
+	return ((m_x == other.m_x) &&
+	        (m_y == other.m_y));
+}
+
 double distance(const Point& p1, const Point& p2)
 {
 	return sqrt(sqr(p2.x() - p1.x()) + sqr(p2.y() - p1.y()));

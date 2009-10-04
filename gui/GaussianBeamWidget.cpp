@@ -63,9 +63,7 @@ GaussianBeamWidget::GaussianBeamWidget(OpticsBench* bench, GaussianBeamWindow* w
 #endif
 
 	// Waist fit
-	fitModel = new QStandardItemModel(0, 2, this);
-	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).string(false) + ")");
-	fitModel->setHeaderData(1, Qt::Horizontal, tr("Value") + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
+	fitModel = new QStandardItemModel(0, 3, this);
 	fitTable->setModel(fitModel);
 	fitTable->setSelectionBehavior(QAbstractItemView::SelectRows);
 	fitTable->setSelectionMode(QAbstractItemView::ExtendedSelection);
@@ -302,6 +300,14 @@ void GaussianBeamWidget::onOpticsBenchTargetBeamChanged()
 ///////////////////////////////////////////////////////////
 // FIT PAGE
 
+QVariant GaussianBeamWidget::formattedFitData(double value)
+{
+	if (value != 0.)
+		return value*Units::getUnit(UnitWaist).divider();
+
+	return QString("");
+}
+
 void GaussianBeamWidget::updateFitInformation(int index)
 {
 	if (index >= m_bench->nFit())
@@ -344,40 +350,65 @@ void GaussianBeamWidget::updateFitInformation(int index)
 	comboBox_FitOrientation->setCurrentIndex(int(fit->orientation()));
 
 	// Resize rows to match the number of elements in the fit
-	for (; fit->size() > fitModel->rowCount();)
+	while (fit->size() > fitModel->rowCount())
 		fitModel->insertRow(0);
-	for (; fitModel->rowCount() > fit->size();)
+	while (fitModel->rowCount() > fit->size())
 		fitModel->removeRow(0);
 
+	// Show/hide fit columns
+	fitTable->showColumn(1);
+	fitTable->showColumn(2);
+	if ((fit->orientation() == Horizontal) || (fit->orientation() == Spherical))
+		fitTable->hideColumn(2);
+	else if (fit->orientation() == Vertical)
+		fitTable->hideColumn(1);
+
+	QString header = (fit->orientation() == Spherical) ? tr("Value") : tr("Horizontal\nvalue");
+	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).string(false) + ")");
+	fitModel->setHeaderData(1, Qt::Horizontal, header + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
+	fitModel->setHeaderData(2, Qt::Horizontal, tr("Vertical\nvalue") + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
+
+	// Fill the fit table
 	for (int i = 0; i < fit->size(); i++)
 	{
-		if ((fit->position(i) != 0.) || (fit->value(i) != 0.))
+		if ((fit->position(i) != 0.) || fit->nonZeroEntry(i))
 			fitModel->setData(fitModel->index(i, 0), fit->position(i)*Units::getUnit(UnitPosition).divider());
 		else
 			fitModel->setData(fitModel->index(i, 0), QString(""));
 
-		if (fit->value(i) != 0.)
-			fitModel->setData(fitModel->index(i, 1), fit->value(i)*Units::getUnit(UnitWaist).divider());
-		else
-			fitModel->setData(fitModel->index(i, 1), QString(""));
+		if (fit->orientation() != Vertical)
+			fitModel->setData(fitModel->index(i, 1), formattedFitData(fit->value(i, Horizontal)));
+		if (fit->orientation() != Horizontal)
+			fitModel->setData(fitModel->index(i, 2), formattedFitData(fit->value(i, Vertical)));
 	}
 
-	if (fit->nonZeroSize() <= 1)
+	bool fh = fit->fitAvailable(Horizontal);
+	bool fv = (fit->fitAvailable(Vertical) & (fit->orientation() != Spherical));
+	if (fh | fv)
+	{
+		Beam fitBeam(m_bench->wavelength());
+		double residue = fit->applyFit(fitBeam);
+		QString text;
+		if (fh)
+		{
+			text += (fv ? tr("Horizonal waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Horizontal)*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
+					(fv ? tr("Horizonal position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Horizontal)*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n";
+		}
+		if (fv)
+		{
+			text += (fh ? tr("Vertical waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Vertical)*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
+					(fh ? tr("Vertical position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Vertical)*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n";
+		}
+		text += tr("Residue") + " = " + QString::number(residue);
+		label_FitResult->setText(text);
+		pushButton_SetInputBeam->setEnabled(true);
+		pushButton_SetTargetBeam->setEnabled(true);
+	}
+	else
 	{
 		pushButton_SetInputBeam->setEnabled(false);
 		pushButton_SetTargetBeam->setEnabled(false);
 		label_FitResult->setText(QString());
-	}
-	else
-	{
-		Beam fitBeam(m_bench->wavelength());
-		double residue = fit->applyFit(fitBeam);
-		QString text = tr("Waist") + " = " + QString::number(fitBeam.waist(fit->orientation())*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
-					tr("Position") + " = " + QString::number(fitBeam.waistPosition(fit->orientation())*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n" +
-					tr("Residue") + " = " + QString::number(residue);
-		label_FitResult->setText(text);
-		pushButton_SetInputBeam->setEnabled(true);
-		pushButton_SetTargetBeam->setEnabled(true);
 	}
 
 	m_updatingFit = false;
@@ -460,8 +491,17 @@ void GaussianBeamWidget::fitModelChanged(const QModelIndex& start, const QModelI
 	for (int row = start.row(); row <= stop.row(); row++)
 	{
 		double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
-		double value = fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
-		fit->setData(row, position, value);
+		double hValue = fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
+		double vValue = fitModel->data(fitModel->index(row, 2)).toDouble()*Units::getUnit(UnitWaist).multiplier();
+		if (fit->orientation() == Spherical)
+			fit->setData(row, position, hValue, Spherical);
+		else
+		{
+			if (fit->orientation() != Vertical)
+				fit->setData(row, position, hValue, Horizontal);
+			if (fit->orientation() != Horizontal)
+				fit->setData(row, position, vValue, Vertical);
+		}
 	}
 }
 
@@ -471,7 +511,7 @@ void GaussianBeamWidget::on_pushButton_FitAddRow_clicked()
 	if (index < 0)
 		return;
 
-	m_bench->fit(index)->addData(0., 0.);
+	m_bench->fit(index)->addData(0., 0., Spherical);
 }
 
 void GaussianBeamWidget::on_pushButton_FitRemoveRow_clicked()

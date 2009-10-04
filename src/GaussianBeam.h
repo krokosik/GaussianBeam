@@ -34,6 +34,8 @@ enum  Type {BeamPosition = 0, BeamRadius, BeamDiameter, BeamCurvature, BeamGouyP
 
 enum  Orientation {Spherical = 0, Horizontal = 1,  Vertical = 2, Ellipsoidal = 3};
 
+Orientation quadrature(Orientation orientation);
+
 /**
 * @brief This class represents a Gaussian beam.
 * A beam is defined by an origin (2 coordinates in the plane) and the angle between the wave vector
@@ -41,7 +43,7 @@ enum  Orientation {Spherical = 0, Horizontal = 1,  Vertical = 2, Ellipsoidal = 3
 * that corresponds to the algebraic distance between the origin and a point on the beam axis.
 * The Gaussian properties of the beam are defined by its wavelength, waist and waist position on the vertical
 * and horizontal axis. In all get function, the default orientation is Horizontal and in all set function the default
-* orientation is Spherical ("default" means "no argment given" or "irrelevant argument given")
+* orientation is Spherical ("default" means "no argment given" or "unvalid argument given, i.e. ellispoidal")
 */
 class Beam
 {
@@ -151,11 +153,15 @@ public:
 	*/
 	static bool copropagating(const Beam& beam1, const Beam& beam2);
 
+	/// Compare the two beams
+	bool operator==(const Beam& other) const;
+
 private:
 	inline double zred(double z, Orientation orientation) const;
 	void init();
 
 private:
+	// Don't forget to update the == operator when adding properties
 	// Optical properties
 	std::pair<double, double> m_waist;
 	std::pair<double, double> m_waistPosition;
@@ -167,8 +173,9 @@ private:
 	double m_angle;
 	double m_start;
 	double m_stop;
+
 	// Aspect cache
-	bool m_sphericalWaist, m_sphericalPosition;
+	mutable bool m_sphericalWaist, m_sphericalPosition;
 };
 
 std::ostream& operator<<(std::ostream& out, const Beam& beam);

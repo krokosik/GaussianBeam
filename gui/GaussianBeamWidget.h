@@ -97,6 +97,7 @@ private:
 	void updateFitInformation(int index);
 	void readSettings();
 	void writeSettings();
+	QVariant formattedFitData(double value);
 
 private:
 	GaussianBeamWindow* m_window;

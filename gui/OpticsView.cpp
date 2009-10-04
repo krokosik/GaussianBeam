@@ -288,12 +288,14 @@ void OpticsScene::onOpticsBenchFitDataChanged(int index)
 	for (int index = 0; index < m_bench->nFit(); index++)
 	{
 		Fit* fit = m_bench->fit(index);
-		if ((fit->orientation() == Spherical) || (fit->orientation() == orientation()))
+		const Orientation so = orientation();
+		const Orientation fo = fit->orientation();
+		if (!(((so == Horizontal) && (fo == Vertical)) || ((so == Vertical) && (fo == Horizontal))))
 			for (int i = 0; i < fit->size(); i++)
-				if (fit->value(i) != 0.)
+				if (fit->value(i, so) != 0.)
 				{
-					addFitPoint(fit->position(i), -fit->radius(i), fit->color());
-					addFitPoint(fit->position(i),  fit->radius(i), fit->color());
+					addFitPoint(fit->position(i), -fit->radius(i, so), fit->color());
+					addFitPoint(fit->position(i),  fit->radius(i, so), fit->color());
 				}
 	}
 }
