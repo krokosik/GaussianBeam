@@ -29,9 +29,8 @@ WISHLIST:
 	Unittest
 
 BUGS:
+	Sometimes, beams disappear
 	Ellipsoidal fit
-	Loading an old file on an ellipsoidal bench does not go back to spherical
-	When loading a file, the old list of fits stays in the widget
 	Removing a fit does not remove it from the scene
 	Hide lock button when there is only one scene
 	Don't allow for optics to exit the optical bench
@@ -49,6 +48,7 @@ BUGS:
 	Save all views information
 	Check that the initial waist position is well loaded from old files (optics position -> beam position)
 	Lock views does not work
+	Last Optics name wrong hen loading a file
 
 CONSTANT VIGILENCE:
 	change all parameters when changing the wavelength

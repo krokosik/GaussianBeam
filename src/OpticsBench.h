@@ -92,6 +92,13 @@ public:
 public:
 	void registerEventListener(OpticsBenchEventListener* listener);
 
+	// Initialization, cleanup
+
+	/// Populate the bench with default optics
+	void populateDefault();
+	/// Reset all properties of the bench
+	void clear();
+
 	// Properties
 
 	/// @return the bench wavelength
@@ -197,6 +204,7 @@ private:
 	void updateExtremeBeams();
 	void detectCavities();
 	void checkFitSpherical();
+	void resetDefaultValues();
 
 private:
 	double m_wavelength;

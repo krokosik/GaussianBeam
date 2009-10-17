@@ -42,6 +42,7 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 
 	// Bench
 	m_bench = new OpticsBench();
+	m_bench->populateDefault();
 	m_bench->registerEventListener(this);
 
 	// Table

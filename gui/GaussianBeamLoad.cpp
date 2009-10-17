@@ -147,6 +147,7 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 		return false;
 	}
 
+	m_bench->clear();
 	parseXml(root);
 
 	return true;

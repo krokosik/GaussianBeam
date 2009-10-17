@@ -107,9 +107,15 @@ OpticsBench::OpticsBench()
 	m_opticsPrefix[GenericABCDType]     = "G";
 	m_opticsPrefix[DielectricSlabType]  = "D";
 
-	m_wavelength = 461e-9;
 	m_beamSpherical = true;
 	m_fitSpherical = true;
+
+	resetDefaultValues();
+}
+
+void OpticsBench::resetDefaultValues()
+{
+	m_wavelength = 461e-9;
 	/// @todo better vertical boundaries
 	m_boundary = Rect(-0.1, -0.2, 0.7, 0.2);
 
@@ -117,8 +123,21 @@ OpticsBench::OpticsBench()
 	m_targetOrientation = Spherical;
 	/// @todo index = 1. ? target = 1.
 	setTargetBeam(Beam(0.000150, 0.6, wavelength(), 1., 1.));
+}
 
+void OpticsBench::clear()
+{
+	// Clear objects
+	removeOptics(0, nOptics());
+	removeFits(0, nFit());
 
+	// Reset to default values
+	resetDefaultValues();
+
+}
+
+void OpticsBench::populateDefault()
+{
 	CreateBeam* inputBeam = new CreateBeam(180e-6, 10e-3, 1., "w0");
 	inputBeam->setAbsoluteLock(true);
 	addOptics(inputBeam, 0);
