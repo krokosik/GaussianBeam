@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -20,27 +20,35 @@
 #include "Utils.h"
 
 #include <iostream>
+#include <typeinfo>
 #include <cmath>
 
 using namespace std;
 
-int Optics::m_lastId = 0;
-
 Optics::Optics(OpticsType type, double position, string name)
-	: m_id(++m_lastId)
-	, m_type(type)
-	, m_position(position)
+	: m_position(position)
 	, m_width(0.)
-	, m_ABCD(false)
-	, m_rotable(false)
-	, m_orientable(false)
 	, m_orientation(Spherical)
 	, m_angle(0.)
 	, m_name(name)
 	, m_absoluteLock(false)
 	, m_relativeLockParent(0)
+	, m_type(type)
+	, m_rotable(false)
 {
 }
+
+Optics::Optics(const Optics& optics)
+	: m_position    (optics.m_position    )
+	, m_width       (optics.m_width       )
+	, m_orientation (optics.m_orientation )
+	, m_angle       (optics.m_angle       )
+	, m_name        (optics.m_name        )
+	, m_absoluteLock(optics.m_absoluteLock)
+	, m_relativeLockParent(0)
+	, m_type        (optics.m_type        )
+	, m_rotable     (optics.m_rotable     )
+{}
 
 Optics::~Optics()
 {
@@ -49,6 +57,11 @@ Optics::~Optics()
 		(*it)->m_relativeLockParent = 0;
 
 	relativeUnlock();
+}
+
+bool Optics::isOrientable() const
+{
+	return isOrientable(Horizontal) || isOrientable(Vertical) || isOrientable(Ellipsoidal);
 }
 
 /////////////////////////////////////////////////
@@ -123,24 +136,43 @@ bool Optics::isRelativeLockDescendant(const Optics* const optics) const
 
 void Optics::moveDescendant(double distance)
 {
-	setPosition(position() + distance);
+	setPosition(position() + distance, false);
 
 	for (list<Optics*>::iterator it = m_relativeLockChildren.begin(); it != m_relativeLockChildren.end(); it++)
 		(*it)->moveDescendant(distance);
 }
 
-void Optics::setPositionCheckLock(double pos, bool respectAbsoluteLock)
+void Optics::setPosition(double position, bool respectLocks)
+{
+	setPosition(position, respectLocks, respectLocks);
+}
+
+void Optics::setPosition(double position, bool respectAbsoluteLock, bool respectRelativeLock)
 {
 	if (relativeLockTreeAbsoluteLock() && respectAbsoluteLock)
 		return;
 
-	relativeLockRoot()->moveDescendant(pos - position());
+	if (respectRelativeLock)
+		relativeLockRoot()->moveDescendant(position - Optics::position());
+	else
+		m_position = position;
 }
 
-void Optics::eraseLockingTree()
+bool Optics::operator==(const Optics& other) const
 {
-	m_relativeLockChildren.clear();
-	m_relativeLockParent = 0;
+	cerr << "Optics==" << endl;
+	bool sameRelativeParent = true;
+	if (m_relativeLockParent && other.m_relativeLockParent)
+		sameRelativeParent = (*m_relativeLockParent == *other.m_relativeLockParent);
+
+	return (m_position     == other.m_position    ) &&
+	       (m_width        == other.m_width       ) &&
+	       (m_orientation  == other.m_orientation ) &&
+	       (m_angle        == other.m_angle       ) &&
+	       (m_name         == other.m_name        ) &&
+	       (m_absoluteLock == other.m_absoluteLock) &&
+	       (m_type         == other.m_type        ) &&
+	       sameRelativeParent;
 }
 
 /////////////////////////////////////////////////
@@ -154,7 +186,6 @@ CreateBeam::CreateBeam(double waist, double waistPosition, double index, string 
 	m_beam.setIndex(index);
 
 	setRotable();
-	setOrientable();
 }
 
 const Beam* CreateBeam::beam() const
@@ -184,6 +215,18 @@ Beam CreateBeam::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& opticalAxis) const
 {
 	return image(outputBeam, opticalAxis);
+}
+
+bool CreateBeam::operator==(const Optics& other) const
+{
+	cerr << "CreateBeam==" << endl;
+
+	if (!this->Optics::operator==(other))
+		return false;
+
+	// This cast will always work because Optics::operator== checked types
+	const CreateBeam& otherCreateBeam = static_cast<const CreateBeam&>(other);
+	return (m_beam == otherCreateBeam.m_beam);
 }
 
 /////////////////////////////////////////////////
@@ -253,12 +296,9 @@ void CurvedInterface::setSurfaceRadius(double surfaceRadius)
 
 void ABCD::forward(const Beam& inputBeam, Beam& outputBeam, Orientation orientation) const
 {
-	if (isAligned(orientation))
-	{
-		complex<double> q = inputBeam.q(position(), orientation);
-		q = (A()*q + B()) / (C()*q + D());
-		outputBeam.setQ(q, position() + width(), orientation);
-	}
+	complex<double> q = inputBeam.q(position(), orientation);
+	q = (A(orientation)*q + B(orientation)) / (C(orientation)*q + D(orientation));
+	outputBeam.setQ(q, position() + width(), orientation);
 }
 
 Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
@@ -279,12 +319,9 @@ Beam ABCD::image(const Beam& inputBeam, const Beam& /*opticalAxis*/) const
 
 void ABCD::backward(const Beam& outputBeam, Beam& inputBeam, Orientation orientation) const
 {
-	if (isAligned(orientation))
-	{
-		complex<double> q = outputBeam.q(position() + width(), orientation);
-		q = (B() - D()*q) / (C()*q - A());
-		inputBeam.setQ(q, position(), orientation);
-	}
+	complex<double> q = outputBeam.q(position() + width(), orientation);
+	q = (B(orientation) - D(orientation)*q) / (C(orientation)*q - A(orientation));
+	inputBeam.setQ(q, position(), orientation);
 }
 
 Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
@@ -305,18 +342,43 @@ Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
 
 bool ABCD::stabilityCriterion1() const
 {
-	return fabs((A() + B())/2.) < 1.;
+	/// @todo deal with orientation
+	return fabs((A(Spherical) + B(Spherical))/2.) < 1.;
 }
 
 bool ABCD::stabilityCriterion2() const
 {
-	return sqr(D() - A()) + 4.*C()*B() < 0.;
+	/// @todo deal with orientation
+	return sqr(D(Spherical) - A(Spherical)) + 4.*C(Spherical)*B(Spherical) < 0.;
 }
 
 Beam ABCD::eigenMode(double wavelength) const
 {
+	/// @todo deal with orientation
 	/// @todo what is the index ?
-	return Beam(complex<double>(-(D() - A())/(2.*C()), -sqrt(-(sqr(D() - A()) + 4.*C()*B()))/(2.*C())), position(), wavelength, 1.0, 1.0);
+	return Beam(complex<double>(-(D(Spherical) - A(Spherical))/(2.*C(Spherical)),
+	                            -sqrt(-(sqr(D(Spherical) - A(Spherical)) + 4.*C(Spherical)*B(Spherical)))/(2.*C(Spherical))),
+	                            position(), wavelength, 1.0, 1.0);
+}
+
+bool ABCD::operator==(const Optics& other) const
+{
+	cerr << "ABCD==" << endl;
+
+	if (!this->Optics::operator==(other))
+		return false;
+
+	// This cast will always work because Optics::operator== checked types
+	const ABCD& otherABCD = static_cast<const ABCD&>(other);
+
+	return (A(Horizontal) == otherABCD.A(Horizontal)) &&
+	       (B(Horizontal) == otherABCD.B(Horizontal)) &&
+	       (C(Horizontal) == otherABCD.C(Horizontal)) &&
+	       (D(Horizontal) == otherABCD.D(Horizontal)) &&
+	       (A(Vertical)   == otherABCD.A(Vertical)  ) &&
+	       (B(Vertical)   == otherABCD.B(Vertical)  ) &&
+	       (C(Vertical)   == otherABCD.C(Vertical)  ) &&
+	       (D(Vertical)   == otherABCD.D(Vertical)  );
 }
 
 /////////////////////////////////////////////////
@@ -324,10 +386,11 @@ Beam ABCD::eigenMode(double wavelength) const
 
 GenericABCD& GenericABCD::operator*=(const ABCD& abcd)
 {
-	setA(A()*abcd.A() + B()*abcd.C());
-	setB(A()*abcd.B() + B()*abcd.D());
-	setC(C()*abcd.A() + D()*abcd.C());
-	setD(C()*abcd.B() + D()*abcd.D());
+	/// @todo deal with orientation
+	setA(A(Spherical)*abcd.A(Spherical) + B(Spherical)*abcd.C(Spherical));
+	setB(A(Spherical)*abcd.B(Spherical) + B(Spherical)*abcd.D(Spherical));
+	setC(C(Spherical)*abcd.A(Spherical) + D(Spherical)*abcd.C(Spherical));
+	setD(C(Spherical)*abcd.B(Spherical) + D(Spherical)*abcd.D(Spherical));
 	/// @todo check if the two objects are adjacent ?
 	setWidth(width() + abcd.width());
 
@@ -343,6 +406,6 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 
 ostream& operator<<(ostream& out, const ABCD& abcd)
 {
-	out << "A = " << abcd.A() << " B = " << abcd.B() << " C = " << abcd.C() << " D = " << abcd.D();
+	out << "A = " << abcd.A(Spherical) << " B = " << abcd.B(Spherical) << " C = " << abcd.C(Spherical) << " D = " << abcd.D(Spherical);
 	return out;
 }

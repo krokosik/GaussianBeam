@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -21,10 +21,15 @@
 
 #include <QString>
 
+enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
+               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
+               UnitWidth, UnitPhase, UnitAngle, UnitLess};
+
 class Unit
 {
 public:
 	Unit(int power, QString unitString);
+	Unit(UnitType type);
 
 public:
 	QString string(bool space = true) const;
@@ -37,19 +42,6 @@ private:
 private:
 	int m_power;
 	QString m_unitString;
-};
-
-enum UnitType {UnitPosition, UnitFocal, UnitWaist, UnitRayleigh, UnitWavelength,
-               UnitDivergence, UnitCurvature, UnitHRange, UnitVRange, UnitABCD,
-               UnitWidth, UnitPhase, UnitAngle, UnitLess};
-
-class Units
-{
-public:
-	Units();
-
-public:
-	static const Unit getUnit(UnitType unit);
 };
 
 #endif

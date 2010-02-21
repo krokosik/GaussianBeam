@@ -263,12 +263,40 @@ minimal</translation>
         <source>Residue</source>
         <translation>Résidu</translation>
     </message>
+    <message>
+        <source>Horizontal
+value</source>
+        <translation>Valeur
+horizontale</translation>
+    </message>
+    <message>
+        <source>Vertical
+value</source>
+        <translation>Valeur
+verticale</translation>
+    </message>
+    <message>
+        <source>Horizonal waist</source>
+        <translation>Waist horizontal</translation>
+    </message>
+    <message>
+        <source>Horizonal position</source>
+        <translation>Position horizontale</translation>
+    </message>
+    <message>
+        <source>Vertical waist</source>
+        <translation>Waist vertical</translation>
+    </message>
+    <message>
+        <source>Vertical position</source>
+        <translation>Position verticale</translation>
+    </message>
 </context>
 <context>
     <name>GaussianBeamWindow</name>
     <message>
         <source>GaussianBeam</source>
-        <translation>GaussianBeam</translation>
+        <translation type="obsolete">GaussianBeam</translation>
     </message>
     <message>
         <source>Save</source>
@@ -424,6 +452,22 @@ minimal</translation>
         <source>Open file </source>
         <translation>Ouvrir</translation>
     </message>
+    <message>
+        <source>Close</source>
+        <translation>Fermer</translation>
+    </message>
+    <message>
+        <source>Ctrl+Q</source>
+        <translation>Ctrl+Q</translation>
+    </message>
+    <message>
+        <source>The optics bench has been modified.</source>
+        <translation>Le banc optique a été modifié.</translation>
+    </message>
+    <message>
+        <source>Do you want to save your changes?</source>
+        <translation>Voulez-vous enregistrer les changements ?</translation>
+    </message>
 </context>
 <context>
     <name>Names</name>
@@ -577,7 +621,7 @@ minimal</translation>
     </message>
     <message>
         <source>Curved mirror</source>
-        <translation>Miroir courve</translation>
+        <translation>Miroir courbe</translation>
     </message>
     <message>
         <source>Flat interface</source>

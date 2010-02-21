@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,20 +19,21 @@
 #ifndef GAUSSIANBEAMWINDOWS_H
 #define GAUSSIANBEAMWINDOW_H
 
-#include "gui/GaussianBeamWidget.h"
-#include "gui/GaussianBeamModel.h"
-#include "gui/GaussianBeamDelegate.h"
-#include "gui/OpticsView.h"
-#include "ui_GaussianBeamWindow.h"
-#include "src/Optics.h"
 #include "src/OpticsBench.h"
-#include "src/GaussianFit.h"
+#include "ui_GaussianBeamWindow.h"
 
 #include <QMainWindow>
 #include <QXmlStreamWriter>
+#include <QDomElement>
 
+class OpticsView;
+class OpticsScene;
+class GaussianBeamWidget;
+class GaussianBeamModel;
 class CornerWidget;
 class TablePropertySelector;
+class QDoubleSpinBox;
+class QTableView;
 
 class GaussianBeamWindow : public QMainWindow, private Ui::GaussianBeamWindow, protected OpticsBenchEventListener
 {
@@ -52,6 +53,7 @@ public slots:
 
 protected slots:
 	void on_action_New_triggered()                { newFile();                         }
+	void on_action_Close_triggered()              { close();                           }
 	void on_action_Open_triggered()               { openFile();                        }
 	void on_action_Save_triggered()               { saveFile(m_currentFile);           }
 	void on_action_SaveAs_triggered()             { saveFile();                        }
@@ -70,11 +72,14 @@ protected slots:
 protected:
 	virtual void onOpticsBenchSphericityChanged();
 	virtual void onOpticsBenchWavelengthChanged();
+	virtual void onOpticsBenchModified();
 
 protected:
+	virtual void showEvent(QShowEvent* event);
 	virtual void closeEvent(QCloseEvent* event);
 
 private:
+	QWidget* createViewEnsemble(OpticsView* view);
 	void newFile();
 	void setCurrentFile(const QString& fileName);
 	void updateRecentFileActions();
@@ -86,16 +91,18 @@ private:
 // In addition, a GaussianBeam file contains view properties that do not belong to OpticsBench.
 private:
 	void initSaveVariables();
+	void convertFormat(QByteArray* data, const QString& xsltPath) const;
 	bool parseFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
 	void parseBench(const QDomElement& element);
 	void parseTargetBeam(const QDomElement& element);
 	void parseBeam(const QDomElement& element, Beam& beam);
 	void parseFit(const QDomElement& element);
-	void parseOptics(const QDomElement& element, QList<QString>& lockTree);
+	void parseOptics(const QDomElement& element, QMap<int, Optics*>& opticsList, QMap<int, int>& lockTree);
 	void parseView(const QDomElement& element);
 	bool writeFile(const QString& path = QString());
 	void writeBench(QXmlStreamWriter& xmlWriter) const;
+	void writeWaist(QXmlStreamWriter& xmlWriter, const Beam* beam, Orientation orientation) const;
 	void writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam) const;
 	void writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics) const;
 	void writeView(QXmlStreamWriter& xmlWriter) const;
@@ -115,10 +122,12 @@ private:
 	QTableView* m_table;
 	TablePropertySelector* m_tableConfigWidget;
 	CornerWidget* m_tableCornerWidget;
-	OpticsView* m_hOpticsView;
-	OpticsView* m_vOpticsView;
 	OpticsScene* m_hOpticsScene;
 	OpticsScene* m_vOpticsScene;
+	OpticsView* m_hOpticsView;
+	OpticsView* m_vOpticsView;
+	QWidget* m_hOpticsViewEnsemble;
+	QWidget* m_vOpticsViewEnsemble;
 	QMap<OpticsType, QString> m_opticsElements;
 
 	QString m_currentFile;

@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,9 +19,8 @@
 #ifndef OPTICSBENCH_H
 #define OPTICSBENCH_H
 
-#include "Optics.h"
 #include "GaussianBeam.h"
-#include "GaussianFit.h"
+#include "Optics.h"
 #include "Cavity.h"
 #include "Utils.h"
 
@@ -55,6 +54,7 @@ private:
 };
 */
 
+class Fit;
 class OpticsBench;
 
 /**
@@ -75,6 +75,11 @@ public:
 	virtual void onOpticsBenchFitsRemoved(int /*index*/, int /*count*/) {}
 	virtual void onOpticsBenchFitDataChanged(int /*index*/) {}
 	virtual void onOpticsBenchSphericityChanged() {}
+	virtual void onOpticsBenchDimensionalityChanged() {}
+	virtual void onOpticsBenchModified() {}
+
+public:
+	const OpticsBench* bench() const { return m_bench; }
 
 protected:
 	OpticsBench* m_bench;
@@ -88,6 +93,9 @@ class OpticsBench
 public:
 	OpticsBench();
 	~OpticsBench();
+	/// Compare the physical properties of two benches
+	bool operator==(const OpticsBench& other) const;
+
 
 public:
 	void registerEventListener(OpticsBenchEventListener* listener);
@@ -99,6 +107,13 @@ public:
 	/// Reset all properties of the bench
 	void clear();
 
+	// Modification status
+
+	/// @return true if the bench has been modified
+	bool modified() const { return m_modified; }
+	/// Set the modification status
+	void setModified(bool modified);
+
 	// Properties
 
 	/// @return the bench wavelength
@@ -107,6 +122,8 @@ public:
 	void setWavelength(double wavelength);
 	/// @return true if the bench contains only spherical optics, i.e. if horizontal beams are identical to vertical beams
 	bool isSpherical() const;
+	/// @return true if all the beams are on the horizontal axis
+	bool is1D() const;
 
 	// Boundaries
 
@@ -144,14 +161,12 @@ public:
 	* Set the optics at @p index to position @p position. Takes care of locks,
 	* exclusion areas, and optics ordering.
 	* @return the new index of the optics
+	* @todo remove this function
 	*/
-	int setOpticsPosition(int index, double position, bool respectAbsoluteLock = true);
+	int setOpticsPosition(int index, double position);
 	/// set the name of optics at @p index to @p name
-	void setOpticsName(int index, std::string name);
-	/// lock the optics at index @p index to the first optics called @p opticsName
-	void lockTo(int index, std::string opticsName);
-	/// lock the optics at index @p index to the optics which id is @p id
-	void lockTo(int index, int id);
+	/// @todo remove this function
+//	void setOpticsName(int index, std::string name);
 	/**
 	* Retrieve a non constant pointer to the optics @p index for property change.
 	* When finished, call opticsPropertyChanged() to propagate your changes
@@ -194,10 +209,6 @@ public:
 	/// Debugging
 	void printTree();
 
-/// These functions are called by objects of the bench to notify that they have been changed
-public:
-	void notifyFitChanged(Fit* fit);
-
 private:
 	/// @todo on demand computing of beam, cavity and sensitity
 	void computeBeams(int changedIndex = 0, bool backwards = false);
@@ -205,33 +216,35 @@ private:
 	void detectCavities();
 	void checkFitSpherical();
 	void resetDefaultValues();
+	void notifyFitChanged(Fit* fit);
 
 private:
+	// Properties
 	double m_wavelength;
 	std::vector<Optics*> m_optics;
+//	std::vector<OpticsTreeItem> m_opticsTree;
+	// Exclusion area
+	Utils::Rect m_boundary;
+	// Waist fit
+	std::vector<Fit*> m_fits;
+	// Magic waist
+	Beam m_targetBeam;
+	double m_targetOverlap;
+	Orientation m_targetOrientation; // Attention : might be different from m_targetBeam.orientation()
+	// Cavity
+	Cavity m_cavity;
+
+	// Cache
 	std::vector<Beam*> m_beams;
 	std::vector<double> m_sensitivity;
 	bool m_beamSpherical, m_fitSpherical;
+	bool m_1D;
+	bool m_modified;
+
+	// Callback
 	std::list<OpticsBenchEventListener*> m_listeners;
 
-//	std::vector<OpticsTreeItem> m_opticsTree;
-
-	/// Exclusion area
-	Utils::Rect m_boundary;
-
-	/// Waist fit
-	std::vector<Fit*> m_fits;
-
-	/// Magic waist
-	Beam m_targetBeam;
-	double m_targetOverlap;
-	Orientation m_targetOrientation;
-
-	/// Cavity
-	Cavity m_cavity;
-
-	/// Optics naming
-	std::map<OpticsType, int> m_lastOpticsName;
+	// Optics naming
 	std::map<OpticsType, std::string> m_opticsPrefix;
 
 	/// @todo it might be possible to remove this

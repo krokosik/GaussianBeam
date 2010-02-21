@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -39,7 +39,7 @@ class RullerSlider;
 class OpticsViewProperties;
 class StatusWidget;
 
-class OpticsScene : public QGraphicsScene, protected OpticsBenchEventListener
+class OpticsScene : public QGraphicsScene, public OpticsBenchEventListener
 {
 Q_OBJECT
 
@@ -47,6 +47,7 @@ public:
 	OpticsScene(OpticsBench* bench, Orientation orientation = Horizontal, QObject* parent = 0);
 
 public:
+	OpticsScene* otherScene() const { return m_otherScene; }
 	void setOtherScene(OpticsScene* otherScene) { m_otherScene = otherScene; }
 	Orientation orientation() const { return m_orientation; }
 	void showTargetBeam(bool show = true);
@@ -67,6 +68,7 @@ protected:
 	virtual void onOpticsBenchFitDataChanged(int index);
 	virtual void onOpticsBenchFitsRemoved(int index, int count);
 	virtual void onOpticsBenchSphericityChanged();
+	virtual void onOpticsBenchDimensionalityChanged();
 
 private:
 	void addFitPoint(double position, double radius, QRgb color);
@@ -95,35 +97,32 @@ public:
 	void setStatusWidget(StatusWidget* statusWidget) { m_statusWidget = statusWidget; }
 	double horizontalRange() const { return m_horizontalRange; }
 	void setHorizontalRange(double horizontalRange);
-	double origin() const;
-	void setOrigin(double origin);
+	QPointF origin() const { return m_origin; }
+	void setOrigin(QPointF origin);
 	void showProperties(bool show = true);
 	bool propertiesVisible() const;
 	OpticsViewProperties* propertiesWidget() { return m_opticsViewProperties; }
 	void showFullBench();
 
+signals:
+	void rangeChanged();
+
 /// Inherited protected functions
 protected:
 	virtual void resizeEvent(QResizeEvent* event);
-	virtual void wheelEvent(QWheelEvent* event);
 	virtual void mouseMoveEvent(QMouseEvent* e);
+	virtual void wheelEvent(QWheelEvent* e);
 	virtual void drawBackground(QPainter* painter, const QRectF& rect);
 
 private:
 	void adjustRange();
-	void scaleView(double scaleFactor);
-
-private slots:
-	void scrollUpdated(int value);
 
 private:
 	OpticsBench* m_bench;
 	OpticsViewProperties* m_opticsViewProperties;
-	RullerSlider* m_horizontalRuller;
-	RullerSlider* m_verticalRuller;
 	StatusWidget* m_statusWidget;
 	double m_horizontalRange;
-//	double m_verticalRange;
+	QPointF m_origin;
 
 friend class OpticsScene;
 };

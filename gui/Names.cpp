@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -97,7 +97,7 @@ void initNames(QApplication* app)
 	Property::unit.insert(Property::BeamWaistPosition,      UnitPosition);
 	Property::unit.insert(Property::BeamRayleigh,           UnitRayleigh);
 	Property::unit.insert(Property::BeamDivergence,         UnitDivergence);
-	Property::unit.insert(Property::OpticsSensitivity,      UnitLess);//app->translate(       "Sensitivity") + "\n(%/" + Units::getUnit(UnitPosition).string(false) + tr("²") + ")";
+	Property::unit.insert(Property::OpticsSensitivity,      UnitLess);//app->translate(       "Sensitivity") + "\n(%/" + Unit(UnitPosition).string(false) + tr("²") + ")";
 	Property::unit.insert(Property::OpticsName,             UnitLess);
 	Property::unit.insert(Property::OpticsLock,             UnitLess);
 	Property::unit.insert(Property::OpticsAngle,            UnitAngle);

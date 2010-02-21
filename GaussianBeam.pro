@@ -42,7 +42,7 @@ unittest {
 # Input
 # src
 HEADERS += src/GaussianBeam.h src/Optics.h src/OpticsBench.h src/Statistics.h src/GaussianFit.h \
-           src/Function.h src/OpticsFunction.h src/Cavity.h src/Utils.h src/lmmin.h
+           src/Function.h src/OpticsFunction.h src/Cavity.h src/Utils.h src/lmmin.h src/Delegate.h
 SOURCES += src/GaussianBeam.cpp src/Optics.cpp src/OpticsBench.cpp src/GaussianFit.cpp \
            src/Function.cpp src/OpticsFunction.cpp src/Cavity.cpp src/Utils.cpp src/lmmin.c
 # gui
@@ -52,4 +52,4 @@ SOURCES += gui/GaussianBeamWidget.cpp gui/OpticsView.cpp gui/OpticsWidgets.cpp g
            gui/GaussianBeamModel.cpp gui/GaussianBeamWindow.cpp gui/Unit.cpp gui/Names.cpp \
            gui/GaussianBeamSave.cpp gui/GaussianBeamLoad.cpp
 FORMS    = gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui gui/OpticsViewProperties.ui
-RESOURCES = gui/GaussianBeamRessource.qrc
+RESOURCES = gui/GaussianBeam.qrc

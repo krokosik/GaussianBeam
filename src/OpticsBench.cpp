@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -17,6 +17,7 @@
 */
 
 #include "OpticsBench.h"
+#include "GaussianFit.h"
 #include "OpticsFunction.h"
 #include "Utils.h"
 
@@ -109,8 +110,20 @@ OpticsBench::OpticsBench()
 
 	m_beamSpherical = true;
 	m_fitSpherical = true;
+	m_1D = true;
 
 	resetDefaultValues();
+}
+
+OpticsBench::~OpticsBench()
+{
+	// Delete optics
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		delete (*it);
+
+	// Delelte beams
+	for (vector<Beam*>::iterator it = m_beams.begin(); it != m_beams.end(); it++)
+		delete (*it);
 }
 
 void OpticsBench::resetDefaultValues()
@@ -133,7 +146,6 @@ void OpticsBench::clear()
 
 	// Reset to default values
 	resetDefaultValues();
-
 }
 
 void OpticsBench::populateDefault()
@@ -145,20 +157,23 @@ void OpticsBench::populateDefault()
 	addFit(0, 3);
 }
 
-OpticsBench::~OpticsBench()
+void OpticsBench::setModified(bool modified)
 {
-	// Delete optics
-	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		delete (*it);
+	if (modified == m_modified)
+		return;
 
-	// Delelte beams
-	for (vector<Beam*>::iterator it = m_beams.begin(); it != m_beams.end(); it++)
-		delete (*it);
+	m_modified = modified;
+	emit(onOpticsBenchModified());
 }
 
 bool OpticsBench::isSpherical() const
 {
 	return m_beamSpherical && m_fitSpherical && (m_targetOrientation == Spherical);
+}
+
+bool OpticsBench::is1D() const
+{
+	return m_1D;
 }
 
 void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
@@ -171,9 +186,6 @@ void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
 
 void OpticsBench::detectCavities()
 {
-	static const double epsilon = 1e-10;
-
-
 	// Cavity detection criterions for a given beam to close a cavity with a given optics
 	// - The optics is on the beam optics axis
 	// - The optics is in the beam range
@@ -187,7 +199,7 @@ void OpticsBench::detectCavities()
 			Optics* optics = m_optics[j];
 			Point opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
 			//cerr << "Checking cavity " << i << " and " << j << endl;
-			if (   (fabs(opticsCoordinates.y()) < epsilon)
+			if (   (fabs(opticsCoordinates.y()) < Utils::epsilon)
 			    && (opticsCoordinates.x() >= beam->start())
 			    && (opticsCoordinates.x() <= beam->stop())
 			    && !Beam::copropagating(*beam, *m_beams[j-1])
@@ -210,9 +222,9 @@ void OpticsBench::checkFitSpherical()
 			break;
 		}
 
-	bool changed = spherical ^ m_fitSpherical;
+	bool wasSpherical = isSpherical();
 	m_fitSpherical = spherical;
-	if (changed)
+	if (wasSpherical ^ isSpherical())
 		emit(onOpticsBenchSphericityChanged());
 }
 
@@ -223,10 +235,30 @@ int OpticsBench::nFit() const
 
 Fit* OpticsBench::addFit(unsigned int index, int nData)
 {
-	Fit* fit = new Fit(this, nData);
+	// Find the best name for the fit
+	int minFit = 0;
+	for (vector<Fit*>::iterator it = m_fits.begin(); it != m_fits.end(); it++)
+		if ((*it)->name().substr(0, 3) == "Fit")
+		{
+			int n = atoi((*it)->name().substr(3).c_str());
+			if (n > minFit)
+				minFit = n;
+		}
+	stringstream stream;
+	stream << "Fit" << minFit + 1 << ends;
+	string name;
+	stream >> name;
+
+	// Add a new fit
+	Fit* fit = new Fit(nData);
+	fit->setName(name);
+	fit->changed.connect(this, &OpticsBench::notifyFitChanged);
 	m_fits.insert(m_fits.begin() + index, fit);
 	checkFitSpherical();
+
 	emit(onOpticsBenchFitAdded(index));
+	setModified(true);
+
 	return fit;
 }
 
@@ -247,7 +279,9 @@ void OpticsBench::removeFits(unsigned int startIndex, int n)
 {
 	m_fits.erase(m_fits.begin() + startIndex, m_fits.begin() + startIndex + n);
 	checkFitSpherical();
+
 	emit(onOpticsBenchFitsRemoved(startIndex, n));
+	setModified(true);
 }
 
 void OpticsBench::notifyFitChanged(Fit* fit)
@@ -262,7 +296,9 @@ void OpticsBench::notifyFitChanged(Fit* fit)
 		}
 
 	checkFitSpherical();
+
 	emit(onOpticsBenchFitDataChanged(index));
+	setModified(true);
 }
 
 /////////////////////////////////////////////////
@@ -276,6 +312,7 @@ void OpticsBench::setWavelength(double wavelength)
 	computeBeams();
 
 	emit(onOpticsBenchWavelengthChanged());
+	setModified(true);
 }
 
 void OpticsBench::setLeftBoundary(double leftBoundary)
@@ -286,6 +323,7 @@ void OpticsBench::setLeftBoundary(double leftBoundary)
 	updateExtremeBeams();
 
 	emit(onOpticsBenchBoundariesChanged());
+	setModified(true);
 }
 
 void OpticsBench::setRightBoundary(double rightBoundary)
@@ -296,6 +334,7 @@ void OpticsBench::setRightBoundary(double rightBoundary)
 	updateExtremeBeams();
 
 	emit(onOpticsBenchBoundariesChanged());
+	setModified(true);
 }
 
 /////////////////////////////////////////////////
@@ -326,11 +365,21 @@ void OpticsBench::addOptics(Optics* optics, int index)
 
 void OpticsBench::addOptics(OpticsType opticsType, int index)
 {
-	Optics* optics;
+	// Find a suitable name
+	int minOptics = 0;
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it)->name().substr(0, m_opticsPrefix[opticsType].size()) == m_opticsPrefix[opticsType])
+		{
+			int n = atoi((*it)->name().substr(m_opticsPrefix[opticsType].size()).c_str());
+			if (n > minOptics)
+				minOptics = n;
+		}
 	stringstream stream;
-	stream << m_opticsPrefix[opticsType] << ++m_lastOpticsName[opticsType] << ends;
+	stream << m_opticsPrefix[opticsType] << minOptics + 1 << ends;
 	string name;
 	stream >> name;
+
+	Optics* optics;
 
 	if (opticsType == LensType)
 		optics = new Lens(0.1, 0.0, name);
@@ -350,7 +399,7 @@ void OpticsBench::addOptics(OpticsType opticsType, int index)
 		return;
 
 	if (index > 0)
-		optics->setPosition(OpticsBench::optics(index-1)->position() + 0.05);
+		optics->setPosition(OpticsBench::optics(index-1)->position() + 0.05, false);
 
 	addOptics(optics, index);
 }
@@ -369,10 +418,10 @@ void OpticsBench::removeOptics(int index, int count)
 	computeBeams(index);
 }
 
-int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsoluteLock)
+int OpticsBench::setOpticsPosition(int index, double position)
 {
 	Optics* movedOptics = m_optics[index];
-	m_optics[index]->setPositionCheckLock(position, respectAbsoluteLock);
+	m_optics[index]->setPosition(position, true);
 	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 	computeBeams();
 
@@ -383,53 +432,20 @@ int OpticsBench::setOpticsPosition(int index, double position, bool respectAbsol
 	return index;
 }
 
-void OpticsBench::lockTo(int index, string opticsName)
-{
-	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		if ((*it)->name() == opticsName)
-		{
-			m_optics[index]->relativeLockTo(*it);
-			break;
-		}
-	emit(onOpticsBenchDataChanged(0, nOptics()-1));
-}
-
-void OpticsBench::lockTo(int index, int id)
-{
-	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		if ((*it)->id() == id)
-		{
-			m_optics[index]->relativeLockTo(*it);
-			break;
-		}
-	emit(onOpticsBenchDataChanged(0, nOptics()-1));
-}
-
 void OpticsBench::printTree()
 {
 	cerr << "Locking tree" << endl;
 
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 	{
-		cerr << " Optics " << (*it)->name() << " " <<  (*it)->id() << endl;
+		cerr << " Optics " << (*it)->name() << endl;
 		if ((*it)->absoluteLock())
 			cerr << "  absolutely locked" << endl;
 		if (const Optics* parent = (*it)->relativeLockParent())
-			cerr << "  parent = " << parent->name() << " " << parent->id() << endl;
+			cerr << "  parent = " << parent->name() << endl;
 		for (list<Optics*>::const_iterator cit = (*it)->relativeLockChildren().begin(); cit != (*it)->relativeLockChildren().end(); cit++)
-			cerr << "  child = " << (*cit)->name() << " " << (*cit)->id() << endl;
+			cerr << "  child = " << (*cit)->name() << endl;
 	}
-}
-
-void OpticsBench::setOpticsName(int index, std::string name)
-{
-	// Check that the name is not already attributed
-	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
-		if ((*it)->name() == name)
-			return;
-
-	m_optics[index]->setName(name);
-	emit(onOpticsBenchDataChanged(0, nOptics()-1));
 }
 
 void OpticsBench::opticsPropertyChanged(int /*index*/)
@@ -535,23 +551,40 @@ void OpticsBench::computeBeams(int changedIndex, bool backwards)
 			spherical = false;
 			break;
 		}
-	bool changed = spherical ^ m_beamSpherical;
+	bool wasSpherical = isSpherical();
 	m_beamSpherical = spherical;
+
+	bool oneD = true;
+	for (int i = 0; i < nOptics(); i++)
+	{
+		double angle = fmod(fabs(m_beams[i]->angle()), M_PI);
+		if ((angle > Utils::epsilon) && (angle < M_PI - Utils::epsilon))
+		{
+			oneD = false;
+			break;
+		}
+	}
+	bool was1D = is1D();
+	m_1D = oneD;
 
 	detectCavities();
 
-	if (changed)
+	if (wasSpherical ^ isSpherical())
 		emit(onOpticsBenchSphericityChanged());
+
+	if (was1D ^ is1D())
+		emit(onOpticsBenchDimensionalityChanged());
 
 	if (backwards)
 		emit(onOpticsBenchDataChanged(0, nOptics()-1));
 	else
 		emit(onOpticsBenchDataChanged(changedIndex, nOptics()-1));
+
+	setModified(true);
 }
 
 pair<Beam*, double> OpticsBench::closestPosition(const Point& point, int preferedSide) const
 {
-	const double epsilon = 1e-5;
 	double bestPosition = 0.;
 	double bestDistance = 1e300;
 	Beam* bestBeam = 0;
@@ -587,16 +620,26 @@ pair<Beam*, double> OpticsBench::closestPosition(const Point& point, int prefere
 
 void OpticsBench::setTargetBeam(const Beam& beam)
 {
-	/// @todo check ellipticity and change target orientation
 	m_targetBeam = beam;
 	m_targetBeam.setWavelength(m_wavelength);
+
+	if ((m_targetBeam.orientation() == Ellipsoidal) && (m_targetOrientation == Spherical))
+	{
+		m_targetOrientation = m_targetBeam.orientation();
+		emit(onOpticsBenchSphericityChanged());
+	}
+
 	emit(onOpticsBenchTargetBeamChanged());
+
+	setModified(true);
 }
 
 void OpticsBench::setTargetOverlap(double targetOverlap)
 {
 	m_targetOverlap = targetOverlap;
 	emit(onOpticsBenchTargetBeamChanged());
+
+	setModified(true);
 }
 
 void OpticsBench::setTargetOrientation(Orientation orientation)
@@ -610,12 +653,14 @@ void OpticsBench::setTargetOrientation(Orientation orientation)
 		m_targetBeam.setWaistPosition(m_targetBeam.waistPosition(), Spherical);
 	}
 
-	bool changed = (orientation != m_targetOrientation);
+	bool wasSpherical = isSpherical();
 	m_targetOrientation = orientation;
-	if (changed)
+	if (wasSpherical ^ isSpherical())
 		emit(onOpticsBenchSphericityChanged());
 
 	emit(onOpticsBenchTargetBeamChanged());
+
+	setModified(true);
 }
 
 bool OpticsBench::magicWaist()
@@ -666,7 +711,7 @@ bool OpticsBench::magicWaist()
 	if (found)
 	{
 		for (unsigned int i = 0; i < positions.size(); i++)
-			m_optics[i]->setPositionCheckLock(positions[i]);
+			m_optics[i]->setPosition(positions[i], true);
 		sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 		computeBeams();
     }
@@ -687,7 +732,7 @@ bool OpticsBench::localOptimum()
 		return false;
 
 	for (unsigned int i = 0; i < positions.size(); i++)
-		m_optics[i]->setPositionCheckLock(positions[i]);
+		m_optics[i]->setPosition(positions[i], true);
 	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 	computeBeams();
 

@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -56,6 +56,8 @@ public:
 	Beam(double waist, double waistPosition, double wavelength, double index = 1., double M2 = 1.);
 	/// Construct a Gaussian beam from a given complex beam parapeter @p q at position @p z
 	Beam(const std::complex<double>& q, double z, double wavelength, double index = 1., double M2 = 1.);
+	/// Comparison operator
+	bool operator==(const Beam& other) const;
 
 public:
 
@@ -92,6 +94,8 @@ public:
 	// Aspect functions
 	/// @return true if the beam is spherical
 	bool isSpherical() const;
+	/// @return the orientation of the beam: Spherical or Ellipsoidal
+	Orientation orientation() const;
 	/// Make the beam spherical according to properties on orientation @p orientation
 	void makeSpherical(Orientation orientation = Horizontal);
 
@@ -152,9 +156,6 @@ public:
 	* Tell whether the two given beams share the same optical axis, in the same direction
 	*/
 	static bool copropagating(const Beam& beam1, const Beam& beam2);
-
-	/// Compare the two beams
-	bool operator==(const Beam& other) const;
 
 private:
 	inline double zred(double z, Orientation orientation) const;

@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -23,8 +23,6 @@
 
 #include <vector>
 
-class OpticsBench;
-
 /**
 * Type of data measured by the user for beam fitting
 */
@@ -42,7 +40,9 @@ class Fit
 {
 public:
 	/// Constructor
-	Fit(OpticsBench* bench = 0, int nData = 0);
+	Fit(int nData = 0);
+	/// Comparison operator
+	bool operator==(const Fit& other) const;
 
 public:
 	/// @return the number of points in the fit
@@ -87,8 +87,10 @@ public:
 	* @note the given bema wavelength chosen as the fit wavelength
 	*/
 	double applyFit(Beam& beam) const;
-	/// Compare the physical properties of two fits
-	bool operator==(const Fit& other) const;
+
+// Signals
+public:
+	Utils::Signal<Fit*> changed;
 
 private:
 	/// @return the number of points with non zero measured value in the fit
@@ -104,9 +106,6 @@ private:
 
 
 private:
-	// The parent. may be 0 if none
-	OpticsBench* m_bench;
-
 	// State variables. Remember to update the == operator when changind this list
 	std::string m_name;
 	FitDataType m_dataType;
@@ -122,9 +121,6 @@ private:
 	mutable double m_residue;
 	mutable std::vector<double> m_tmpPositions;
 	mutable std::vector<double> m_tmpRadii;
-
-	// Statics
-	static int m_fitCount;
 };
 
 

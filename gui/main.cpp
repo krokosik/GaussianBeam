@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -27,10 +27,13 @@
 
 int main(int argc, char *argv[])
 {
+	Q_INIT_RESOURCE(GaussianBeam);
+
 	QApplication app(argc, argv);
 
 	QCoreApplication::setOrganizationName("GaussianBeam");
 	QCoreApplication::setApplicationName("GaussianBeam");
+	QCoreApplication::setApplicationVersion("0.5");
 
 	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
 
@@ -46,7 +49,6 @@ int main(int argc, char *argv[])
 
 	initNames(&app);
 
-	///@todo parse other arguments ?
 	QString file;
 	if (argc > 1)
 		file = argv[1];

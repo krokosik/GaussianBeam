@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -18,6 +18,7 @@
 
 #include "src/GaussianBeam.h"
 #include "src/OpticsBench.h"
+#include "src/GaussianFit.h"
 
 #include "gui/GaussianBeamWidget.h"
 #include "gui/GaussianBeamWindow.h"
@@ -111,12 +112,12 @@ void GaussianBeamWidget::readSettings()
 
 void GaussianBeamWidget::updateUnits()
 {
-	doubleSpinBox_HTargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
-	doubleSpinBox_HTargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
-	doubleSpinBox_VTargetWaist->setSuffix(Units::getUnit(UnitWaist).string());
-	doubleSpinBox_VTargetPosition->setSuffix(Units::getUnit(UnitPosition).string());
-	doubleSpinBox_LeftBoundary->setSuffix(Units::getUnit(UnitPosition).string());
-	doubleSpinBox_RightBoundary->setSuffix(Units::getUnit(UnitPosition).string());
+	doubleSpinBox_HTargetWaist->setSuffix(Unit(UnitWaist).string());
+	doubleSpinBox_HTargetPosition->setSuffix(Unit(UnitPosition).string());
+	doubleSpinBox_VTargetWaist->setSuffix(Unit(UnitWaist).string());
+	doubleSpinBox_VTargetPosition->setSuffix(Unit(UnitPosition).string());
+	doubleSpinBox_LeftBoundary->setSuffix(Unit(UnitPosition).string());
+	doubleSpinBox_RightBoundary->setSuffix(Unit(UnitPosition).string());
 	/// @todo update table headers and status bar and wavelength
 }
 
@@ -136,18 +137,18 @@ void GaussianBeamWidget::onOpticsBenchWavelengthChanged()
 
 void GaussianBeamWidget::on_doubleSpinBox_LeftBoundary_valueChanged(double value)
 {
-	m_bench->setLeftBoundary(value*Units::getUnit(UnitPosition).multiplier());
+	m_bench->setLeftBoundary(value*Unit(UnitPosition).multiplier());
 }
 
 void GaussianBeamWidget::on_doubleSpinBox_RightBoundary_valueChanged(double value)
 {
-	m_bench->setRightBoundary(value*Units::getUnit(UnitPosition).multiplier());
+	m_bench->setRightBoundary(value*Unit(UnitPosition).multiplier());
 }
 
 void GaussianBeamWidget::onOpticsBenchBoundariesChanged()
 {
-	doubleSpinBox_LeftBoundary->setValue(m_bench->leftBoundary()*Units::getUnit(UnitPosition).divider());
-	doubleSpinBox_RightBoundary->setValue(m_bench->rightBoundary()*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_LeftBoundary->setValue(m_bench->leftBoundary()*Unit(UnitPosition).divider());
+	doubleSpinBox_RightBoundary->setValue(m_bench->rightBoundary()*Unit(UnitPosition).divider());
 }
 
 ///////////////////////////////////////////////////////////
@@ -189,10 +190,10 @@ void GaussianBeamWidget::updateTargetInformation()
 		doubleSpinBox_VTargetPosition->setVisible(false);
 	}
 
-	doubleSpinBox_HTargetWaist->setValue(m_bench->targetBeam()->waist(Horizontal)*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_HTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Horizontal)*Units::getUnit(UnitPosition).divider());
-	doubleSpinBox_VTargetWaist->setValue(m_bench->targetBeam()->waist(Vertical)*Units::getUnit(UnitWaist).divider());
-	doubleSpinBox_VTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Vertical)*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_HTargetWaist->setValue(m_bench->targetBeam()->waist(Horizontal)*Unit(UnitWaist).divider());
+	doubleSpinBox_HTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Horizontal)*Unit(UnitPosition).divider());
+	doubleSpinBox_VTargetWaist->setValue(m_bench->targetBeam()->waist(Vertical)*Unit(UnitWaist).divider());
+	doubleSpinBox_VTargetPosition->setValue(m_bench->targetBeam()->waistPosition(Vertical)*Unit(UnitPosition).divider());
 	doubleSpinBox_MinOverlap->setValue(m_bench->targetOverlap()*100.);
 	displayOverlap();
 
@@ -220,7 +221,7 @@ void GaussianBeamWidget::on_doubleSpinBox_HTargetWaist_valueChanged(double value
 		orientation = Spherical;
 
 	Beam beam = *m_bench->targetBeam();
-	beam.setWaist(value*Units::getUnit(UnitWaist).multiplier(), orientation);
+	beam.setWaist(value*Unit(UnitWaist).multiplier(), orientation);
 	m_bench->setTargetBeam(beam);
 }
 
@@ -234,7 +235,7 @@ void GaussianBeamWidget::on_doubleSpinBox_HTargetPosition_valueChanged(double va
 		orientation = Spherical;
 
 	Beam beam = *m_bench->targetBeam();
-	beam.setWaistPosition(value*Units::getUnit(UnitPosition).multiplier(), orientation);
+	beam.setWaistPosition(value*Unit(UnitPosition).multiplier(), orientation);
 	m_bench->setTargetBeam(beam);
 }
 
@@ -244,7 +245,7 @@ void GaussianBeamWidget::on_doubleSpinBox_VTargetWaist_valueChanged(double value
 		return;
 
 	Beam beam = *m_bench->targetBeam();
-	beam.setWaist(value*Units::getUnit(UnitWaist).multiplier(), Vertical);
+	beam.setWaist(value*Unit(UnitWaist).multiplier(), Vertical);
 	m_bench->setTargetBeam(beam);
 }
 
@@ -254,7 +255,7 @@ void GaussianBeamWidget::on_doubleSpinBox_VTargetPosition_valueChanged(double va
 		return;
 
 	Beam beam = *m_bench->targetBeam();
-	beam.setWaistPosition(value*Units::getUnit(UnitPosition).multiplier(), Vertical);
+	beam.setWaistPosition(value*Unit(UnitPosition).multiplier(), Vertical);
 	m_bench->setTargetBeam(beam);
 }
 
@@ -303,7 +304,7 @@ void GaussianBeamWidget::onOpticsBenchTargetBeamChanged()
 QVariant GaussianBeamWidget::formattedFitData(double value)
 {
 	if (value != 0.)
-		return value*Units::getUnit(UnitWaist).divider();
+		return value*Unit(UnitWaist).divider();
 
 	return QString("");
 }
@@ -364,15 +365,15 @@ void GaussianBeamWidget::updateFitInformation(int index)
 		fitTable->hideColumn(1);
 
 	QString header = (fit->orientation() == Spherical) ? tr("Value") : tr("Horizontal\nvalue");
-	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Units::getUnit(UnitPosition).string(false) + ")");
-	fitModel->setHeaderData(1, Qt::Horizontal, header + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
-	fitModel->setHeaderData(2, Qt::Horizontal, tr("Vertical\nvalue") + "\n(" + Units::getUnit(UnitWaist).string(false) + ")");
+	fitModel->setHeaderData(0, Qt::Horizontal, tr("Position") + "\n(" + Unit(UnitPosition).string(false) + ")");
+	fitModel->setHeaderData(1, Qt::Horizontal, header + "\n(" + Unit(UnitWaist).string(false) + ")");
+	fitModel->setHeaderData(2, Qt::Horizontal, tr("Vertical\nvalue") + "\n(" + Unit(UnitWaist).string(false) + ")");
 
 	// Fill the fit table
 	for (int i = 0; i < fit->size(); i++)
 	{
 		if ((fit->position(i) != 0.) || fit->nonZeroEntry(i))
-			fitModel->setData(fitModel->index(i, 0), fit->position(i)*Units::getUnit(UnitPosition).divider());
+			fitModel->setData(fitModel->index(i, 0), fit->position(i)*Unit(UnitPosition).divider());
 		else
 			fitModel->setData(fitModel->index(i, 0), QString(""));
 
@@ -391,13 +392,13 @@ void GaussianBeamWidget::updateFitInformation(int index)
 		QString text;
 		if (fh)
 		{
-			text += (fv ? tr("Horizonal waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Horizontal)*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
-					(fv ? tr("Horizonal position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Horizontal)*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n";
+			text += (fv ? tr("Horizonal waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Horizontal)*Unit(UnitWaist).divider()) + Unit(UnitWaist).string() + "\n" +
+					(fv ? tr("Horizonal position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Horizontal)*Unit(UnitPosition).divider()) + Unit(UnitPosition).string() + "\n";
 		}
 		if (fv)
 		{
-			text += (fh ? tr("Vertical waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Vertical)*Units::getUnit(UnitWaist).divider()) + Units::getUnit(UnitWaist).string() + "\n" +
-					(fh ? tr("Vertical position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Vertical)*Units::getUnit(UnitPosition).divider()) + Units::getUnit(UnitPosition).string() + "\n";
+			text += (fh ? tr("Vertical waist") : tr("Waist")) + " = " + QString::number(fitBeam.waist(Vertical)*Unit(UnitWaist).divider()) + Unit(UnitWaist).string() + "\n" +
+					(fh ? tr("Vertical position") : tr("Position")) + " = " + QString::number(fitBeam.waistPosition(Vertical)*Unit(UnitPosition).divider()) + Unit(UnitPosition).string() + "\n";
 		}
 		text += tr("Residue") + " = " + QString::number(residue);
 		label_FitResult->setText(text);
@@ -490,9 +491,9 @@ void GaussianBeamWidget::fitModelChanged(const QModelIndex& start, const QModelI
 
 	for (int row = start.row(); row <= stop.row(); row++)
 	{
-		double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Units::getUnit(UnitPosition).multiplier();
-		double hValue = fitModel->data(fitModel->index(row, 1)).toDouble()*Units::getUnit(UnitWaist).multiplier();
-		double vValue = fitModel->data(fitModel->index(row, 2)).toDouble()*Units::getUnit(UnitWaist).multiplier();
+		double position = fitModel->data(fitModel->index(row, 0)).toDouble()*Unit(UnitPosition).multiplier();
+		double hValue = fitModel->data(fitModel->index(row, 1)).toDouble()*Unit(UnitWaist).multiplier();
+		double vValue = fitModel->data(fitModel->index(row, 2)).toDouble()*Unit(UnitWaist).multiplier();
 		if (fit->orientation() == Spherical)
 			fit->setData(row, position, hValue, Spherical);
 		else
@@ -567,8 +568,7 @@ void GaussianBeamWidget::onOpticsBenchFitAdded(int index)
 
 void GaussianBeamWidget::onOpticsBenchFitsRemoved(int index, int count)
 {
-	/// @bug should be i >= index ?????
-	for (int i = index + count - 1; i >= 0; i--)
+	for (int i = index + count - 1; i >= index; i--)
 		comboBox_Fit->removeItem(i);
 }
 

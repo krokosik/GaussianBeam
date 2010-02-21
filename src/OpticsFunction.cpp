@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -37,18 +37,15 @@ vector<Optics*> OpticsFunction::cloneOptics() const
 
 	// Clone optics objects
 	for (vector<Optics*>::const_iterator it = m_optics.begin(); it != m_optics.end(); it++)
-	{
 		opticsClone.push_back((*it)->clone());
-		opticsClone.back()->eraseLockingTree();
-	}
 
 	// Rebuild the locking tree
 	for (vector<Optics*>::const_iterator itChild = m_optics.begin(); itChild != m_optics.end(); itChild++)
 		if ((*itChild)->relativeLockParent())
-			for (vector<Optics*>::iterator itParent = opticsClone.begin(); itParent != opticsClone.end(); itParent++)
-				if ((*itParent)->id() == (*itChild)->relativeLockParent()->id())
+			for (vector<Optics*>::const_iterator itParent = m_optics.begin(); itParent != m_optics.end(); itParent++)
+				if ((*itParent) == (*itChild)->relativeLockParent())
 				{
-					opticsClone[itChild - m_optics.begin()]->relativeLockTo(*itParent);
+					opticsClone[itChild - m_optics.begin()]->relativeLockTo(opticsClone[itParent - m_optics.begin()]);
 					break;
 				}
 
@@ -62,9 +59,9 @@ Beam OpticsFunction::beam(const std::vector<double>& x) const
 
 	for (unsigned int i = 0; i < ::min(opticsClone.size(), x.size()); i++)
 		if (m_checkLock)
-			opticsClone[i]->setPositionCheckLock(x[i]);
+			opticsClone[i]->setPosition(x[i], true);
 		else
-			opticsClone[i]->setPosition(x[i]);
+			opticsClone[i]->setPosition(x[i], false);
 
 	sort(opticsClone.begin() + 1, opticsClone.end(), less<Optics*>());
 

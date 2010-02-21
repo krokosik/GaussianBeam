@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,7 +19,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "Delegate.h"
 #include <vector>
+#include <set>
 #include <cmath>
 
 inline double sqr(double x)
@@ -67,6 +69,7 @@ namespace Utils
 	double norm(const std::vector<double>& v1);
 //	double distance(const std::vector<double>& v1, const std::vector<double>& v2);
 
+	/// Point
 	class Point
 	{
 	public:
@@ -88,6 +91,7 @@ namespace Utils
 	Point operator+(const Point& p1, const Point& p2);
 	double distance(const Point& p1, const Point& p2);
 
+	/// Rect
 	class Rect
 	{
 	public:
@@ -109,6 +113,29 @@ namespace Utils
 
 	private:
 		double m_x1, m_y1, m_x2, m_y2;
+	};
+
+
+	/// Signal
+	template<class Param>
+	class Signal
+	{
+	private:
+		typedef std::set<Delegate1<Param> > DelegateList;
+		typedef typename DelegateList::iterator DelegateIterator;
+		DelegateList m_delegateList;
+
+	public:
+		template<class X, class Y> void connect(Y* obj, void (X::*func)(Param p))          { m_delegateList.insert(MakeDelegate(obj, func)); }
+		template<class X, class Y> void connect(Y* obj, void (X::*func)(Param p) const)    { m_delegateList.insert(MakeDelegate(obj, func)); }
+		template<class X, class Y> void disconnect(Y* obj, void (X::*func)(Param p))       { m_delegateList.erase(MakeDelegate(obj, func)); }
+		template<class X, class Y> void disconnect(Y* obj, void (X::*func)(Param p) const) { m_delegateList.erase(MakeDelegate(obj, func)); }
+		void emit(Param p) const
+		{
+			for (DelegateIterator it = m_delegateList.begin(); it != m_delegateList.end(); ++it)
+				(*it)(p);
+		}
+
 	};
 
 }

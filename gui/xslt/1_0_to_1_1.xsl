@@ -39,6 +39,42 @@
 	</targetBeam>
 </xsl:template>
 
+<!-- Optics -->
+
+<xsl:template match = "gaussianBeam[@version = '1.0']/*/relativeLockParent">
+	<relativeLockParent>
+		<xsl:variable name="lockParent"><xsl:value-of select="."/></xsl:variable>
+		<xsl:variable name="firstOptics" select="count(../../inputBeam/preceding-sibling::*)"/>
+		<xsl:for-each select="../../*">
+			<xsl:if test="name=$lockParent">
+				<xsl:value-of select="count(./preceding-sibling::*) - $firstOptics + 1"/>
+			</xsl:if>
+		</xsl:for-each>
+	</relativeLockParent>
+</xsl:template>
+
+<xsl:template match="gaussianBeam[@version = '1.0']/inputBeam |
+                     gaussianBeam[@version = '1.0']/lens |
+                     gaussianBeam[@version = '1.0']/flatInterface |
+                     gaussianBeam[@version = '1.0']/curvedInterface |
+                     gaussianBeam[@version = '1.0']/flatMirror |
+                     gaussianBeam[@version = '1.0']/curvedMirror |
+                     gaussianBeam[@version = '1.0']/genericABCD">
+	<xsl:variable name="firstOptics" select="count(../inputBeam/preceding-sibling::*)"/>
+	<xsl:copy>
+	<xsl:attribute name="id"><xsl:value-of select="count(./preceding-sibling::*) - $firstOptics + 1"/></xsl:attribute>
+		<xsl:apply-templates/>
+		<xsl:if test="not(absoluteLock)">
+			<absoluteLock>
+			<xsl:choose>
+				<xsl:when test="name()='inputBeam'">1</xsl:when>
+				<xsl:otherwise>0</xsl:otherwise>
+			</xsl:choose>
+			</absoluteLock>
+		</xsl:if>
+	</xsl:copy>
+</xsl:template>
+
 <!-- Root -->
 
 <xsl:template match="gaussianBeam[@version = '1.0']">
@@ -51,7 +87,7 @@
 		<xsl:apply-templates select="magicWaist"/>
 		<xsl:apply-templates select="waistFit"/>
 		<opticsList>
-			<xsl:apply-templates select="inputBeam|lens|flatInterface|curvedInterface|flatMirror|genericABCD"/>
+			<xsl:apply-templates select="inputBeam|lens|flatInterface|curvedInterface|flatMirror|curvedMirror|genericABCD"/>
 		</opticsList>
 	</bench>
 	<view id="0" bench="0">

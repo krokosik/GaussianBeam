@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -17,28 +17,18 @@
 */
 
 #include "GaussianFit.h"
-#include "OpticsBench.h"
 #include "Statistics.h"
 #include "lmmin.h"
 
 #include <iostream>
 #include <cmath>
 
-#define epsilon 1e-50
-
-int Fit::m_fitCount = 0;
-
 using namespace std;
 
-Fit::Fit(OpticsBench* bench, int nData) : m_bench(bench)
+Fit::Fit(int nData)
 {
-	stringstream stream;
-	stream << "Fit" << m_fitCount++ << ends;
-	stream >> m_name;
-
 	m_dirty = true;
 	m_lastWavelength = 0.;
-	/// @todo change this default to Radius_e2 or remember from the last usage
 	m_dataType = Radius_e2;
 	m_color = 0;
 	m_orientation = Spherical;
@@ -52,7 +42,7 @@ int Fit::nonZeroSize(Orientation orientation) const
 	int result = 0;
 
 	for (int i = 0; i < size(); i++)
-		if (radius(i, orientation) > epsilon)
+		if (radius(i, orientation) > Utils::epsilon)
 			result++;
 
 	return result;
@@ -70,7 +60,7 @@ bool Fit::fitAvailable(Orientation orientation) const
 		return (nonZeroSize(orientation) > 1);
 	}
 
-	cerr << "Wrong orientation arguement in fitAvailable(" << orientation << ")" << endl;
+	cerr << "Wrong orientation argument in fitAvailable(" << orientation << ")" << endl;
 	return false;
 }
 
@@ -89,27 +79,27 @@ bool Fit::nonZeroEntry(int index) const
 void Fit::setName(std::string name)
 {
 	m_name = name;
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 void Fit::setDataType(FitDataType dataType)
 {
 	m_dataType = dataType;
 	m_dirty = true;
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 void Fit::setOrientation(Orientation orientation)
 {
 	m_orientation = orientation;
 	m_dirty = true;
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 void Fit::setColor(unsigned int color)
 {
 	m_color = color;
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 double Fit::position(unsigned int index) const
@@ -198,16 +188,16 @@ void Fit::setData(unsigned int index, double position, double value, Orientation
 		m_values.resize(index + 1);
 	}
 
-	if (m_orientation != Vertical)
+	if ((orientation == Horizontal) || ((orientation == Spherical) && (m_orientation != Vertical)))
 		m_values[index].first = value;
 
-	if (m_orientation != Horizontal)
+	if ((orientation == Vertical)   || ((orientation == Spherical) && (m_orientation != Horizontal)))
 		m_values[index].second = value;
 
 	m_positions[index] = position;
 	m_dirty = true;
 
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 void Fit::removeData(unsigned int index)
@@ -216,7 +206,7 @@ void Fit::removeData(unsigned int index)
 	m_values.erase(m_values.begin() + index);
 	m_dirty = true;
 
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 void Fit::clear()
@@ -225,7 +215,7 @@ void Fit::clear()
 	m_values.clear();
 	m_dirty = true;
 
-	if (m_bench) m_bench->notifyFitChanged(this);
+	changed.emit(this);
 }
 
 double Fit::applyFit(Beam& beam) const
@@ -338,7 +328,7 @@ double Fit::fitBeam(double wavelength, Orientation orientation) const
 	m_tmpPositions.clear();
 	m_tmpRadii.clear();
 	for (int i = 0; i < size(); i++)
-		if (radius(i, orientation) > epsilon)
+		if (radius(i, orientation) > Utils::epsilon)
 		{
 			m_tmpPositions.push_back(position(i));
 			m_tmpRadii.push_back(radius(i, orientation));
@@ -353,7 +343,7 @@ double Fit::fitBeam(double wavelength, Orientation orientation) const
 	// 3/ Try a linear fit with the first two points + non linear fit on all points
 	vector<double> positions, radii;
 	for (int i = 0; (i < size()) && (positions.size() < 2); i++)
-		if (radius(i, orientation) > epsilon)
+		if (radius(i, orientation) > Utils::epsilon)
 		{
 			positions.push_back(position(i));
 			radii.push_back(radius(i, orientation));
@@ -366,7 +356,7 @@ double Fit::fitBeam(double wavelength, Orientation orientation) const
 	positions.clear();
 	radii.clear();
 	for (int i = size()-1; (i >= 0) && (positions.size() < 2); i--)
-		if (radius(i, orientation) > epsilon)
+		if (radius(i, orientation) > Utils::epsilon)
 		{
 			positions.push_back(position(i));
 			radii.push_back(radius(i, orientation));

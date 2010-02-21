@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -191,6 +191,11 @@ bool Beam::isSpherical() const
 	return (m_sphericalWaist && m_sphericalPosition);
 }
 
+Orientation Beam::orientation() const
+{
+	return isSpherical() ? Spherical : Ellipsoidal;
+}
+
 void Beam::makeSpherical(Orientation orientation)
 {
 	setWaist(waist(orientation), Spherical);
@@ -368,7 +373,6 @@ double Beam::overlap(const Beam& beam1, const Beam& beam2, double z, Orientation
 
 bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
 {
-	static const double epsilon = 1e-7;
 	double deltaX = beam1.origin().x() - beam2.origin().x();
 	double deltaY = beam1.origin().y() - beam2.origin().y();
 	double deltaAngle = fmodPos(beam1.angle() - beam2.angle(), 2.*M_PI);
@@ -376,8 +380,8 @@ bool Beam::copropagating(const Beam& beam1, const Beam& beam2)
 //	cerr << " angles = " << beam1.angle() << " " << beam2.angle() << " " << deltaAngle << endl;
 //	cerr << " criterion = " << deltaOrigin[1] - tan(beam1.angle())*deltaOrigin[0] << endl;
 
-	if (   (   (deltaAngle < epsilon)
-		    || (deltaAngle > (2.*M_PI - epsilon)))
+	if (   (   (deltaAngle < Utils::epsilon)
+		    || (deltaAngle > (2.*M_PI - Utils::epsilon)))
 		&& (fabs(deltaY - tan(beam1.angle())*deltaX) < epsilon))
 		return true;
 

@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,18 +19,15 @@
 #ifndef GAUSSIANBEAMWIDGET_H
 #define GAUSSIANBEAMWIDGET_H
 
-#include "ui_GaussianBeamWidget.h"
-
 #include "src/Optics.h"
 #include "src/OpticsBench.h"
+#include "ui_GaussianBeamWidget.h"
 
 #include <QWidget>
 
 class QStandardItemModel;
 class QDomElement;
 class QAction;
-
-class OpticsBench;
 class GaussianBeamWindow;
 
 class GaussianBeamWidget : public QWidget,

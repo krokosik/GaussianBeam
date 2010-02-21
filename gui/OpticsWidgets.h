@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -19,9 +19,8 @@
 #ifndef OPTICSWIDGETS_H
 #define OPTICSWIDGETS_H
 
-#include "ui_OpticsViewProperties.h"
-
 #include "src/GaussianBeam.h"
+#include "ui_OpticsViewProperties.h"
 
 #include <QScrollBar>
 #include <QModelIndex>
@@ -35,27 +34,25 @@ class QStatusBar;
 /**
 * Displays graduated rullers instead of scroll bars
 */
-class RullerSlider : public QScrollBar
+class GraduatedRuller : public QWidget
 {
 Q_OBJECT
 
 public:
-	RullerSlider(OpticsView* view, bool zoomScroll = false);
-
-public:
-	double rullerScale() const;
+	GraduatedRuller(OpticsView* view, Qt::Orientation orientation);
 
 protected:
 	virtual void paintEvent(QPaintEvent* event);
-	virtual void mousePressEvent(QMouseEvent* event);
 	virtual void wheelEvent(QWheelEvent* event);
+//	virtual void mousePressEvent(QMouseEvent* event);
 
 private:
-	void drawGraduation(QPainter& painter, double position, double fractionalLength);
+	double optimalSpacing(double length, int nMajorTics) const;
 
 private:
 	OpticsView* m_view;
-	bool m_zoomScroll;
+	Qt::Orientation m_orientation;
+	double m_height;
 };
 
 /**
@@ -69,7 +66,7 @@ public:
 	OpticsViewProperties(OpticsView* view);
 
 public:
-	void setOrigin(double origin);
+	void setOrigin(QPointF origin);
 	void setHorizontalRange(double horizontalRange);
 	void setBeamScale(double beamScale);
 	void setOpticsHeight(double opticsHeight);

@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -17,6 +17,7 @@
 */
 
 #include "gui/GaussianBeamWindow.h"
+#include "gui/OpticsView.h"
 #include "gui/Unit.h"
 #include "src/GaussianFit.h"
 
@@ -58,15 +59,28 @@ bool GaussianBeamWindow::writeFile(const QString& fileName)
 	return true;
 }
 
+void GaussianBeamWindow::writeWaist(QXmlStreamWriter& xmlWriter, const Beam* beam, Orientation orientation) const
+{
+	xmlWriter.writeStartElement("waist");
+		xmlWriter.writeAttribute("orientation", QString::number(orientation));
+		xmlWriter.writeCharacters(QString::number(beam->waist(orientation)));
+	xmlWriter.writeEndElement();
+	xmlWriter.writeStartElement("waistPosition");
+		xmlWriter.writeAttribute("orientation", QString::number(orientation));
+		xmlWriter.writeCharacters(QString::number(beam->waistPosition(orientation)));
+	xmlWriter.writeEndElement();
+}
+
 void GaussianBeamWindow::writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam) const
 {
-	/// @bug make this available to loadBeam and alternative short names for horizontal properties for compatibility
-	xmlWriter.writeTextElement("horizontalWaist", QString::number(beam->waist(Horizontal)));
-	xmlWriter.writeTextElement("horizontalPosition", QString::number(beam->waistPosition(Horizontal)));
-	xmlWriter.writeTextElement("verticalWaist", QString::number(beam->waist(Vertical)));
-	xmlWriter.writeTextElement("verticalPosition", QString::number(beam->waistPosition(Vertical)));
+	if (beam->isSpherical())
+		writeWaist(xmlWriter, beam, Spherical);
+	else
+	{
+		writeWaist(xmlWriter, beam, Horizontal);
+		writeWaist(xmlWriter, beam, Vertical);
+	}
 	xmlWriter.writeTextElement("wavelength", QString::number(beam->wavelength()));
-	xmlWriter.writeTextElement("angle", QString::number(beam->angle()));
 	xmlWriter.writeTextElement("index", QString::number(beam->index()));
 	xmlWriter.writeTextElement("M2", QString::number(beam->M2()));
 }
@@ -90,7 +104,7 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter) const
 		Fit* fit = m_bench->fit(i);
 		xmlWriter.writeStartElement("beamFit");
 		xmlWriter.writeAttribute("id", QString::number(i));
-			xmlWriter.writeTextElement("name", fit->name().c_str());
+			xmlWriter.writeTextElement("name", QString::fromUtf8(fit->name().c_str()));
 			xmlWriter.writeTextElement("dataType", QString::number(int(fit->dataType())));
 			xmlWriter.writeTextElement("color", QString::number(fit->color()));
 			xmlWriter.writeTextElement("orientation", QString::number(fit->orientation()));
@@ -130,14 +144,17 @@ void GaussianBeamWindow::writeBench(QXmlStreamWriter& xmlWriter) const
 
 	xmlWriter.writeStartElement("opticsList");
 	for (int i = 0; i < m_bench->nOptics(); i++)
+	{
+		xmlWriter.writeStartElement(m_opticsElements[m_bench->optics(i)->type()]);
+		xmlWriter.writeAttribute("id", QString::number(i));
 		writeOptics(xmlWriter, m_bench->optics(i));
+		xmlWriter.writeEndElement();
+	}
 	xmlWriter.writeEndElement();
 }
 
 void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* optics) const
 {
-	xmlWriter.writeStartElement(m_opticsElements[optics->type()]);
-	xmlWriter.writeAttribute("id", QString::number(optics->id()));
 
 	if (optics->type() == CreateBeamType)
 	{
@@ -164,26 +181,25 @@ void GaussianBeamWindow::writeOptics(QXmlStreamWriter& xmlWriter, const Optics* 
 	else if (optics->type() == GenericABCDType)
 	{
 		xmlWriter.writeTextElement("width", QString::number(optics->width()));
-		xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD*>(optics)->A()));
-		xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD*>(optics)->B()));
-		xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD*>(optics)->C()));
-		xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D()));
+		xmlWriter.writeTextElement("A", QString::number(dynamic_cast<const GenericABCD*>(optics)->A(Spherical)));
+		xmlWriter.writeTextElement("B", QString::number(dynamic_cast<const GenericABCD*>(optics)->B(Spherical)));
+		xmlWriter.writeTextElement("C", QString::number(dynamic_cast<const GenericABCD*>(optics)->C(Spherical)));
+		xmlWriter.writeTextElement("D", QString::number(dynamic_cast<const GenericABCD*>(optics)->D(Spherical)));
 	}
 	xmlWriter.writeTextElement("position", QString::number(optics->position()));
 	xmlWriter.writeTextElement("angle", QString::number(optics->angle()));
 	xmlWriter.writeTextElement("orientation", QString::number(optics->orientation()));
-	xmlWriter.writeTextElement("name", QString(optics->name().c_str()));
+	xmlWriter.writeTextElement("name", QString::fromUtf8(optics->name().c_str()));
 	xmlWriter.writeTextElement("absoluteLock", QString::number(optics->absoluteLock() ? true : false));
 	if (optics->relativeLockParent())
-		xmlWriter.writeTextElement("relativeLockParent", QString::number(optics->relativeLockParent()->id()));
-	xmlWriter.writeEndElement();
+		xmlWriter.writeTextElement("relativeLockParent", QString::number(m_bench->opticsIndex(optics->relativeLockParent())));
 }
 
 void GaussianBeamWindow::writeView(QXmlStreamWriter& xmlWriter) const
 {
 	xmlWriter.writeTextElement("horizontalRange", QString::number(m_hOpticsView->horizontalRange()));
-//	xmlWriter.writeTextElement("verticalRange", QString::number(m_hOpticsView->verticalRange()));
-	xmlWriter.writeTextElement("origin", QString::number(m_hOpticsView->origin()));
+	/// @todo vertial origin
+	xmlWriter.writeTextElement("origin", QString::number(m_hOpticsView->origin().x()));
 	xmlWriter.writeStartElement("showTargetBeam");
 	xmlWriter.writeAttribute("id", "0");
 	xmlWriter.writeCharacters(QString::number(m_hOpticsScene->targetBeamVisible()));

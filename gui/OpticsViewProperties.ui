@@ -31,7 +31,7 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset resource="GaussianBeamRessource.qrc">
+           <iconset resource="GaussianBeam.qrc">
             <normaloff>:/images/zoom-in.png</normaloff>:/images/zoom-in.png</iconset>
           </property>
           <property name="checkable">
@@ -48,7 +48,7 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset resource="GaussianBeamRessource.qrc">
+           <iconset resource="GaussianBeam.qrc">
             <normaloff>:/images/zoom-out.png</normaloff>:/images/zoom-out.png</iconset>
           </property>
          </widget>
@@ -62,7 +62,7 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset resource="GaussianBeamRessource.qrc">
+           <iconset resource="GaussianBeam.qrc">
             <normaloff>:/images/zoom-original.png</normaloff>:/images/zoom-original.png</iconset>
           </property>
          </widget>
@@ -76,7 +76,7 @@
            <string>...</string>
           </property>
           <property name="icon">
-           <iconset resource="GaussianBeamRessource.qrc">
+           <iconset resource="GaussianBeam.qrc">
             <normaloff>:/images/object-unlocked.png</normaloff>
             <normalon>:/images/object-locked.png</normalon>:/images/object-unlocked.png</iconset>
           </property>
@@ -208,7 +208,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="GaussianBeamRessource.qrc"/>
+  <include location="GaussianBeam.qrc"/>
  </resources>
  <connections/>
 </ui>

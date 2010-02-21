@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -42,15 +42,14 @@ public:
 	* @p name name of the optics
 	*/
 	Optics(OpticsType type, double position, std::string name);
-	/**
-	* Destructor
-	*/
+	/// Copy constructor. Erase relative lock information, because they only belong tho one object.
+	Optics(const Optics& optics);
+	/// Destructor
 	virtual ~Optics();
-	/**
-	* Duplicate the optics into a new independant class.
-	* This function can clone an optics without knowing its actual type.
-	*/
+	/// Duplicate the optics into a new independant class. This function can copy an optics without knowing its actual type.
 	virtual Optics* clone() const = 0;
+	/// Comparison operator
+	virtual bool operator==(const Optics& other) const;
 
 public:
 	/**
@@ -84,12 +83,19 @@ public:
 	virtual double indexJump() const { return 1.; }
 
 public:
+	// Type
+
 	/// @return the enum type of the optics
 	OpticsType type() const { return m_type; }
+	/// @return true if the optics is of type ABCD
+	virtual bool isABCD() const { return false; }
+
+	// Geometry
+
 	/// @return the position of the left boundary of the optics
 	double position() const { return m_position; }
-	/// Set the left position of the optics to @p position
-	void setPosition(double position) { m_position = position; }
+	/// Set the left position of the optics to @p position. If @p respectLocks is true, respect absolute and relative locks
+	void setPosition(double position, bool respectLocks);
 	/// @return the right position of the optics
 	double endPosition() const { return position() + width(); }
 	/// @return the width of the optics
@@ -100,24 +106,27 @@ public:
 	double angle() const { return m_angle; }
 	/// Set the angle between the optics and the optical axis
 	void setAngle(double angle) { if (isRotable()) m_angle = angle; }
-	/// @return the orientaition of the optics, i.e. its anisotropy (e.g. cylindric aspect for lenses)
-	Orientation orientation() const { return m_orientation; }
-	/// Set the orientation of the optics
-	void setOrientation(Orientation orientation) { if (isOrientable()) m_orientation = orientation; }
+	/// @return true if the optics is rotable, i.e. if it can form an angle different from Pi/2 with the optical axis
+	bool isRotable() const { return m_rotable; }
+
+	// Name
+
 	/// @return the name of the optics
 	std::string name() const { return m_name; }
 	/// Set the name of the optics
 	void setName(std::string name) { m_name = name; }
-	/// @return true if the optics is rotable, i.e. if it can form an angle different from Pi/2 with the optical axis
-	bool isRotable() const { return m_rotable; }
+
+	// Orientation
+
+	/// @return the orientaition of the optics, i.e. its anisotropy (e.g. cylindric aspect for lenses)
+	Orientation orientation() const { return m_orientation; }
+	/// Set the orientation of the optics
+	void setOrientation(Orientation orientation) { if (isOrientable(orientation)) m_orientation = orientation; }
+	/// @return true if it is possible to orient the optics along orientation @p orientation
+	virtual bool isOrientable(Orientation orientation) const { return orientation == Spherical; }
 	/// @return true if the optics is orientable, i.e. if it can be anisotropic
-	bool isOrientable() const { return m_orientable; }
-	/// @return true if the optics is of type ABCD
-	bool isABCD() const { return m_ABCD; }
-	/// @return the unique ID of the optics
-	int id() const { return m_id; }
-	/// set the optics id. This function is reserved to loading functions: do not use
-	void setId(int id) { m_id = id; }
+	bool isOrientable() const;
+
 	/// Query absolute lock. @return true if the lock is absolute, false otherwise
 	bool absoluteLock() const { return m_absoluteLock; }
 	/**
@@ -129,7 +138,7 @@ public:
 	const Optics* relativeLockParent() const { return m_relativeLockParent; }
 	/// @return a list of relative lock children
 	const std::list<Optics*>& relativeLockChildren() const { return m_relativeLockChildren; }
-	/// Query relative lock. @return true if @p optics within the locking tree of this optics
+	/// Query relative lock. @return true if @p optics is within the locking tree of this optics
 	bool relativeLockedTo(const Optics* const optics) const;
 	/// @return true if the locking tree is absolutely locked, i.e. if the root of the locking tree is absolutely locked
 	bool relativeLockTreeAbsoluteLock() const { return relativeLockRoot()->absoluteLock(); }
@@ -144,24 +153,10 @@ public:
 	* @return true if success, false otherwise
 	*/
 	bool relativeUnlock();
-	/**
-	* Move the optics to @p position while taking care of locks :
-	* - move the whole lock tree
-	* - if the lock tree is abolutly locked, don't do anything,
-	*   except if @p respectAbsoluteLock is set to false
-	*/
-	void setPositionCheckLock(double position, bool respectAbsoluteLock = true);
-	/**
-	* Erase the locking tree structure of this optics without affecting ascendant or descendant.
-	* This is usefull for preserving or recreating the locking tree after cloning.
-	*/
-	void eraseLockingTree();
 
 protected:
 	void setType(OpticsType type) { m_type = type; }
-	void setABCD(bool ABCD = true) { m_ABCD = ABCD; }
 	void setRotable(bool rotable = true) { m_rotable = rotable; }
-	void setOrientable(bool orientable = true) { m_orientable = orientable; }
 	bool isAligned(Orientation orientation) const { return (m_orientation == Spherical) || (m_orientation == orientation); }
 
 private:
@@ -172,22 +167,23 @@ private:
 	bool isRelativeLockDescendant(const Optics* const optics) const;
 	// Translate this optics and recursively its descendant by @p distance
 	void moveDescendant(double distance);
-	// Notify all registered classes
-	void notify() const;
+	// Set the left position of the optics to @p position, respecting relative and/or absolute locks
+	void setPosition(double position, bool respectAbsoluteLock, bool respectRelativeLock);
 
 private:
-	int m_id;
-	OpticsType m_type;
+	// Properties. Don't forget to update the copy constructor and == operator
 	double m_position;
 	double m_width;
-	bool m_ABCD, m_rotable, m_orientable;
 	Orientation m_orientation;
 	double m_angle;
 	std::string m_name;
 	bool m_absoluteLock;
 	Optics* m_relativeLockParent;
+
+	// Cache
+	OpticsType m_type;
+	bool m_rotable;
 	std::list<Optics*> m_relativeLockChildren;
-	static int m_lastId;
 };
 
 /////////////////////////////////////////////////
@@ -202,26 +198,27 @@ class ABCD : public Optics
 {
 public:
 	/// Constructor
-	ABCD(OpticsType type, double position, std::string name = "")
-		: Optics(type, position, name) { setABCD(); }
+	ABCD(OpticsType type, double position, std::string name = "") : Optics(type, position, name) {}
 	/// Destructor
 	virtual ~ABCD() {}
+	/// Comparison operator
+	virtual bool operator==(const Optics& other) const;
 
+// Inherited
 public:
-	/// @return the image of @p inputBeam
 	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
-	/// @return the antecedent if @p outputBeam
 	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
+	virtual bool isABCD() const { return true; }
 
 public:
 	/// @return coefficient A of the ABCD matrix
-	virtual double A() const { return 1.; }
+	virtual double A(Orientation /*orientation*/) const { return 1.; }
 	/// @return coefficient B of the ABCD matrix
-	virtual double B() const { return 0.; }
+	virtual double B(Orientation /*orientation*/) const { return 0.; }
 	/// @return coefficient C of the ABCD matrix
-	virtual double C() const { return 0.; }
+	virtual double C(Orientation /*orientation*/) const { return 0.; }
 	/// @return coefficient D of the ABCD matrix
-	virtual double D() const { return 1.; }
+	virtual double D(Orientation /*orientation*/) const { return 1.; }
 
 /// @todo transfer this to the cavity class
 public:
@@ -272,7 +269,7 @@ public:
 
 public:
 	virtual double indexJump() const { return indexRatio(); }
-	virtual double D() const { return 1./indexRatio(); }
+	virtual double D(Orientation /*orientation*/) const { return 1./indexRatio(); }
 };
 
 /////////////////////////////////////////////////
@@ -290,10 +287,14 @@ public:
 	/// Constructor
 	CreateBeam(double waist, double waistPosition, double index, std::string name = "");
 	virtual CreateBeam* clone() const { return new CreateBeam(*this); }
+	/// Comparison operator
+	virtual bool operator==(const Optics& other) const;
 
+// Inherited
 public:
 	virtual Beam image(const Beam& inputBeam, const Beam& opticalAxis) const;
 	virtual Beam antecedent(const Beam& outputBeam, const Beam& opticalAxis) const;
+	virtual bool isOrientable(Orientation orientation) const { return (orientation == Spherical) || (orientation == Ellipsoidal); }
 
 public:
 	const Beam* beam() const;
@@ -320,7 +321,7 @@ public:
 	virtual FreeSpace* clone() const { return new FreeSpace(*this); }
 
 public:
-	virtual double B() const { return width(); }
+	virtual double B(Orientation /*orientation*/) const { return width(); }
 };
 
 /**
@@ -330,12 +331,13 @@ class Lens : public ABCD
 {
 public:
 	/// Constructor
-	Lens(double focal, double position, std::string name = "")
-		: ABCD(LensType, position, name) , m_focal(focal) { setOrientable(); }
+	Lens(double focal, double position, std::string name = "") : ABCD(LensType, position, name) , m_focal(focal) {}
 	virtual Lens* clone() const { return new Lens(*this); }
 
+// Inherited
 public:
-	virtual double C() const { return -1./focal(); }
+	virtual bool isOrientable(Orientation orientation) const { return (orientation != Ellipsoidal); }
+	virtual double C(Orientation orientation) const { return isAligned(orientation) ? -1./focal() : ABCD::C(orientation); }
 
 public:
 	/// @return the lens focal length
@@ -361,9 +363,9 @@ public:
 	virtual ThickLens* clone() const { return new ThickLens(*this); }
 
 public:
-	virtual double A() const { return -1./focal(); }
-	virtual double B() const { return -1./focal(); }
-	virtual double D() const { return -1./focal(); }
+	virtual double A(Orientation /*orientation*/) const { return -1./focal(); }
+	virtual double B(Orientation /*orientation*/) const { return -1./focal(); }
+	virtual double D(Orientation /*orientation*/) const { return -1./focal(); }
 };
 
 /**
@@ -393,11 +395,12 @@ class CurvedMirror : public FlatMirror
 public:
 	/// Constructor
 	CurvedMirror(double curvatureRadius, double position, std::string name = "")
-		: FlatMirror(position, name), m_curvatureRadius(curvatureRadius) { setType(CurvedMirrorType); setOrientable(); }
+		: FlatMirror(position, name), m_curvatureRadius(curvatureRadius) { setType(CurvedMirrorType); }
 	virtual CurvedMirror* clone() const { return new CurvedMirror(*this); }
 
 public:
- 	virtual double C() const { return -2./curvatureRadius(); }
+	virtual bool isOrientable(Orientation orientation) const { return (orientation != Ellipsoidal); }
+	virtual double C(Orientation orientation) const { return isAligned(orientation) ? -2./curvatureRadius() : ABCD::C(orientation); }
 
 public:
 	/// @return the mirror curvature radius
@@ -429,11 +432,12 @@ class CurvedInterface : public Interface
 public:
 	/// Constructor
 	CurvedInterface(double surfaceRadius, double indexRatio, double position, std::string name = "")
-		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) { setOrientable(); }
+		: Interface(CurvedInterfaceType, indexRatio, position, name), m_surfaceRadius(surfaceRadius) {}
 	virtual CurvedInterface* clone() const { return new CurvedInterface(*this); }
 
 public:
-	virtual double C() const { return (1./indexRatio()-1.)/surfaceRadius(); }
+	virtual bool isOrientable(Orientation orientation) const { return (orientation != Ellipsoidal); }
+	virtual double C(Orientation orientation) const { return isAligned(orientation) ? (1./indexRatio()-1.)/surfaceRadius() : ABCD::C(orientation); }
 
 public:
 	/// @return the surface curvature radius
@@ -458,11 +462,12 @@ public:
 	virtual DielectricSlab* clone() const { return new DielectricSlab(*this); }
 
 public:
-	virtual double B() const { return width()/indexRatio(); }
+	virtual double B(Orientation /*orientation*/) const { return width()/indexRatio(); }
 };
 
 /**
 * User defined ABCD transformation
+* @todo deal with orientation
 */
 class GenericABCD : public ABCD
 {
@@ -474,7 +479,7 @@ public:
 	/// Copy constructor
 	GenericABCD(const ABCD& abcd)
 		: ABCD(abcd)
-		, m_A(abcd.A()), m_B(abcd.B()), m_C(abcd.C()), m_D(abcd.D())
+		, m_A(abcd.A(Spherical)), m_B(abcd.B(Spherical)), m_C(abcd.C(Spherical)), m_D(abcd.D(Spherical))
 		{ setType(GenericABCDType); }
 	/// Full constructor
 	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "")
@@ -485,10 +490,10 @@ public:
 	GenericABCD& operator*=(const ABCD& abcd1);
 
 public:
-	virtual double A() const { return m_A; }
-	virtual double B() const { return m_B; }
-	virtual double C() const { return m_C; }
-	virtual double D() const { return m_D; }
+	virtual double A(Orientation /*orientation*/) const { return m_A; }
+	virtual double B(Orientation /*orientation*/) const { return m_B; }
+	virtual double C(Orientation /*orientation*/) const { return m_C; }
+	virtual double D(Orientation /*orientation*/) const { return m_D; }
 
 /// @todo check if the given ABCD matrix is valid
 public:

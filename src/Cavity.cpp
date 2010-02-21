@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -63,8 +63,8 @@ void Cavity::computeMatrix() const
 	{
 		static FreeSpace freeSpace(0., 0.);
 		freeSpace.setWidth((*it)->position() - (*(lastIt))->endPosition());
-		freeSpace.setPosition((*it)->endPosition());
-		cerr << "freespace B = " << freeSpace.B() << endl;
+		freeSpace.setPosition((*it)->endPosition(), false);
+//		cerr << "freespace B = " << freeSpace.B() << endl;
 		m_matrix = m_matrix * freeSpace;
 		cerr << "freespace Cavity ABCD = " << m_matrix << endl;
 		m_matrix *= *(*it);
@@ -82,7 +82,7 @@ void Cavity::computeMatrix() const
 		{
 			static FreeSpace freeSpace(0., 0.);
 			freeSpace.setWidth((*it)->endPosition() - (*(lastIt))->position());
-			freeSpace.setPosition((*it)->endPosition());
+			freeSpace.setPosition((*it)->endPosition(), false);
 			m_matrix *= freeSpace;
 			m_matrix *= *(*it);
 		}

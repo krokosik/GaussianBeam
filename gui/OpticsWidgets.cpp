@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2008-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -30,55 +30,47 @@
 /////////////////////////////////////////////////
 // RullerSlider
 
-RullerSlider::RullerSlider(OpticsView* view, bool zoomScroll)
-	: QScrollBar(view)
+GraduatedRuller::GraduatedRuller(OpticsView* view, Qt::Orientation orientation)
 {
+	m_height = 16.;
 	m_view = view;
-	m_zoomScroll = zoomScroll;
+	m_orientation = orientation;
+
+	if (m_orientation == Qt::Horizontal)
+		setFixedHeight(int(m_height));
+	else if (m_orientation == Qt::Vertical)
+		setFixedWidth(int(m_height));
+
+	connect(m_view, SIGNAL(rangeChanged()), this, SLOT(update()));
 }
 
-double RullerSlider::rullerScale() const
+double GraduatedRuller::optimalSpacing(double length, int nMajorTics) const
 {
-	int length = maximum() + pageStep() - minimum();
-	double scale = double(length);
-	if (orientation() == Qt::Horizontal)
-		scale /= m_view->scene()->width();
-	else
-		scale /= m_view->scene()->height();
+	double result = 0.1/double(nMajorTics);
 
-	return scale;
-}
-
-void RullerSlider::mousePressEvent(QMouseEvent* event)
-{
-	Q_UNUSED(event);
-}
-
-void RullerSlider::wheelEvent(QWheelEvent* event)
-{
-	if (m_zoomScroll)
+	while (length > 10.)
 	{
-		int numDegrees = event->delta()/8;
-		int numSteps = numDegrees/15;
-		double zoomFactor = pow(1.2, numSteps);
-		if (orientation() == Qt::Horizontal)
-			m_view->setHorizontalRange(m_view->horizontalRange()*zoomFactor);
-//		else
-//			m_view->setVerticalRange(m_view->verticalRange()*zoomFactor);
+		length /= 10.;
+		result *= 10.;
 	}
+
+	while (length < 1.)
+	{
+		length *= 10.;
+		result /= 10.;
+	}
+
+	if (length < 1.5)
+		return result;
+	else if (length < 3.)
+		return 2.*result;
+	else if (length < 7.)
+		return 5.*result;
 	else
-		QScrollBar::wheelEvent(event);
+		return 10.*result;
 }
 
-void RullerSlider::drawGraduation(QPainter& painter, double position, double fractionalLength)
-{
-	if (orientation() == Qt::Horizontal)
-		painter.drawLine(QPointF(position, 0.), QPointF(position, height()*fractionalLength));
-	else
-		painter.drawLine(QPointF(0., position), QPointF(width()*fractionalLength, position));
-}
-
-void RullerSlider::paintEvent(QPaintEvent* event)
+void GraduatedRuller::paintEvent(QPaintEvent* event)
 {
 	Q_UNUSED(event);
 
@@ -89,33 +81,83 @@ void RullerSlider::paintEvent(QPaintEvent* event)
 	QPen mainTickPen(Qt::black);
 	QPen secondTickPen(Qt::lightGray);
 
-	double scale = rullerScale();
-	double spacing = (orientation() == Qt::Horizontal ? 0.01 : 0.00005);
-	int lastStep = int(double(value() + pageStep())/(scale*spacing)) + 1;
-	int firstStep = int(double(value())/(scale*spacing)) - 1;
+	int length;
+	double start, stop; // Edges of the ruller in scene coordinates
+	double unit = Unit(UnitPosition).divider();
+	if (m_orientation == Qt::Horizontal)
+	{
+		length = width();
+		start = m_view->mapToScene(m_view->viewport()->rect().topLeft()).x();
+		stop = m_view->mapToScene(m_view->viewport()->rect().bottomRight()).x();
+	}
+	else
+	{
+		length = height();
+		painter.rotate(-90.);
+		painter.translate(-height(), 0.);
+		start = m_view->mapToScene(m_view->viewport()->rect().topLeft()).y();
+		stop = m_view->mapToScene(m_view->viewport()->rect().bottomRight()).y();
+		OpticsScene* scene = dynamic_cast<OpticsScene*>(m_view->scene());
+		if (scene->bench()->is1D())
+		{
+			start /= scene->beamScale();
+			stop  /= scene->beamScale();
+			unit = Unit(UnitWaist).divider();
+		}
+	}
+	if ((stop <= start) || (length == 0))
+		return;
+	double scale = double(length)/(stop - start); // pixels/(Scene Coordinates)
 
+	// These 3 variables are in scene coordinates
+	double spacing = optimalSpacing(stop - start, m_orientation == Qt::Horizontal ? 10 : 5);
+	const double lastGraduation  = double(int(stop /spacing) + 1)*spacing;
+	const double firstGraduation = double(int(start/spacing) - 1)*spacing;
+
+	// Background
 	painter.setBrush(backgroundBrush);
 	painter.setPen(backgroundPen);
-	painter.drawRect(rect());
-	painter.setPen(secondTickPen);
-	for (double x = double(lastStep)*spacing; x >= double(firstStep)*spacing; x -= spacing)
+	painter.drawRect(QRectF(0., 0., length, m_height));
+
+	for (double x = lastGraduation; x >= firstGraduation; x -= spacing)
 	{
-		double pos = x*scale - double(value());
-		drawGraduation(painter, pos, 0.4);
+		painter.setPen(secondTickPen);
+		double pos = (x - start)*scale;
+		double gradHeight = 0.4;
 		if (abs((int(round(x/spacing)) % 10)) == 5)
-			drawGraduation(painter, pos, 0.65);
+			gradHeight = 0.65;
 		else if ((int(round(x/spacing)) % 10) == 0)
 		{
+			gradHeight = 0.8;
 			painter.setPen(mainTickPen);
-			drawGraduation(painter, pos, 0.8);
 			QString text;
-			text.setNum(round(x*1000.));
+			text.setNum(round(x*unit));
 			QRectF textRect(0., 0., 0., 0.);
-			textRect.moveCenter(QPointF(pos + 2., height()/2.));
+			textRect.moveCenter(QPointF(pos + 2., m_height/2.));
 			textRect = painter.boundingRect(textRect, Qt::AlignLeft | Qt::AlignVCenter, text);
 			painter.drawText(textRect, Qt::AlignCenter, text);
-			painter.setPen(secondTickPen);
 		}
+		painter.drawLine(QPointF(pos, 0.), QPointF(pos, m_height*gradHeight));
+	}
+}
+
+void GraduatedRuller::wheelEvent(QWheelEvent* event)
+{
+	const int numDegrees = event->delta()/8;
+	const double numSteps = double(numDegrees)/15.;
+
+	if (m_orientation == Qt::Horizontal)
+	{
+		if (QApplication::keyboardModifiers() == Qt::ControlModifier)
+			m_view->setHorizontalRange(m_view->horizontalRange()*pow(1.2, numSteps));
+		else
+			m_view->setOrigin(m_view->origin() + QPointF(m_view->horizontalRange()*numSteps	/10., 0.));
+	}
+	else if (m_orientation == Qt::Vertical)
+	{
+		OpticsScene* scene = dynamic_cast<OpticsScene*>(m_view->scene());
+		scene->setBeamScale(scene->beamScale()*pow(1.2, numSteps));
+		/// @todo scroll if 2D bench
 	}
 }
 
@@ -168,14 +210,19 @@ void OpticsViewProperties::on_toolButton_Lock_toggled(bool checked)
 
 void OpticsViewProperties::on_doubleSpinBox_Origin_valueChanged(double value)
 {
+	/// @todo vertical origin
 	if (m_update)
-		m_view->setOrigin(value*Units::getUnit(UnitPosition).multiplier());
+	{
+		QPointF origin = m_view->origin();
+		origin.setX(value*Unit(UnitPosition).multiplier());
+		m_view->setOrigin(origin);
+	}
 }
 
 void OpticsViewProperties::on_doubleSpinBox_HorizontalRange_valueChanged(double value)
 {
 	if (m_update)
-		m_view->setHorizontalRange(value*Units::getUnit(UnitPosition).multiplier());
+		m_view->setHorizontalRange(value*Unit(UnitPosition).multiplier());
 }
 
 void OpticsViewProperties::on_doubleSpinBox_BeamScale_valueChanged(double value)
@@ -187,20 +234,21 @@ void OpticsViewProperties::on_doubleSpinBox_BeamScale_valueChanged(double value)
 void OpticsViewProperties::on_doubleSpinBox_OpticsHeight_valueChanged(double value)
 {
 	if (m_update)
-		dynamic_cast<OpticsScene*>(m_view->scene())->setOpticsHeight(value*Units::getUnit(UnitPosition).multiplier());
+		dynamic_cast<OpticsScene*>(m_view->scene())->setOpticsHeight(value*Unit(UnitPosition).multiplier());
 }
 
-void OpticsViewProperties::setOrigin(double origin)
+void OpticsViewProperties::setOrigin(QPointF origin)
 {
+	/// @todo vertical origin
 	m_update = false;
-	doubleSpinBox_Origin->setValue(origin*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_Origin->setValue(origin.x()*Unit(UnitPosition).divider());
 	m_update = true;
 }
 
 void OpticsViewProperties::setHorizontalRange(double horizontalRange)
 {
 	m_update = false;
-	doubleSpinBox_HorizontalRange->setValue(horizontalRange*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_HorizontalRange->setValue(horizontalRange*Unit(UnitPosition).divider());
 	m_update = true;
 }
 
@@ -214,7 +262,7 @@ void OpticsViewProperties::setBeamScale(double beamScale)
 void OpticsViewProperties::setOpticsHeight(double opticsHeight)
 {
 	m_update = false;
-	doubleSpinBox_OpticsHeight->setValue(opticsHeight*Units::getUnit(UnitPosition).divider());
+	doubleSpinBox_OpticsHeight->setValue(opticsHeight*Unit(UnitPosition).divider());
 	m_update = true;
 }
 
@@ -259,7 +307,8 @@ void CornerWidget::mousePressEvent(QMouseEvent* event)
 {
 	Q_UNUSED(event);
 
-	m_widget->setVisible(!m_widget->isVisible());
+	if (m_widget)
+		m_widget->setVisible(!m_widget->isVisible());
 }
 
 /////////////////////////////////////////////////
@@ -455,13 +504,13 @@ void StatusWidget::showBeamInfo(const Beam* beam, double z, Orientation orientat
 		else if (type == Property::Index)
 			value = beam->index();
 
-		value *=  Units::getUnit(Property::unit[type]).divider();
-		text += QString::number(value, 'f', 2) + Units::getUnit(Property::unit[type]).string();
+		value *=  Unit(Property::unit[type]).divider();
+		text += QString::number(value, 'f', 2) + Unit(Property::unit[type]).string();
 
 		if (type == Property::BeamParameter)
 		{
-			value = beam->rayleigh(orientation)*Units::getUnit(UnitRayleigh).divider();
-			text += " + i" + QString::number(value, 'f', 2) + Units::getUnit(UnitRayleigh).string();
+			value = beam->rayleigh(orientation)*Unit(UnitRayleigh).divider();
+			text += " + i" + QString::number(value, 'f', 2) + Unit(UnitRayleigh).string();
 		}
 
 		text += "    ";

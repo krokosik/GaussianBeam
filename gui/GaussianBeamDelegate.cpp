@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -108,23 +108,23 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 			properties << EditorProperty(0., Utils::infinity, "n = ")
 			           << EditorProperty(1., Utils::infinity, tr("M²") + " = ");
 		else if (optics->type() == LensType)
-			properties << EditorProperty(-Utils::infinity, Utils::infinity, "f = ", Units::getUnit(UnitFocal).string());
+			properties << EditorProperty(-Utils::infinity, Utils::infinity, "f = ", Unit(UnitFocal).string());
 		else if (optics->type() == CurvedMirrorType)
-			properties << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Units::getUnit(UnitCurvature).string());
+			properties << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Unit(UnitCurvature).string());
 		else if (optics->type() == FlatInterfaceType)
 			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ");
 		else if (optics->type() == CurvedInterfaceType)
 			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ")
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Units::getUnit(UnitCurvature).string());
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "R = ", Unit(UnitCurvature).string());
 		else if (optics->type() == DielectricSlabType)
 			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ")
-			           << EditorProperty(0., Utils::infinity, "width = ", Units::getUnit(UnitWidth).string());
+			           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
 		else if (optics->type() == GenericABCDType)
 			properties << EditorProperty(-Utils::infinity, Utils::infinity, "A = ")
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "B = ", Units::getUnit(UnitABCD).string())
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "C = ", " /" + Units::getUnit(UnitABCD).string(false))
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "B = ", Unit(UnitABCD).string())
+			           << EditorProperty(-Utils::infinity, Utils::infinity, "C = ", " /" + Unit(UnitABCD).string(false))
 			           << EditorProperty(-Utils::infinity, Utils::infinity, "D = ")
-			           << EditorProperty(0., Utils::infinity, "width = ", Units::getUnit(UnitWidth).string());
+			           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
 
 		return new PropertyEditor(properties, parent);
 	}
@@ -140,21 +140,16 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 		editor->addItem(tr("absolute"), -1);
 		for (int i = 0; i < m_model->rowCount(); i++)
 			if ((!m_bench->optics(i)->relativeLockedTo(optics)) || (m_bench->optics(i) == optics->relativeLockParent()))
-				editor->addItem(QString::fromUtf8(m_bench->optics(i)->name().c_str()), m_bench->optics(i)->id());
+				editor->addItem(QString::fromUtf8(m_bench->optics(i)->name().c_str()), i);
 		return editor;
 	}
 	case Property::OpticsOrientation:
 	{
 		QComboBox* editor = new QComboBox(parent);
-		editor->addItem(OrientationName::fullName[Spherical], Spherical);
-		/// @todo make this more general
-		if (optics->type() == CreateBeamType)
-			editor->addItem(OrientationName::fullName[Ellipsoidal], Ellipsoidal);
-		else
-		{
-			editor->addItem(OrientationName::fullName[Horizontal], Horizontal);
-			editor->addItem(OrientationName::fullName[Vertical]  , Vertical);
-		}
+		if (optics->isOrientable(Spherical))   editor->addItem(OrientationName::fullName[Spherical]  , Spherical);
+		if (optics->isOrientable(Ellipsoidal)) editor->addItem(OrientationName::fullName[Ellipsoidal], Ellipsoidal);
+		if (optics->isOrientable(Horizontal))  editor->addItem(OrientationName::fullName[Horizontal] , Horizontal);
+		if (optics->isOrientable(Vertical))    editor->addItem(OrientationName::fullName[Vertical]   , Vertical);
 		return editor;
 	}
 	default:
@@ -206,32 +201,32 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 			propertyEditor->setValue(1, createBeam->beam()->M2());
 		}
 		else if (optics->type() == LensType)
-			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Units::getUnit(UnitFocal).divider());
+			propertyEditor->setValue(0, dynamic_cast<const Lens*>(optics)->focal()*Unit(UnitFocal).divider());
 		else if (optics->type() == CurvedMirrorType)
-			propertyEditor->setValue(0, dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Units::getUnit(UnitCurvature).divider());
+			propertyEditor->setValue(0, dynamic_cast<const CurvedMirror*>(optics)->curvatureRadius()*Unit(UnitCurvature).divider());
 		else if (optics->type() == FlatInterfaceType)
 			propertyEditor->setValue(0, dynamic_cast<const FlatInterface*>(optics)->indexRatio());
 		else if (optics->type() == CurvedInterfaceType)
 		{
 			const CurvedInterface* curvedInterface = dynamic_cast<const CurvedInterface*>(optics);
 			propertyEditor->setValue(0, curvedInterface->indexRatio());
-			propertyEditor->setValue(1, curvedInterface->surfaceRadius()*Units::getUnit(UnitCurvature).divider());
+			propertyEditor->setValue(1, curvedInterface->surfaceRadius()*Unit(UnitCurvature).divider());
 		}
 		else if (optics->type() == GenericABCDType)
 		{
 			const GenericABCD* ABCDOptics = dynamic_cast<const GenericABCD*>(optics);
-			propertyEditor->setValue(0, ABCDOptics->A());
-			propertyEditor->setValue(1, ABCDOptics->B()*Units::getUnit(UnitABCD).divider());
-			propertyEditor->setValue(2, ABCDOptics->C()/Units::getUnit(UnitABCD).divider());
-			propertyEditor->setValue(3, ABCDOptics->D());
-			propertyEditor->setValue(4, ABCDOptics->width()*Units::getUnit(UnitWidth).divider());
+			propertyEditor->setValue(0, ABCDOptics->A(Spherical));
+			propertyEditor->setValue(1, ABCDOptics->B(Spherical)*Unit(UnitABCD).divider());
+			propertyEditor->setValue(2, ABCDOptics->C(Spherical)/Unit(UnitABCD).divider());
+			propertyEditor->setValue(3, ABCDOptics->D(Spherical));
+			propertyEditor->setValue(4, ABCDOptics->width()*Unit(UnitWidth).divider());
 			break;
 		}
 		else if (optics->type() == DielectricSlabType)
 		{
 			const DielectricSlab* dielectricSlab = dynamic_cast<const DielectricSlab*>(optics);
 			propertyEditor->setValue(0, dielectricSlab->indexRatio());
-			propertyEditor->setValue(1, dielectricSlab->width()*Units::getUnit(UnitWidth).divider());
+			propertyEditor->setValue(1, dielectricSlab->width()*Unit(UnitWidth).divider());
 		}
 
 		break;
@@ -250,7 +245,7 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		if (optics->absoluteLock())
 			lockId = -1;
 		else if (m_bench->optics(row)->relativeLockParent())
-			lockId = m_bench->optics(row)->relativeLockParent()->id();
+			lockId = m_bench->opticsIndex(m_bench->optics(row)->relativeLockParent());
 		QComboBox* comboBox = static_cast<QComboBox*>(editor);
 		comboBox->setCurrentIndex(comboBox->findData(lockId));
 		break;

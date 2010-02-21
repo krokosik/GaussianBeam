@@ -1,5 +1,5 @@
 /* This file is part of the GaussianBeam project
-   Copyright (C) 2007-2008 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
+   Copyright (C) 2007-2010 Jérôme Lodewyck <jerome dot lodewyck at normalesup.org>
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -24,6 +24,27 @@ Unit::Unit(int power, QString unitString)
 {
 	m_power = power;
 	m_unitString = unitString;
+}
+
+Unit::Unit(UnitType type)
+{
+	m_power = 0;
+	m_unitString = QString();
+
+	     if (type == UnitPosition)   { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitFocal)      { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitWaist)      { m_power = -6; m_unitString = "m"; }
+	else if (type == UnitRayleigh)   { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitWavelength) { m_power = -9; m_unitString = "m"; }
+	else if (type == UnitDivergence) { m_power = -3; m_unitString = "rad"; }
+	else if (type == UnitCurvature)  { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitHRange)     { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitVRange)     { m_power = -6; m_unitString = "m"; }
+	else if (type == UnitABCD)       { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitWidth)      { m_power = -3; m_unitString = "m"; }
+	else if (type == UnitPhase)      { m_power = 0 ; m_unitString = "rad"; }
+	else if (type == UnitAngle)      { m_power = 0 ; m_unitString = QChar(0xB0); }
+	else if (type == UnitLess)       { m_power = 0 ; m_unitString = QString(); }
 }
 
 QChar Unit::prefix() const
@@ -73,41 +94,4 @@ double Unit::multiplier() const
 double Unit::divider() const
 {
 	return pow(10., -m_power);
-}
-
-Units::Units()
-{}
-
-const Unit Units::getUnit(UnitType unit)
-{
-	if (unit == UnitPosition)
-		return Unit(-3, "m");
-	else if (unit == UnitFocal)
-		return Unit(-3, "m");
-	else if (unit == UnitWaist)
-		return Unit(-6, "m");
-	else if (unit == UnitRayleigh)
-		return Unit(-3, "m");
-	else if (unit == UnitWavelength)
-		return Unit(-9, "m");
-	else if (unit == UnitDivergence)
-		return Unit(-3, "rad");
-	else if (unit == UnitCurvature)
-		return Unit(-3, "m");
-	else if (unit == UnitHRange)
-		return Unit(-3, "m");
-	else if (unit == UnitVRange)
-		return Unit(-6, "m");
-	else if (unit == UnitABCD)
-		return Unit(-3, "m");
-	else if (unit == UnitWidth)
-		return Unit(-3, "m");
-	else if (unit == UnitPhase)
-		return Unit(0, "rad");
-	else if (unit == UnitAngle)
-		return Unit(0, QChar(0xB0));
-	else if (unit == UnitLess)
-		return Unit(0, QString());
-
-	return Unit(0, "");
 }

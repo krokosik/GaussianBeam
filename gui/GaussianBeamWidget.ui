@@ -373,7 +373,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="GaussianBeamRessource.qrc">
+              <iconset resource="GaussianBeam.qrc">
                <normaloff>:/images/edit-add.png</normaloff>:/images/edit-add.png</iconset>
              </property>
             </widget>
@@ -393,7 +393,7 @@
               <string/>
              </property>
              <property name="icon">
-              <iconset resource="GaussianBeamRessource.qrc">
+              <iconset resource="GaussianBeam.qrc">
                <normaloff>:/images/edit-delete.png</normaloff>:/images/edit-delete.png</iconset>
              </property>
             </widget>
@@ -543,7 +543,7 @@
               <string>Row</string>
              </property>
              <property name="icon">
-              <iconset resource="GaussianBeamRessource.qrc">
+              <iconset resource="GaussianBeam.qrc">
                <normaloff>:/images/edit-add.png</normaloff>:/images/edit-add.png</iconset>
              </property>
             </widget>
@@ -554,7 +554,7 @@
               <string>Row</string>
              </property>
              <property name="icon">
-              <iconset resource="GaussianBeamRessource.qrc">
+              <iconset resource="GaussianBeam.qrc">
                <normaloff>:/images/edit-delete.png</normaloff>:/images/edit-delete.png</iconset>
              </property>
             </widget>
@@ -597,7 +597,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="GaussianBeamRessource.qrc"/>
+  <include location="GaussianBeam.qrc"/>
  </resources>
  <connections/>
 </ui>
