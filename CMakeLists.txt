@@ -6,6 +6,12 @@ set(QT_MIN_VERSION "4.5.0")
 find_package(Qt4 COMPONENTS QtCore QtGui QtXml QtXmlPatterns REQUIRED)
 include(${QT_USE_FILE})
 
+# Platform options
+if(APPLE)
+	set(CMAKE_OSX_ARCHITECTURES i386 ppc)   # Cuild universal library
+	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.4)   # Minimum version required
+endif (APPLE)
+
 # Compiler options
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 if(CMAKE_COMPILER_IS_GNUCXX)
@@ -47,15 +53,23 @@ add_custom_command(TARGET gaussianbeam POST_BUILD COMMAND ${CMAKE_COMMAND} -E re
 install(TARGETS gaussianbeam DESTINATION bin)
 
 # Packaging
-set(CPACK_GENERATOR DEB TGZ)
+set(CPACK_GENERATOR DEB RPM TGZ)
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 5)
 set(CPACK_PACKAGE_VERSION_PATCH 0)
+set(CPACK_PACKAGE_CONTACT      "Jérôme Lodewyck (jerome dot lodewyck at normalesup dot org)")
+set(CPACK_DESCRIPTION_SUMMARY  "GaussianBeam is a GUI software that simulated Gaussian laser beams")
 # Debian package
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jérôme Lodewyck")
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS      "libqt4-core (>= 4.5), libqt4-gui (>= 4.5), libqt4-xml (>= 4.5), libqt4-xmlpatterns (>= 4.5)")
+set(CPACK_DEBIAN_PACKAGE_SECTION      "science")
+# RPM package
+
 # Windows installer
 if(WIN32 AND NOT UNIX)
   set(CPACK_PACKAGE_EXECUTABLES "gaussianbeam" "GaussianBeam")
 endif()
 # Mac bundle
+set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/gui/images/gaussianbeam128.png)
+
 include(CPack)
