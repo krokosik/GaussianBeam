@@ -647,8 +647,6 @@ BeamItem::BeamItem(const Beam* beam, const Beam* previousBeam, const Beam* nextB
 
 void BeamItem::updateTransform()
 {
-	Q_ASSERT(beam()->origin().size() == 2);
-
 	OpticsScene* opticsScene = dynamic_cast<OpticsScene*>(scene());
 	if (!opticsScene)
 		return;
