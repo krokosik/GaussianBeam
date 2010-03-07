@@ -118,10 +118,10 @@ public:
 
 	// Orientation
 
-	/// @return the orientaition of the optics, i.e. its anisotropy (e.g. cylindric aspect for lenses)
+	/// @return the orientation of the optics, i.e. its anisotropy (e.g. cylindric aspect for lenses)
 	Orientation orientation() const { return m_orientation; }
 	/// Set the orientation of the optics
-	void setOrientation(Orientation orientation) { if (isOrientable(orientation)) m_orientation = orientation; }
+	void setOrientation(Orientation orientation);
 	/// @return true if it is possible to orient the optics along orientation @p orientation
 	virtual bool isOrientable(Orientation orientation) const { return orientation == Spherical; }
 	/// @return true if the optics is orientable, i.e. if it can be anisotropic
@@ -219,12 +219,6 @@ public:
 	virtual double C(Orientation /*orientation*/) const { return 0.; }
 	/// @return coefficient D of the ABCD matrix
 	virtual double D(Orientation /*orientation*/) const { return 1.; }
-
-/// @todo transfer this to the cavity class
-public:
-	bool stabilityCriterion1() const;
-	bool stabilityCriterion2() const;
-	Beam eigenMode(double wavelength) const;
 
 private:
 	inline void forward(const Beam& inputBeam, Beam& outputBeam, Orientation orientation) const;
@@ -349,7 +343,8 @@ private:
 	double m_focal;
 };
 
-/**
+#if 0
+/*
 * Thick lens class.
 * @warning This class is not finished yet
 * @todo finish this class
@@ -357,7 +352,7 @@ private:
 class ThickLens : public Lens, public Dielectric
 {
 public:
-	/// Constructor
+	// Constructor
 	ThickLens(double focal, double indexRatio, double position, std::string name = "")
 		: Lens(focal, position, name), Dielectric(indexRatio) { setType(ThickLensType); }
 	virtual ThickLens* clone() const { return new ThickLens(*this); }
@@ -367,6 +362,7 @@ public:
 	virtual double B(Orientation /*orientation*/) const { return -1./focal(); }
 	virtual double D(Orientation /*orientation*/) const { return -1./focal(); }
 };
+#endif
 
 /**
 * Flat mirror optics. With repsect to beam propagation, this optics
@@ -473,41 +469,42 @@ class GenericABCD : public ABCD
 {
 public:
 	/// Default constructor. Build an identity matrix
-	GenericABCD()
-		: ABCD(GenericABCDType, 0.)
-		, m_A(1.), m_B(0.), m_C(0.), m_D(1.) {}
+	GenericABCD() : ABCD(GenericABCDType, 0.) { setABCD(1., 0., 0., 1.); }
 	/// Copy constructor
-	GenericABCD(const ABCD& abcd)
-		: ABCD(abcd)
-		, m_A(abcd.A(Spherical)), m_B(abcd.B(Spherical)), m_C(abcd.C(Spherical)), m_D(abcd.D(Spherical))
-		{ setType(GenericABCDType); }
+	GenericABCD(const ABCD& abcd);
 	/// Full constructor
-	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "")
-		: ABCD(GenericABCDType, position, name)
-		, m_A(A), m_B(B), m_C(C), m_D(D) { setWidth(width); }
+	GenericABCD(double A, double B, double C, double D, double width, double position, std::string name = "");
 	virtual GenericABCD* clone() const { return new GenericABCD(*this); }
 	/// Compose ABCD matrices
-	GenericABCD& operator*=(const ABCD& abcd1);
+	GenericABCD& operator*=(const ABCD& abcd);
 
 public:
-	virtual double A(Orientation /*orientation*/) const { return m_A; }
-	virtual double B(Orientation /*orientation*/) const { return m_B; }
-	virtual double C(Orientation /*orientation*/) const { return m_C; }
-	virtual double D(Orientation /*orientation*/) const { return m_D; }
+	virtual bool isOrientable(Orientation orientation) const { return (orientation == Spherical) || (orientation == Ellipsoidal); }
+	virtual double A(Orientation orientation) const { return getCoefficient(m_A, orientation); }
+	virtual double B(Orientation orientation) const { return getCoefficient(m_B, orientation); }
+	virtual double C(Orientation orientation) const { return getCoefficient(m_C, orientation); }
+	virtual double D(Orientation orientation) const { return getCoefficient(m_D, orientation); }
 
 /// @todo check if the given ABCD matrix is valid
 public:
 	/// Set the matrix coefficient A
-	void setA(double A) { m_A = A; }
+	void setA(double A, Orientation orientation = Spherical) { setCoefficient(m_A, A, orientation); }
 	/// Set the matrix coefficient B
-	void setB(double B) { m_B = B; }
+	void setB(double B, Orientation orientation = Spherical) { setCoefficient(m_B, B, orientation); }
 	/// Set the matrix coefficient C
-	void setC(double C) { m_C = C; }
+	void setC(double C, Orientation orientation = Spherical) { setCoefficient(m_C, C, orientation); }
 	/// Set the matrix coefficient D
-	void setD(double D) { m_D = D; }
+	void setD(double D, Orientation orientation = Spherical) { setCoefficient(m_D, D, orientation); }
+	/// Set all 4 coefficents at the same time
+	void setABCD(double A, double B, double C, double D, Orientation orientation = Spherical);
 
 private:
-	double m_A, m_B, m_C, m_D;
+	double getCoefficient(const double coefficient[], Orientation orientation) const;
+	void setCoefficient(double coefficient[], double value, Orientation orientation);
+	void mult(const ABCD& abcd, Orientation orientation);
+
+private:
+	double m_A[2], m_B[2], m_C[2], m_D[2];
 };
 
 GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2);

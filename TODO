@@ -24,7 +24,7 @@ WISHLIST:
 	more intrication between opticsbench bounds and view bounds
 	Scripting
 	Unittest
-	Ellipsoidal generic ABCD
+	Restore names aboce optics
 
 BUGS:
 	Save properties for H and V views
@@ -34,8 +34,11 @@ BUGS:
 	Save all views information (save beam scale, optics height and lock view)
 	Different graphism for H/V lenses -> for instance more alpha ?
 	Disappearing beam in test.xml
+	Changing the waist in an intermediate beam might scramble the optics ordering with angle (e.g. linear cavity)
 	Lock to create beam does not work : changing the position of createBeam should change the waist position i.e. the beam stored in create beam should be relative to the create beam position
 	On the same account, the sensitivity does not work for createBeam
+	On MAC OS X, moving the optics does not work. Also, waists are not displayed correclty
+	Implement the GUI for ellipsoidal generic ABCD
 
 MINOR BUGS
 	Flip mirrors when loading and old files

@@ -186,25 +186,51 @@ void OpticsBench::registerEventListener(OpticsBenchEventListener* listener)
 
 void OpticsBench::detectCavities()
 {
-	// Cavity detection criterions for a given beam to close a cavity with a given optics
-	// - The optics is on the beam optics axis
+	// Cavity detection criterions for a given optics i to close a cavity with a previous beam j
+	// - The optics is on the beam optical axis
 	// - The optics is in the beam range
-	// - The beam is while it is not copropagating with the optics antecedent.
-	// - The image of the beam by the optics is copropagating with the actual optics image
+	// - The beam is copropagating with the optics image
+	// - The beam is NOT copropagating with the optics antecedent.
 
-	for (int i = 0; i < nOptics(); i++)
-		for (int j = 1; j < i; j++)
+	cerr << "Detecting cavity" << endl;
+	bool cavityDetected = false;
+
+	for (int i = 2; i < nOptics(); i++)
+		for (int j = 0; j < i-1; j++)
 		{
-			Beam* beam = m_beams[i];
-			Optics* optics = m_optics[j];
-			Point opticsCoordinates = beam->beamCoordinates(m_beams[j-1]->absoluteCoordinates(optics->position()));
-			//cerr << "Checking cavity " << i << " and " << j << endl;
+			Optics* optics = m_optics[i];
+			Beam* beam = m_beams[j];
+			Point opticsCoordinates = beam->beamCoordinates(m_beams[i-1]->absoluteCoordinates(optics->position()));
+			cerr << "Checking cavity " << i << " and " << j << endl;
+			cerr << (fabs(opticsCoordinates.y()) < Utils::epsilon) << endl;
+			cerr << (opticsCoordinates.x() >= beam->start()) << endl;
+			cerr << (opticsCoordinates.x() <= beam->stop()) << endl;
+			cerr << Beam::copropagating(*beam, *m_beams[i]) << endl;
+			cerr << !Beam::copropagating(*beam, *m_beams[i-1]) << endl;
 			if (   (fabs(opticsCoordinates.y()) < Utils::epsilon)
 			    && (opticsCoordinates.x() >= beam->start())
 			    && (opticsCoordinates.x() <= beam->stop())
-			    && !Beam::copropagating(*beam, *m_beams[j-1])
-			    && Beam::copropagating(optics->image(*beam, *m_beams[j-1]), *m_beams[j]))
+			    &&  Beam::copropagating(*beam, *m_beams[i])
+			    && !Beam::copropagating(*beam, *m_beams[i-1]))
+			{
+				cavityDetected = true;
+				Cavity cavity;
+				for (int o = j + 1; o <= i; o++)
+				{
+					if (m_optics[o]->isABCD())
+					{
+						cavity.addOptics(dynamic_cast<ABCD*>(m_optics[o]));
+						cerr << "   adding optics " << o << endl;
+					}
+				}
+				cerr << m_optics[j]->position() << " - " << opticsCoordinates.x() << endl;
+				double closingFreeSpace = m_optics[j+1]->position() - opticsCoordinates.x();
+				cerr << closingFreeSpace << endl;
+				cavity.setClosingFreeSpace(closingFreeSpace);
 				cerr << " Detected cavity around beams " << i << " and " << j << endl;
+				cerr << "Stability : " << cavity.isStable() << endl;
+				cerr << "EigenBeam : " << *cavity.eigenBeam(wavelength(), 0) << endl;
+			}
 		}
 
 }

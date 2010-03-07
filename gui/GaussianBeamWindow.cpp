@@ -160,37 +160,6 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	// NOTE: this has to be the last part of the constructor
 	if (!fileName.isEmpty())
 		openFile(fileName);
-
-	Lens lens(0.1, 0.1);
-	Lens lens2(0.2, 0.1);
-	CurvedMirror mirror(0.2, 0.1);
-
-	qDebug() << "Identical" << (lens == mirror);
-
-	Optics* o1 = &lens;
-	Optics* o2 = &lens2;
-
-	qDebug() << "Identical" << (*o1 == *o2);
-
-	const Optics& o3 = lens;
-	const Optics& o4 = lens2;
-
-	qDebug() << "Identical" << (o3 == o4);
-
-	Optics* o5 = &lens;
-	Optics* o6 = &mirror;
-
-	qDebug() << "Identical" << (*o5 == *o6);
-
-	Optics* o7 = &lens;
-	Optics* o8 = &lens;
-
-	qDebug() << "Identical" << (*o7 == *o8);
-
-	CreateBeam input(0.1, 0.1, 1.0);
-	CreateBeam input2(0.1, 0.1, 1.1);
-	qDebug() << (input == lens) << (lens == input);
-	qDebug() << (input == input) << (input2 == input);
 }
 
 QWidget* GaussianBeamWindow::createViewEnsemble(OpticsView* view)

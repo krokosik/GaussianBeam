@@ -26,20 +26,23 @@ using namespace std;
 
 Cavity::Cavity()
 {
-	m_ringCavity = true;
+	m_closingFreeSpace = 0.;
+	m_dirty = true;
 }
 
 void Cavity::addOptics(const ABCD* optics)
 {
 	if (!isOpticsInCavity(optics))
+	{
 		m_opticsList.push_back(optics);
-
-	/// @todo sort
+		m_dirty = true;
+	}
 }
 
 void Cavity::removeOptics(const ABCD* optics)
 {
 	m_opticsList.remove(optics);
+	m_dirty = true;
 }
 
 bool Cavity::isOpticsInCavity(const ABCD* optics) const
@@ -52,55 +55,34 @@ bool Cavity::isOpticsInCavity(const ABCD* optics) const
 
 void Cavity::computeMatrix() const
 {
-	if (m_opticsList.empty())
+	if (!m_dirty)
 		return;
 
+	/// @todo sort optics
+
 	// Compute cavity
-	m_matrix = *m_opticsList.front();
-	cerr << "Initial Cavity ABCD = " << m_matrix << endl;
-	list<const ABCD*>::const_iterator lastIt = m_opticsList.begin();
-	for (list<const ABCD*>::const_iterator it = lastIt; ++it != m_opticsList.end(); lastIt = it)
+	m_matrix = FreeSpace(0., 0.);
+	list<const ABCD*>::const_iterator lastIt = m_opticsList.end();
+	for (list<const ABCD*>::const_iterator it = m_opticsList.begin(); it != m_opticsList.end(); lastIt = it++)
 	{
-		static FreeSpace freeSpace(0., 0.);
-		freeSpace.setWidth((*it)->position() - (*(lastIt))->endPosition());
-		freeSpace.setPosition((*it)->endPosition(), false);
-//		cerr << "freespace B = " << freeSpace.B() << endl;
-		m_matrix = m_matrix * freeSpace;
-		cerr << "freespace Cavity ABCD = " << m_matrix << endl;
+		if (lastIt != m_opticsList.end())
+			m_matrix *= FreeSpace((*it)->position() - (*(lastIt))->endPosition(), (*lastIt)->endPosition());
+		cerr << " Cavity ABCD added free space = " << m_matrix << endl;
 		m_matrix *= *(*it);
-		cerr << "added Cavity ABCD = " << m_matrix << endl;
+		cerr << " Cavity ABCD added optics = " << m_matrix << endl;
 	}
-	/// @todo matrix.setWidth()
+	// Free space that closes the cavity
+	if (lastIt != m_opticsList.end())
+		m_matrix *= FreeSpace(m_closingFreeSpace, (*lastIt)->endPosition());
+		cerr << " Cavity ABCD added last free space = " << m_matrix << endl;
 
-	cerr << "Backwards" << endl;
+	m_dirty = false;
+}
 
-	if (m_ringCavity)
-	{
-		list<const ABCD*>::const_iterator lastIt = m_opticsList.end();
-		m_matrix = *m_opticsList.back();
-		for (list<const ABCD*>::const_iterator it = lastIt; --it != m_opticsList.begin(); lastIt = it)
-		{
-			static FreeSpace freeSpace(0., 0.);
-			freeSpace.setWidth((*it)->endPosition() - (*(lastIt))->position());
-			freeSpace.setPosition((*it)->endPosition(), false);
-			m_matrix *= freeSpace;
-			m_matrix *= *(*it);
-		}
-		//FreeSpace freeSpace(optics(i+1)->position() - m_bench.optics(i)->endPosition(), m_bench.optics(i)->endPosition());
-		//m_matrix *= freeSpace;
-		cerr << "freespace Cavity ABCD = " << m_matrix << endl;
-	}
-	else
-	{
-		/// @todo add a user defined free space between the last and the first optics for linear cavities.
-	}
-
-/*	static FreeSpace freeSpace(0., 0.);
-	freeSpace.setWidth(m_bench.optics(m_lastCavityIndex)->position() - m_bench.optics(m_firstCavityIndex)->endPosition());
-	freeSpace.setPosition(m_bench.optics(m_firstCavityIndex)->endPosition());
-	m_matrix *= freeSpace;
-*/
-//	cerr << "Final Cavity ABCD = " << m_matrix.A() << " " << m_matrix.B() << " " << m_matrix.C() << " " << m_matrix.D() << endl;
+double Cavity::delta() const
+{
+	computeMatrix();
+	return sqr(m_matrix.D(Spherical) - m_matrix.A(Spherical)) + 4.*m_matrix.B(Spherical)*m_matrix.C(Spherical);
 }
 
 bool Cavity::isStable() const
@@ -108,24 +90,30 @@ bool Cavity::isStable() const
 	if (m_opticsList.empty())
 		return false;
 
-	if (m_matrix.stabilityCriterion1())
-	{
-		if (m_matrix.stabilityCriterion2())
-			return true;
-		else
-			cerr << "Cavity stable for 1 and not 2 !!!!";
-	}
-	else if (m_matrix.stabilityCriterion2())
-		cerr << "Cavity stable for 2 and not 1 !!!!";
+	computeMatrix();
 
-	return false;
+	/// @todo deal with orientation
+
+	// Stability criterion from I don't know where...
+	//return fabs((m_matrix.A(Spherical) + m_matrix.B(Spherical))/2.) < 1.;
+
+	// Stability criterion: stable if the eigen beam q parameter of
+	// the ABCD matrix has a non-zero imaginary part
+	cerr << "Delta = " << delta() << endl;
+	return delta() < 0.;
 }
 
 const Beam* Cavity::eigenBeam(double wavelength, int index) const
 {
-	/// @todo cache compute beam ?
 	computeMatrix();
-	m_beam = m_matrix.eigenMode(wavelength);
+
+	/// @todo deal with orientation
+	/// @todo what is the index ?
+
+	if (isStable() && (m_matrix.C(Spherical) != 0.))
+		m_beam = Beam(complex<double>(0.5*(m_matrix.A(Spherical) - m_matrix.D(Spherical))/m_matrix.C(Spherical),
+		              0.5*sqrt(-delta())/m_matrix.C(Spherical)),
+		              m_opticsList.front()->position(), wavelength, 1.0, 1.0);
 
 	/// @todo reimplement checks
 /*	if (!isStable() ||

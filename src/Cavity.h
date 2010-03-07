@@ -33,6 +33,16 @@ public:
 	Cavity();
 
 public:
+	/// Add the optics @p optics to the cavity
+	void addOptics(const ABCD* optics);
+	/// Remove the optics @p optics from the cavity
+	void removeOptics(const ABCD* optics);
+	/// Check if a given optics is in the cavity
+	bool isOpticsInCavity(const ABCD* optics) const;
+	/// @return the freespace interval that closes the cavity
+	double closingFreeSpace() const { return m_closingFreeSpace; }
+	/// Set the freespace interval that closes the cavity
+	void setClosingFreeSpace(double closingFreeSpace) { m_closingFreeSpace = closingFreeSpace; }
 	/// @return true if there exist a Gaussian cavity eigen-mode
 	bool isStable() const;
 	/**
@@ -41,21 +51,18 @@ public:
 	* @p index return the beam as it is after the @p index cavity optics
 	*/
 	const Beam* eigenBeam(double wavelength, int index) const;
-	/// Add the optics @p optics to the cavity
-	void addOptics(const ABCD* optics);
-	/// Remove the optics @p optics from the cavity
-	void removeOptics(const ABCD* optics);
-	/// Check if a given optics is in the cavity
-	bool isOpticsInCavity(const ABCD* optics) const;
 
 private:
 	void computeMatrix() const;
+	double delta() const;
 
 private:
+	std::list<const ABCD*> m_opticsList;
+	double m_closingFreeSpace;
+
 	mutable GenericABCD m_matrix;
 	mutable Beam m_beam;
-	bool m_ringCavity;
-	std::list<const ABCD*> m_opticsList;
+	mutable bool m_dirty;
 };
 
 #endif

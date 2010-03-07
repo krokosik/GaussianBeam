@@ -64,6 +64,14 @@ bool Optics::isOrientable() const
 	return isOrientable(Horizontal) || isOrientable(Vertical) || isOrientable(Ellipsoidal);
 }
 
+void Optics::setOrientation(Orientation orientation)
+{
+	if (isOrientable(orientation))
+		m_orientation = orientation;
+	else
+		cerr << "Error in Optics::setOrientation : the optics is not orientable along this orientation" << endl;
+}
+
 /////////////////////////////////////////////////
 // Locking functions
 
@@ -160,7 +168,6 @@ void Optics::setPosition(double position, bool respectAbsoluteLock, bool respect
 
 bool Optics::operator==(const Optics& other) const
 {
-	cerr << "Optics==" << endl;
 	bool sameRelativeParent = true;
 	if (m_relativeLockParent && other.m_relativeLockParent)
 		sameRelativeParent = (*m_relativeLockParent == *other.m_relativeLockParent);
@@ -219,8 +226,6 @@ Beam CreateBeam::antecedent(const Beam& outputBeam, const Beam& opticalAxis) con
 
 bool CreateBeam::operator==(const Optics& other) const
 {
-	cerr << "CreateBeam==" << endl;
-
 	if (!this->Optics::operator==(other))
 		return false;
 
@@ -340,31 +345,8 @@ Beam ABCD::antecedent(const Beam& outputBeam, const Beam& /*opticalAxis*/) const
 	return inputBeam;
 }
 
-bool ABCD::stabilityCriterion1() const
-{
-	/// @todo deal with orientation
-	return fabs((A(Spherical) + B(Spherical))/2.) < 1.;
-}
-
-bool ABCD::stabilityCriterion2() const
-{
-	/// @todo deal with orientation
-	return sqr(D(Spherical) - A(Spherical)) + 4.*C(Spherical)*B(Spherical) < 0.;
-}
-
-Beam ABCD::eigenMode(double wavelength) const
-{
-	/// @todo deal with orientation
-	/// @todo what is the index ?
-	return Beam(complex<double>(-(D(Spherical) - A(Spherical))/(2.*C(Spherical)),
-	                            -sqrt(-(sqr(D(Spherical) - A(Spherical)) + 4.*C(Spherical)*B(Spherical)))/(2.*C(Spherical))),
-	                            position(), wavelength, 1.0, 1.0);
-}
-
 bool ABCD::operator==(const Optics& other) const
 {
-	cerr << "ABCD==" << endl;
-
 	if (!this->Optics::operator==(other))
 		return false;
 
@@ -384,13 +366,78 @@ bool ABCD::operator==(const Optics& other) const
 /////////////////////////////////////////////////
 // GenericABCD class
 
+GenericABCD::GenericABCD(const ABCD& abcd) : ABCD(abcd)
+{
+	setType(GenericABCDType);
+
+	if (abcd.orientation() == Spherical)
+		setABCD(abcd.A(Spherical), abcd.B(Spherical), abcd.C(Spherical), abcd.D(Spherical), Spherical);
+	else
+	{
+		setABCD(abcd.A(Horizontal), abcd.B(Horizontal), abcd.C(Horizontal), abcd.D(Horizontal), Horizontal);
+		setABCD(abcd.A(Vertical),   abcd.B(Vertical),   abcd.C(Vertical),   abcd.D(Vertical),   Vertical);
+	}
+}
+
+GenericABCD::GenericABCD(double A, double B, double C, double D, double width, double position, std::string name)
+	: ABCD(GenericABCDType, position, name)
+{
+	setWidth(width);
+	setABCD(A, B, C, D);
+}
+
+void GenericABCD::setABCD(double A, double B, double C, double D, Orientation orientation)
+{
+	setA(A, orientation);
+	setB(B, orientation);
+	setC(C, orientation);
+	setD(D, orientation);
+}
+
+double GenericABCD::getCoefficient(const double coefficient[], Orientation orientation) const
+{
+	if ((orientation == Spherical) && (GenericABCD::orientation() == Ellipsoidal))
+		cerr << "Wrong orientation for GenericABCD::getCoefficient" << endl;
+
+	if ((orientation == Spherical) || (orientation == Horizontal) || (GenericABCD::orientation() == Spherical))
+		return coefficient[0];
+	else
+		return coefficient[1];
+}
+
+void GenericABCD::setCoefficient(double coefficient[], double value, Orientation orientation)
+{
+	if (orientation == Spherical)
+		coefficient[0] = coefficient[1] = value;
+	else if (orientation == Horizontal)
+		coefficient[0] = value;
+	else if (orientation == Vertical)
+		coefficient[1] = value;
+	else
+		cerr << "Wrong orientation for GenericABCD::setCoefficient" << endl;
+
+	if (orientation != Spherical)
+		setOrientation(Ellipsoidal);
+}
+
+void GenericABCD::mult(const ABCD& abcd, Orientation orientation)
+{
+	setA(A(orientation)*abcd.A(orientation) + B(orientation)*abcd.C(orientation), orientation);
+	setB(A(orientation)*abcd.B(orientation) + B(orientation)*abcd.D(orientation), orientation);
+	setC(C(orientation)*abcd.A(orientation) + D(orientation)*abcd.C(orientation), orientation);
+	setD(C(orientation)*abcd.B(orientation) + D(orientation)*abcd.D(orientation), orientation);
+}
+
 GenericABCD& GenericABCD::operator*=(const ABCD& abcd)
 {
-	/// @todo deal with orientation
-	setA(A(Spherical)*abcd.A(Spherical) + B(Spherical)*abcd.C(Spherical));
-	setB(A(Spherical)*abcd.B(Spherical) + B(Spherical)*abcd.D(Spherical));
-	setC(C(Spherical)*abcd.A(Spherical) + D(Spherical)*abcd.C(Spherical));
-	setD(C(Spherical)*abcd.B(Spherical) + D(Spherical)*abcd.D(Spherical));
+	if ((orientation() == Spherical) && (abcd.orientation() == Spherical))
+		mult(abcd, Spherical);
+	else
+	{
+		mult(abcd, Horizontal);
+		mult(abcd, Vertical);
+	}
+
 	/// @todo check if the two objects are adjacent ?
 	setWidth(width() + abcd.width());
 
@@ -406,6 +453,13 @@ GenericABCD operator*(const ABCD& abcd1, const ABCD& abcd2)
 
 ostream& operator<<(ostream& out, const ABCD& abcd)
 {
-	out << "A = " << abcd.A(Spherical) << " B = " << abcd.B(Spherical) << " C = " << abcd.C(Spherical) << " D = " << abcd.D(Spherical);
+	if (abcd.orientation() == Spherical)
+		out << "A = " << abcd.A(Spherical) << " B = " << abcd.B(Spherical) << " C = " << abcd.C(Spherical) << " D = " << abcd.D(Spherical);
+	else
+	{
+		out << "Ah = " << abcd.A(Horizontal) << " Bh = " << abcd.B(Horizontal) << " Ch = " << abcd.C(Horizontal) << " Dh = " << abcd.D(Horizontal);
+		out << "Av = " << abcd.A(Vertical  ) << " Bv = " << abcd.B(Vertical  ) << " Cv = " << abcd.C(Vertical  ) << " Dv = " << abcd.D(Vertical  );
+	}
+
 	return out;
 }

@@ -127,9 +127,9 @@ namespace Utils
 
 	public:
 		template<class X, class Y> void connect(Y* obj, void (X::*func)(Param p))          { m_delegateList.insert(MakeDelegate(obj, func)); }
-		template<class X, class Y> void connect(Y* obj, void (X::*func)(Param p) const)    { m_delegateList.insert(MakeDelegate(obj, func)); }
+//		template<class X, class Y> void connect(Y* obj, void (X::*func)(Param p) const)    { m_delegateList.insert(MakeDelegate(obj, func)); }
 		template<class X, class Y> void disconnect(Y* obj, void (X::*func)(Param p))       { m_delegateList.erase(MakeDelegate(obj, func)); }
-		template<class X, class Y> void disconnect(Y* obj, void (X::*func)(Param p) const) { m_delegateList.erase(MakeDelegate(obj, func)); }
+//		template<class X, class Y> void disconnect(Y* obj, void (X::*func)(Param p) const) { m_delegateList.erase(MakeDelegate(obj, func)); }
 		void emit(Param p) const
 		{
 			for (DelegateIterator it = m_delegateList.begin(); it != m_delegateList.end(); ++it)
