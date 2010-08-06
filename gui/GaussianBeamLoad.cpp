@@ -19,6 +19,7 @@
 #include "gui/GaussianBeamWindow.h"
 #include "gui/OpticsView.h"
 #include "gui/Unit.h"
+#include "gui/Names.h"
 #include "src/GaussianFit.h"
 
 #include <QDebug>
@@ -240,9 +241,9 @@ void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)
 	{
 		/// @todo showTargetBeam is missing
 		if (child.tagName() == "waist")
-			beam.setWaist(child.text().toDouble(), Orientation(child.attribute("orientation").toInt()));
+			beam.setWaist(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "waistPosition")
-			beam.setWaistPosition(child.text().toDouble(), Orientation(child.attribute("orientation").toInt()));
+			beam.setWaistPosition(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "wavelength")
 			beam.setWavelength(child.text().toDouble());
 		else if (child.tagName() == "index")
@@ -274,7 +275,7 @@ void GaussianBeamWindow::parseFit(const QDomElement& element)
 		else if (child.tagName() == "color")
 			fit->setColor(child.text().toUInt());
 		else if (child.tagName() == "orientation")
-			fit->setOrientation(Orientation(child.text().toUInt()));
+			fit->setOrientation(OrientationName::codedName.key(child.text()));
 		else if (child.tagName() == "data")
 		{
 			QDomElement dataElement = child.firstChildElement();
@@ -287,7 +288,7 @@ void GaussianBeamWindow::parseFit(const QDomElement& element)
 				else if (dataElement.tagName() == "value")
 				{
 					double value = dataElement.text().toDouble();
-					Orientation orientation = Orientation(dataElement.attribute("orientation").toInt());
+					Orientation orientation = OrientationName::codedName.key(dataElement.attribute("orientation"));
 					if (added)
 						fit->setData(fit->size() - 1, position, value, orientation);
 					else
@@ -311,21 +312,21 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QMap<int, Optic
 {
 	Optics* optics = 0;
 
-	if (element.tagName() == m_opticsElements[CreateBeamType])
+	if (element.tagName() == OpticsName::codedName[CreateBeamType])
 		optics = new CreateBeam(1., 1., 1., "");
-	else if (element.tagName() == m_opticsElements[LensType])
+	else if (element.tagName() == OpticsName::codedName[LensType])
 		optics = new Lens(1., 1., "");
-	else if (element.tagName() == m_opticsElements[FlatMirrorType])
+	else if (element.tagName() == OpticsName::codedName[FlatMirrorType])
 		optics = new FlatMirror(1., "");
-	else if (element.tagName() == m_opticsElements[CurvedMirrorType])
+	else if (element.tagName() == OpticsName::codedName[CurvedMirrorType])
 		optics = new CurvedMirror(1., 1., "");
-	else if (element.tagName() == m_opticsElements[FlatInterfaceType])
+	else if (element.tagName() == OpticsName::codedName[FlatInterfaceType])
 		optics = new FlatInterface(1., 1., "");
-	else if (element.tagName() == m_opticsElements[CurvedInterfaceType])
+	else if (element.tagName() == OpticsName::codedName[CurvedInterfaceType])
 		optics = new CurvedInterface(1., 1., 1., "");
-	else if (element.tagName() == m_opticsElements[DielectricSlabType])
+	else if (element.tagName() == OpticsName::codedName[DielectricSlabType])
 		optics = new DielectricSlab(1., 1., 1., "");
-	else if (element.tagName() == m_opticsElements[GenericABCDType])
+	else if (element.tagName() == OpticsName::codedName[GenericABCDType])
 		optics = new GenericABCD(1., 1., 1., 1., 1., 1., "");
 	else
 		qDebug() << " -> Unknown tag in parseOptics: " << element.tagName();
@@ -344,7 +345,7 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QMap<int, Optic
 		else if (child.tagName() == "angle")
 			optics->setAngle(child.text().toDouble());
 		else if (child.tagName() == "orientation")
-			optics->setOrientation(Orientation(child.text().toInt()));
+			optics->setOrientation(OrientationName::codedName.key(child.text()));
 		else if (child.tagName() == "name")
 			optics->setName(child.text().toUtf8().data());
 		else if (child.tagName() == "absoluteLock")
@@ -362,13 +363,13 @@ void GaussianBeamWindow::parseOptics(const QDomElement& element, QMap<int, Optic
 		else if (child.tagName() == "surfaceRadius")
 			dynamic_cast<CurvedInterface*>(optics)->setSurfaceRadius(child.text().toDouble());
 		else if (child.tagName() == "A")
-			dynamic_cast<GenericABCD*>(optics)->setA(child.text().toDouble());
+			dynamic_cast<GenericABCD*>(optics)->setA(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "B")
-			dynamic_cast<GenericABCD*>(optics)->setB(child.text().toDouble());
+			dynamic_cast<GenericABCD*>(optics)->setB(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "C")
-			dynamic_cast<GenericABCD*>(optics)->setC(child.text().toDouble());
+			dynamic_cast<GenericABCD*>(optics)->setC(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "D")
-			dynamic_cast<GenericABCD*>(optics)->setD(child.text().toDouble());
+			dynamic_cast<GenericABCD*>(optics)->setD(child.text().toDouble(), OrientationName::codedName.key(child.attribute("orientation")));
 		else if (child.tagName() == "beam")
 		{
 			Beam inputBeam;
@@ -405,17 +406,4 @@ void GaussianBeamWindow::parseView(const QDomElement& element)
 
 		child = child.nextSiblingElement();
 	}
-}
-
-void GaussianBeamWindow::initSaveVariables()
-{
-	m_opticsElements.clear();
-	m_opticsElements.insert(CreateBeamType, "createBeam");
-	m_opticsElements.insert(LensType, "lens");
-	m_opticsElements.insert(FlatMirrorType, "flatMirror");
-	m_opticsElements.insert(CurvedMirrorType, "curvedMirror");
-	m_opticsElements.insert(FlatInterfaceType, "flatInterface");
-	m_opticsElements.insert(CurvedInterfaceType, "curvedInterface");
-	m_opticsElements.insert(DielectricSlabType, "dielectricSlab");
-	m_opticsElements.insert(GenericABCDType, "genericABCD");
 }

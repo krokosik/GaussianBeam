@@ -30,7 +30,6 @@
 GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 {
 	m_currentFile = QString();
-	initSaveVariables();
 
 	setupUi(this);
 	setWindowTitle(QApplication::applicationName());

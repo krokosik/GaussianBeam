@@ -120,11 +120,24 @@ QWidget *GaussianBeamDelegate::createEditor(QWidget* parent,
 			properties << EditorProperty(0., Utils::infinity, "n2/n1 = ")
 			           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
 		else if (optics->type() == GenericABCDType)
-			properties << EditorProperty(-Utils::infinity, Utils::infinity, "A = ")
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "B = ", Unit(UnitABCD).string())
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "C = ", " /" + Unit(UnitABCD).string(false))
-			           << EditorProperty(-Utils::infinity, Utils::infinity, "D = ")
-			           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
+		{
+			if (optics->orientation() == Spherical)
+				properties << EditorProperty(-Utils::infinity, Utils::infinity, "A = ")
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "B = ", Unit(UnitABCD).string())
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "C = ", " /" + Unit(UnitABCD).string(false))
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "D = ")
+				           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
+			else
+				properties << EditorProperty(-Utils::infinity, Utils::infinity, "A(H) = ")
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "A(V) = ")
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "B(H) = ", Unit(UnitABCD).string())
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "B(V) = ", Unit(UnitABCD).string())
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "C(H) = ", " /" + Unit(UnitABCD).string(false))
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "C(V) = ", " /" + Unit(UnitABCD).string(false))
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "D(H) = ")
+				           << EditorProperty(-Utils::infinity, Utils::infinity, "D(V) = ")
+				           << EditorProperty(0., Utils::infinity, "width = ", Unit(UnitWidth).string());
+		}
 
 		return new PropertyEditor(properties, parent);
 	}
@@ -215,11 +228,26 @@ void GaussianBeamDelegate::setEditorData(QWidget* editor, const QModelIndex& ind
 		else if (optics->type() == GenericABCDType)
 		{
 			const GenericABCD* ABCDOptics = dynamic_cast<const GenericABCD*>(optics);
-			propertyEditor->setValue(0, ABCDOptics->A(Spherical));
-			propertyEditor->setValue(1, ABCDOptics->B(Spherical)*Unit(UnitABCD).divider());
-			propertyEditor->setValue(2, ABCDOptics->C(Spherical)/Unit(UnitABCD).divider());
-			propertyEditor->setValue(3, ABCDOptics->D(Spherical));
-			propertyEditor->setValue(4, ABCDOptics->width()*Unit(UnitWidth).divider());
+			if (optics->orientation() == Spherical)
+			{
+				propertyEditor->setValue(0, ABCDOptics->A(Spherical));
+				propertyEditor->setValue(1, ABCDOptics->B(Spherical)*Unit(UnitABCD).divider());
+				propertyEditor->setValue(2, ABCDOptics->C(Spherical)/Unit(UnitABCD).divider());
+				propertyEditor->setValue(3, ABCDOptics->D(Spherical));
+				propertyEditor->setValue(4, ABCDOptics->width()*Unit(UnitWidth).divider());
+			}
+			else
+			{
+				propertyEditor->setValue(0, ABCDOptics->A(Horizontal));
+				propertyEditor->setValue(1, ABCDOptics->A(Vertical  ));
+				propertyEditor->setValue(2, ABCDOptics->B(Horizontal)*Unit(UnitABCD).divider());
+				propertyEditor->setValue(3, ABCDOptics->B(Vertical  )*Unit(UnitABCD).divider());
+				propertyEditor->setValue(4, ABCDOptics->C(Horizontal)/Unit(UnitABCD).divider());
+				propertyEditor->setValue(5, ABCDOptics->C(Vertical  )/Unit(UnitABCD).divider());
+				propertyEditor->setValue(6, ABCDOptics->D(Horizontal));
+				propertyEditor->setValue(7, ABCDOptics->D(Vertical  ));
+				propertyEditor->setValue(8, ABCDOptics->width()*Unit(UnitWidth).divider());
+			}
 			break;
 		}
 		else if (optics->type() == DielectricSlabType)

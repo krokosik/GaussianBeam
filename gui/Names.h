@@ -37,11 +37,13 @@ namespace Property
 namespace OrientationName
 {
 	extern QMap<Orientation, QString> fullName;
+	extern QMap<Orientation, QString> codedName;
 }
 
 namespace OpticsName
 {
 	extern QMap<OpticsType, QString> fullName;
+	extern QMap<OpticsType, QString> codedName;
 }
 
 /// Called by main() to fill name maps

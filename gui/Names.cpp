@@ -28,11 +28,13 @@ namespace Property
 namespace OrientationName
 {
 	QMap<Orientation, QString> fullName;
+	QMap<Orientation, QString> codedName;
 }
 
 namespace OpticsName
 {
 	QMap<OpticsType, QString> fullName;
+	QMap<OpticsType, QString> codedName;
 }
 
 void initNames(QApplication* app)
@@ -114,10 +116,26 @@ void initNames(QApplication* app)
 	OpticsName::fullName.insert(ThermalLensType,     app->translate("Names", "Thermal lens"));
 	OpticsName::fullName.insert(GenericABCDType,     app->translate("Names", "Generic ABCD"));
 
+	OpticsName::codedName.insert(CreateBeamType,      app->translate("Names", "createBeam"));
+	OpticsName::codedName.insert(LensType,            app->translate("Names", "lens"));
+	OpticsName::codedName.insert(ThickLensType,       app->translate("Names", "thickLens"));
+	OpticsName::codedName.insert(FlatMirrorType,      app->translate("Names", "flatMirror"));
+	OpticsName::codedName.insert(CurvedMirrorType,    app->translate("Names", "curvedMirror"));
+	OpticsName::codedName.insert(FlatInterfaceType,   app->translate("Names", "flatInterface"));
+	OpticsName::codedName.insert(CurvedInterfaceType, app->translate("Names", "curvedInterface"));
+	OpticsName::codedName.insert(DielectricSlabType,  app->translate("Names", "dielectricSlab"));
+	OpticsName::codedName.insert(ThermalLensType,     app->translate("Names", "thermalLens"));
+	OpticsName::codedName.insert(GenericABCDType,     app->translate("Names", "genericABCD"));
+
+	OrientationName::fullName.insert(Spherical,   app->translate("Names", "Spherical"));
 	OrientationName::fullName.insert(Horizontal,  app->translate("Names", "Horizontal"));
 	OrientationName::fullName.insert(Vertical,    app->translate("Names", "Vertical"));
-	OrientationName::fullName.insert(Spherical,   app->translate("Names", "Spherical"));
 	OrientationName::fullName.insert(Ellipsoidal, app->translate("Names", "Ellipsoidal"));
+
+	OrientationName::codedName.insert(Spherical,   "spherical");
+	OrientationName::codedName.insert(Horizontal,  "horizontal");
+	OrientationName::codedName.insert(Vertical,    "vertical");
+	OrientationName::codedName.insert(Ellipsoidal, "ellipsoidal");
 }
 
 QString breakString(QString string)

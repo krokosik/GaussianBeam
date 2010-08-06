@@ -484,7 +484,8 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench* bench)
 	if (m_optics->type() != CreateBeamType)
 	{
 		setCursor(Qt::OpenHandCursor);
-		setFlag(ItemIsMovable);
+		setFlag(QGraphicsItem::ItemIsMovable);
+		setFlag(QGraphicsItem::ItemSendsGeometryChanges);
 		setZValue(1);
 	}
 	else
@@ -752,8 +753,12 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 	painter->setPen(m_style ? Qt::NoPen : QPen(beamColor));
 	painter->setBrush(QBrush(beamColor, m_style ? Qt::SolidPattern : Qt::NoBrush));
 
-	const double horizontalScale = 1./sqrt(sqr(option->matrix.m11()) + sqr(option->matrix.m12())); // m/Pixels
-	const double verticalScale   = 1./sqrt(sqr(option->matrix.m22()) + sqr(option->matrix.m21())); // m/Pixels
+	const double horizontalScale = 1./sqrt(sqr(painter->worldTransform().m11()) + sqr(painter->worldTransform().m12())); // m/Pixels
+	const double verticalScale   = 1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21())); // m/Pixels
+
+	qDebug() << "paint" << horizontalScale << verticalScale;
+	qDebug() << 1./sqrt(sqr(painter->worldTransform().m11()) + sqr(painter->worldTransform().m12())) <<
+	            1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21()));
 
 	const double waist = m_beam->waist(m_orientationCache);
 	const double waistPosition = m_beam->waistPosition(m_orientationCache);

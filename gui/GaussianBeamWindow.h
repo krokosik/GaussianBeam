@@ -90,7 +90,6 @@ private:
 // Loading stuff that should logically be moved to OpticsBench, but depend on Qt.
 // In addition, a GaussianBeam file contains view properties that do not belong to OpticsBench.
 private:
-	void initSaveVariables();
 	void convertFormat(QByteArray* data, const QString& xsltPath) const;
 	bool parseFile(const QString& path = QString());
 	void parseXml(const QDomElement& element);
@@ -101,6 +100,7 @@ private:
 	void parseOptics(const QDomElement& element, QMap<int, Optics*>& opticsList, QMap<int, int>& lockTree);
 	void parseView(const QDomElement& element);
 	bool writeFile(const QString& path = QString());
+	void writeOrientedElement(QXmlStreamWriter& xmlWriter, QString name, QString data, Orientation orientation) const;
 	void writeBench(QXmlStreamWriter& xmlWriter) const;
 	void writeWaist(QXmlStreamWriter& xmlWriter, const Beam* beam, Orientation orientation) const;
 	void writeBeam(QXmlStreamWriter& xmlWriter, const Beam* beam) const;
@@ -128,7 +128,6 @@ private:
 	OpticsView* m_vOpticsView;
 	QWidget* m_hOpticsViewEnsemble;
 	QWidget* m_vOpticsViewEnsemble;
-	QMap<OpticsType, QString> m_opticsElements;
 
 	QString m_currentFile;
 };

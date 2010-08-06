@@ -191,7 +191,7 @@ void OpticsBench::detectCavities()
 	// - The optics is in the beam range
 	// - The beam is copropagating with the optics image
 	// - The beam is NOT copropagating with the optics antecedent.
-
+/*
 	cerr << "Detecting cavity" << endl;
 	bool cavityDetected = false;
 
@@ -232,7 +232,7 @@ void OpticsBench::detectCavities()
 				cerr << "EigenBeam : " << *cavity.eigenBeam(wavelength(), 0) << endl;
 			}
 		}
-
+*/
 }
 
 /////////////////////////////////////////////////

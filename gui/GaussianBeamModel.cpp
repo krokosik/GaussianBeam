@@ -120,14 +120,26 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		else if (optics->type() == GenericABCDType)
 		{
 			const ABCD* abcd = dynamic_cast<const ABCD*>(optics);
-			return QString("A = ") + QString::number(abcd->A(Spherical)) +
-			       QString("\nB = ") + QString::number(abcd->B(Spherical)*Unit(UnitABCD).divider())
-			                         + Unit(UnitABCD).string() +
-			       QString("\nC = ") + QString::number(abcd->C(Spherical)/Unit(UnitABCD).divider())
-			                         + " /" + Unit(UnitABCD).string(false) +
-			       QString("\nD = ") + QString::number(abcd->D(Spherical)) +
-			       QString("\n") + tr("width") + " = " + QString::number(optics->width()*Unit(UnitWidth).divider())
-			                       + Unit(UnitWidth).string();
+			if (optics->orientation() == Spherical)
+			{
+				return QString(  "A = ") + QString::number(abcd->A(Spherical)) +
+				       QString("\nB = ") + QString::number(abcd->B(Spherical)*Unit(UnitABCD).divider()) + Unit(UnitABCD).string() +
+				       QString("\nC = ") + QString::number(abcd->C(Spherical)/Unit(UnitABCD).divider()) + " /" + Unit(UnitABCD).string(false) +
+				       QString("\nD = ") + QString::number(abcd->D(Spherical)) +
+				       QString("\n")     + tr("width") + " = " + QString::number(optics->width()*Unit(UnitWidth).divider()) + Unit(UnitWidth).string();
+			}
+			else
+			{
+				return QString(  "A(H) = ") + QString::number(abcd->A(Horizontal)) +
+				       QString("\nA(V) = ") + QString::number(abcd->A(Vertical  )) +
+				       QString("\nB(H) = ") + QString::number(abcd->B(Horizontal)*Unit(UnitABCD).divider()) + Unit(UnitABCD).string() +
+				       QString("\nB(V) = ") + QString::number(abcd->B(Vertical  )*Unit(UnitABCD).divider()) + Unit(UnitABCD).string() +
+				       QString("\nC(H) = ") + QString::number(abcd->C(Horizontal)/Unit(UnitABCD).divider()) + " /" + Unit(UnitABCD).string(false) +
+				       QString("\nC(V) = ") + QString::number(abcd->C(Vertical  )/Unit(UnitABCD).divider()) + " /" + Unit(UnitABCD).string(false) +
+				       QString("\nD(H) = ") + QString::number(abcd->D(Horizontal)) +
+				       QString("\nD(V) = ") + QString::number(abcd->D(Vertical  )) +
+				       QString("\n")     + tr("width") + " = " + QString::number(optics->width()*Unit(UnitWidth).divider()) + Unit(UnitWidth).string();
+			}
 		}
 	}
 	else if (column == Property::BeamWaist)
@@ -273,11 +285,26 @@ bool GaussianBeamModel::setData(const QModelIndex& index, const QVariant& value,
 		{
 			/// @todo check that the ABCD matrix is valid, e.g. by introducing bool GenericABCD::isValid()
 			GenericABCD* ABCDOptics = dynamic_cast<GenericABCD*>(optics);
-			ABCDOptics->setA(value.toList()[0].toDouble());
-			ABCDOptics->setB(value.toList()[1].toDouble()*Unit(UnitABCD).multiplier());
-			ABCDOptics->setC(value.toList()[2].toDouble()/Unit(UnitABCD).multiplier());
-			ABCDOptics->setD(value.toList()[3].toDouble());
-			ABCDOptics->setWidth(value.toList()[4].toDouble()*Unit(UnitWidth).multiplier());
+			if (optics->orientation() == Spherical)
+			{
+				ABCDOptics->setA(value.toList()[0].toDouble(), Spherical);
+				ABCDOptics->setB(value.toList()[1].toDouble()*Unit(UnitABCD).multiplier(), Spherical);
+				ABCDOptics->setC(value.toList()[2].toDouble()/Unit(UnitABCD).multiplier(), Spherical);
+				ABCDOptics->setD(value.toList()[3].toDouble(), Spherical);
+				ABCDOptics->setWidth(value.toList()[4].toDouble()*Unit(UnitWidth).multiplier());
+			}
+			else
+			{
+				ABCDOptics->setA(value.toList()[0].toDouble(), Horizontal);
+				ABCDOptics->setA(value.toList()[1].toDouble(), Vertical  );
+				ABCDOptics->setB(value.toList()[2].toDouble()*Unit(UnitABCD).multiplier(), Horizontal);
+				ABCDOptics->setB(value.toList()[3].toDouble()*Unit(UnitABCD).multiplier(), Vertical  );
+				ABCDOptics->setC(value.toList()[4].toDouble()/Unit(UnitABCD).multiplier(), Horizontal);
+				ABCDOptics->setC(value.toList()[5].toDouble()/Unit(UnitABCD).multiplier(), Vertical  );
+				ABCDOptics->setD(value.toList()[6].toDouble(), Horizontal);
+				ABCDOptics->setD(value.toList()[7].toDouble(), Vertical  );
+				ABCDOptics->setWidth(value.toList()[8].toDouble()*Unit(UnitWidth).multiplier());
+			}
 		}
 		m_bench->opticsPropertyChanged(row);
 	}

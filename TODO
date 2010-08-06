@@ -25,6 +25,7 @@ WISHLIST:
 	Scripting
 	Unittest
 	Restore names aboce optics
+	explore the q/n = (Aq/n + B)/(Cq/n + D) expression
 
 BUGS:
 	Save properties for H and V views
@@ -37,8 +38,9 @@ BUGS:
 	Changing the waist in an intermediate beam might scramble the optics ordering with angle (e.g. linear cavity)
 	Lock to create beam does not work : changing the position of createBeam should change the waist position i.e. the beam stored in create beam should be relative to the create beam position
 	On the same account, the sensitivity does not work for createBeam
-	On MAC OS X, moving the optics does not work. Also, waists are not displayed correclty
-	Implement the GUI for ellipsoidal generic ABCD
+	Grammar : change optics properties order (common first, specific after)
+	Grammar : Change orientation data type
+	Grammar : add orientation attribute to genericABCD
 
 MINOR BUGS
 	Flip mirrors when loading and old files
