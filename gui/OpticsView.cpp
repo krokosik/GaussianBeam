@@ -124,8 +124,14 @@ void OpticsScene::setBeamScale(double beamScale)
 	foreach (BeamItem* item, m_beamItems)
 		item->updateTransform();
 
+	m_targetBeamItem->updateTransform();
+	m_cavityBeamItem->updateTransform();
+
 	if (m_scenesLocked && m_otherScene)
 		m_otherScene->setBeamScale(m_beamScale);
+
+	// Rescale fit points
+	onOpticsBenchFitDataChanged(0);
 }
 
 void OpticsScene::setOpticsHeight(double opticsHeight)
@@ -453,7 +459,41 @@ void OpticsView::drawBackground(QPainter* painter, const QRectF& rect)
 	painter->drawLine(QPointF(rect.left(), 0.), QPointF(rect.right(), 0.));
 	painter->drawLine(QPointF(0., rect.top()),  QPointF(0., rect.bottom()));
 
+	// Geometrical optics
+/*
+	QPolygonF polygon;
 
+
+	double x = m_bench->optics(0)->image(Beam(), Beam()).waistPosition();
+	double r = 0.;
+	double t = m_bench->optics(0)->image(Beam(), Beam()).waist()*1000.;
+
+	polygon << QPointF(x, r);
+
+	for (int i = 0; i < m_bench->nOptics(); i++)
+		if (m_bench->optics(i)->isABCD())
+		{
+			const ABCD* optics = dynamic_cast<const ABCD*>(m_bench->optics(i));
+			double pos = optics->position();
+			// Apply freespace
+			r += t*(pos - x);
+			// Apply ABCD
+			double rp = optics->A(Spherical)*r + optics->B(Spherical)*t;
+			double tp = optics->C(Spherical)*r + optics->D(Spherical)*t;
+			r = rp; t = tp;
+			// New point
+			polygon << QPointF(pos, r);
+			x = pos;
+		}
+
+	for (int i = polygon.size() - 1; i >= 0; i--)
+		polygon << QPointF(polygon[i].x(), -polygon[i].y());
+
+	QPen geometricalPen(Qt::red, 0);
+	painter->setPen(geometricalPen);
+	painter->setBrush(QBrush());
+	painter->drawPolygon(polygon);
+*/
 
 /*	/// @todo if drawing a grid and rullers, set background cache
 	const double pixel = scene()->width()/width();
