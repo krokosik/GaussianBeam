@@ -245,7 +245,7 @@ double Fit::applyFit(Beam& beam) const
 * @p data  user data. Here null
 * @p info  integer output variable. If set to a negative value, the minimization procedure will stop.
 */
-void Fit::lm_evaluate_beam(double* par, int /*m_dat*/, double* fvec, void* data, int* /*info*/)
+void Fit::lm_evaluate_beam(const double* par, int /*m_dat*/, const void* data, double* fvec, int* /*info*/)
 {
 	const Fit* fit = static_cast<const Fit*>(data);
 
@@ -259,16 +259,16 @@ void Fit::lm_evaluate_beam(double* par, int /*m_dat*/, double* fvec, void* data,
 	// if <parameters drifted away> { *info = -1; }
 }
 
-pair<Beam,double> Fit::nonLinearFit(const Beam& guessBeam) const
+pair<Beam, double> Fit::nonLinearFit(const Beam& guessBeam) const
 {
 	const int nPar = 2;
 	double par[nPar] = {guessBeam.waist(), guessBeam.waistPosition()};
 
-	lm_control_type control;
-	lm_initialize_control(&control);
-	lm_minimize(m_tmpRadii.size(), nPar, par, Fit::lm_evaluate_beam, NULL, (void*)(this), &control);
+	lm_control_struct control = lm_control_double;
+	lm_status_struct status;
+	lmmin(nPar, par, m_tmpRadii.size(), (void*)(this), Fit::lm_evaluate_beam, &control, &status, NULL);
 
-	pair<Beam,double> result(guessBeam, control.fnorm);
+	pair<Beam, double> result(guessBeam, status.fnorm);
 	result.first.setWaist(par[0]);
 	result.first.setWaistPosition(par[1]);
 

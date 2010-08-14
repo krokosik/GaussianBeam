@@ -1,17 +1,15 @@
 /*
  * Project:  LevenbergMarquardtLeastSquaresFitting
  *
- * File:     lmmin.c
+ * File:     lmmin.h
  *
  * Contents: Public interface to the Levenberg-Marquardt core implementation.
  *
- * Author:   Joachim Wuttke 2004-8 
- * 
- * Homepage: www.messen-und-deuten.de/lmfit
+ * Author:   Joachim Wuttke 2004-2010 - version 3.2
  *
- * Licence:  Public domain.
+ * Homepage: www.messen-und-deuten.de/lmfit
  */
- 
+
 #ifndef LMMIN_H
 #define LMMIN_H
 
@@ -20,70 +18,68 @@ extern "C" {
 #endif
 
 
-/** User-supplied subroutines. **/
-
-/* Type of user-supplied subroutine that calculates fvec. */
-typedef void (lm_evaluate_ftype) (double *par, int m_dat, double *fvec,
-				  void *data, int *info);
-
-/* Default implementation therof, provided by lm_eval.c. */
-void lm_evaluate_default(double *par, int m_dat, double *fvec, void *data,
-			 int *info);
-
-/* Type of user-supplied subroutine that informs about fit progress. */
-typedef void (lm_print_ftype) (int n_par, double *par, int m_dat,
-			       double *fvec, void *data, int iflag,
-			       int iter, int nfev);
-
-/* Default implementation therof, provided by lm_eval.c. */
-void lm_print_default(int n_par, double *par, int m_dat, double *fvec,
-		      void *data, int iflag, int iter, int nfev);
-
-
 /** Compact high-level interface. **/
 
-/* Collection of control parameters. */
+/* Collection of control (input) parameters. */
 typedef struct {
     double ftol;      /* relative error desired in the sum of squares. */
     double xtol;      /* relative error between last two approximations. */
     double gtol;      /* orthogonality desired between fvec and its derivs. */
     double epsilon;   /* step used to calculate the jacobian. */
     double stepbound; /* initial bound to steps in the outer loop. */
-    double fnorm;     /* norm of the residue vector fvec. */
     int maxcall;      /* maximum number of iterations. */
+    int scale_diag;   /* UNDOCUMENTED, TESTWISE automatical diag rescaling? */
+    int printflags;   /* OR'ed to produce more noise */
+} lm_control_struct;
+
+/* Collection of status (output) parameters. */
+typedef struct {
+    double fnorm;     /* norm of the residue vector fvec. */
     int nfev;	      /* actual number of iterations. */
     int info;	      /* status of minimization. */
-} lm_control_type;
+} lm_status_struct;
 
-/* Initialize control parameters with default values. */
-void lm_initialize_control(lm_control_type * control);
+/* Recommended control parameter settings. */
+extern const lm_control_struct lm_control_double;
+extern const lm_control_struct lm_control_float;
+
+/* Standard monitoring routine. */
+void lm_printout_std( int n_par, const double *par, int m_dat,
+                      const void *data, const double *fvec,
+                      int printflags, int iflag, int iter, int nfev);
 
 /* Refined calculation of Eucledian norm, typically used in printout routine. */
-double lm_enorm(int, double *);
+double lm_enorm( int, const double * );
 
 /* The actual minimization. */
-void lm_minimize(int m_dat, int n_par, double *par,
-		 lm_evaluate_ftype * evaluate, lm_print_ftype * printout,
-		 void *data, lm_control_type * control);
+void lmmin( int n_par, double *par, int m_dat, const void *data,
+            void (*evaluate) (const double *par, int m_dat, const void *data,
+                              double *fvec, int *info),
+            const lm_control_struct *control, lm_status_struct *status,
+            void (*printout) (int n_par, const double *par, int m_dat,
+                              const void *data, const double *fvec,
+                              int printflags, int iflag, int iter, int nfev) );
 
 
 /** Legacy low-level interface. **/
 
 /* Alternative to lm_minimize, allowing full control, and read-out
    of auxiliary arrays. For usage, see implementation of lm_minimize. */
-void lm_lmdif(int m, int n, double *x, double *fvec, double ftol,
-	      double xtol, double gtol, int maxfev, double epsfcn,
-	      double *diag, int mode, double factor, int *info, int *nfev,
-	      double *fjac, int *ipvt, double *qtf, double *wa1,
-	      double *wa2, double *wa3, double *wa4,
-	      lm_evaluate_ftype * evaluate, lm_print_ftype * printout,
-	      void *data);
+void lm_lmdif( int m, int n, double *x, double *fvec, double ftol,
+	       double xtol, double gtol, int maxfev, double epsfcn,
+	       double *diag, int mode, double factor, int *info, int *nfev,
+	       double *fjac, int *ipvt, double *qtf, double *wa1,
+	       double *wa2, double *wa3, double *wa4,
+               void (*evaluate) (const double *par, int m_dat, const void *data,
+                                 double *fvec, int *info),
+               void (*printout) (int n_par, const double *par, int m_dat,
+                                 const void *data, const double *fvec,
+                                 int printflags, int iflag, int iter, int nfev),
+               int printflags, const void *data );
 
-
-#ifndef _LMDIF
 extern const char *lm_infmsg[];
 extern const char *lm_shortmsg[];
-#endif
+
 
 #ifdef __cplusplus
 }

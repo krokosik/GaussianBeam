@@ -100,7 +100,7 @@ private:
 	double fitBeam(double wavelength, Orientation orientation) const;
 	/// Non linear fit functions
 	std::pair<Beam,double> nonLinearFit(const Beam& guessBeam) const;
-	static void lm_evaluate_beam(double *par, int m_dat, double *fvec, void *data, int *info);
+	static void lm_evaluate_beam(const double* par, int m_dat, const void* data, double* fvec, int* info);
 	/// Linear fit functions
 	Beam linearFit(const std::vector<double>& positions, const std::vector<double>& radii, double wavelength) const;
 
