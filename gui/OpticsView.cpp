@@ -169,6 +169,7 @@ void OpticsScene::setScenesLocked(bool scenesLocked)
 
 void OpticsScene::showTargetBeam(bool show)
 {
+	m_targetBeamItem->updateTransform();
 	m_targetBeamItem->setVisible(show);
 }
 
@@ -189,9 +190,8 @@ void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 				opticsItem->setUpdate(false);
 				const Beam* axis = m_bench->axis(opticsIndex);
 				Utils::Point coord = axis->absoluteCoordinates(opticsItem->optics()->position());
+				opticsItem->setRotation(-(axis->angle() + opticsItem->optics()->angle())*180./M_PI);
 				opticsItem->setPos(coord.x(), -coord.y());
-				opticsItem->resetTransform();
-				opticsItem->rotate(-(axis->angle() + opticsItem->optics()->angle())*180./M_PI);
 				opticsItem->setUpdate(true);
 			}
 		}
@@ -203,6 +203,7 @@ void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 
 void OpticsScene::onOpticsBenchTargetBeamChanged()
 {
+	m_targetBeamItem->updateTransform();
 	m_targetBeamItem->update();
 }
 
@@ -355,7 +356,8 @@ void OpticsView::adjustRange()
 	if (horizontalRange() == 0.)
 		return;
 
-	// Set the view rect exactly to the desired view to avoid scrollbar effects (to be done for vertical)
+	// Set the view rect exactly to the desired view to avoid scrollbar effects
+	/// @TODO to be done for vertical
 	setSceneRect(origin().x(), scene()->sceneRect().top(), horizontalRange(), scene()->height());
 	// Transform the view so that it displays the view rect
 	fitInView(sceneRect());
@@ -410,6 +412,12 @@ void OpticsView::setHorizontalRange(double horizontalRange)
 		foreach (QGraphicsView* view, otherScene->views())
 			dynamic_cast<OpticsView*>(view)->setHorizontalRange(OpticsView::horizontalRange());
 	}
+}
+
+void OpticsView::zoom(double factor)
+{
+	setOrigin(origin() + QPointF(0.5*(1. - factor)*horizontalRange(), 0.));
+	setHorizontalRange(factor*horizontalRange());
 }
 
 void OpticsView::showFullBench()
@@ -583,10 +591,20 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 {
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
-
+/*
+	// Draw the bounding rect of the optics
+	QPen boundingPen(Qt::blue);
+	boundingPen.setCosmetic(true);
+	painter->setPen(boundingPen);
+	painter->setBrush(QBrush());
+	painter->drawRect(boundingRect());
+*/
 	QColor opticsColor = QColor(153, 209, 247, 150);
 	QBrush opticsBrush(opticsColor);
+	QPen opticsPen(opticsColor.darker());
+	opticsPen.setCosmetic(true);
 	painter->setBrush(opticsBrush);
+	painter->setPen(opticsPen);
 	QPen textPen(Qt::black);
 
 	QPainterPath path;
@@ -735,10 +753,11 @@ void BeamItem::updateTransform()
 	m_boundingRectCache = QRectF(QPointF(minStart, -maxUpperRadius), QPointF(maxStop, maxLowerRadius));
 
 	// Position the beam
-	resetTransform();
-	setPos(beam()->origin().x(), -beam()->origin().y());
-	rotate(-beam()->angle()*180./M_PI);
-	scale(1., opticsScene->beamScale());
+	QTransform transform;
+	transform.translate(beam()->origin().x(), -beam()->origin().y());
+	transform.rotate(-beam()->angle()*180./M_PI);
+	transform.scale(1., opticsScene->beamScale());
+	setTransform(transform);
 }
 
 QRectF BeamItem::boundingRect() const
@@ -782,24 +801,32 @@ void BeamItem::drawLowerBeamSegment(double start, double stop, double pixel, int
 void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
 	Q_UNUSED(widget);
-
-/*	painter->setPen(QPen(Qt::red));
-	painter->setBrush(QBrush(Qt::red, Qt::Dense7Pattern));
+	Q_UNUSED(option);
+/*
+	QPen boundingPen(Qt::red);
+	boundingPen.setCosmetic(true);
+	painter->setPen(boundingPen);
+	painter->setBrush(QBrush());
 	painter->drawRect(boundingRect());
 */
 	QColor beamColor = wavelengthColor(m_beam->wavelength());
 	beamColor.setAlpha(200);
 
-	painter->setPen(m_style ? Qt::NoPen : QPen(beamColor));
+	QPen beamPen(beamColor);
+	if (m_style)
+		beamPen = Qt::NoPen;
+	else
+		beamPen.setCosmetic(true);
+	painter->setPen(beamPen);
 	painter->setBrush(QBrush(beamColor, m_style ? Qt::SolidPattern : Qt::NoBrush));
 
 	const double horizontalScale = 1./sqrt(sqr(painter->worldTransform().m11()) + sqr(painter->worldTransform().m12())); // m/Pixels
 	const double verticalScale   = 1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21())); // m/Pixels
-
+/*
 	qDebug() << "paint" << horizontalScale << verticalScale;
 	qDebug() << 1./sqrt(sqr(painter->worldTransform().m11()) + sqr(painter->worldTransform().m12())) <<
 	            1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21()));
-
+*/
 	const double waist = m_beam->waist(m_orientationCache);
 	const double waistPosition = m_beam->waistPosition(m_orientationCache);
 	const double rayleigh = m_beam->rayleigh(m_orientationCache);

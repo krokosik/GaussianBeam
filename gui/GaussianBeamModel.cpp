@@ -51,8 +51,9 @@ GaussianBeamModel::~GaussianBeamModel()
 
 void GaussianBeamModel::propertyWidgetModified()
 {
+	beginResetModel();
 	m_columns = m_propertySelector->checkedItems();
-	reset();
+	endResetModel();
 }
 
 int GaussianBeamModel::rowCount(const QModelIndex& /*parent*/) const

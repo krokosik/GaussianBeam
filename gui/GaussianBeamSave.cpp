@@ -27,7 +27,12 @@
 #include <QMessageBox>
 #include <QStandardItemModel>
 #include <QtXml/QDomDocument>
-#include <QtXml/QXmlStreamWriter>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+	#include <QXmlStreamWriter>
+#else
+	#include <QtXml/QXmlStreamWriter>
+#endif
+
 
 void GaussianBeamWindow::writeOrientedElement(QXmlStreamWriter& xmlWriter, QString name, QString data, Orientation orientation) const
 {

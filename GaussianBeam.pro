@@ -7,11 +7,13 @@
 
 include(po/po.pri)
 
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
 TEMPLATE = app
 TARGET = gaussianbeam
 DEPENDPATH += .
 QT += xml xmlpatterns
-QMAKE_CXXFLAGS += -pedantic -Wno-long-long -g
+QMAKE_CXXFLAGS += -pedantic -Wno-long-long -Wno-unused-local-typedefs -g
 CONFIG += release warn_on stl qt
 macx:CONFIG += x86 ppc                # Generate Universal Binary for Mac OS X
 win32:RC_FILE = gui/GaussianBeam.rc   # Embed the application icon
@@ -51,5 +53,5 @@ HEADERS += gui/GaussianBeamWidget.h gui/OpticsView.h gui/OpticsWidgets.h gui/Gau
 SOURCES += gui/GaussianBeamWidget.cpp gui/OpticsView.cpp gui/OpticsWidgets.cpp gui/GaussianBeamDelegate.cpp \
            gui/GaussianBeamModel.cpp gui/GaussianBeamWindow.cpp gui/Unit.cpp gui/Names.cpp \
            gui/GaussianBeamSave.cpp gui/GaussianBeamLoad.cpp
-FORMS    = gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui gui/OpticsViewProperties.ui
+FORMS   += gui/GaussianBeamWidget.ui gui/GaussianBeamWindow.ui gui/OpticsViewProperties.ui
 RESOURCES = gui/GaussianBeam.qrc

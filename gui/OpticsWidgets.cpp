@@ -181,7 +181,7 @@ void OpticsViewProperties::on_toolButton_ZoomIn_clicked(bool checked)
 	/// @todo use scaleview
 
 	if (m_update)
-		m_view->setHorizontalRange(m_view->horizontalRange()/1.2);
+		m_view->zoom(1./1.2);
 }
 
 void OpticsViewProperties::on_toolButton_ZoomOut_clicked(bool checked)
@@ -191,7 +191,7 @@ void OpticsViewProperties::on_toolButton_ZoomOut_clicked(bool checked)
 	/// @todo use scaleview
 
 	if (m_update)
-		m_view->setHorizontalRange(m_view->horizontalRange()*1.2);
+		m_view->zoom(1.2);
 }
 
 void OpticsViewProperties::on_toolButton_ZoomFull_clicked(bool checked)

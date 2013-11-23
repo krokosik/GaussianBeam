@@ -35,7 +35,9 @@ int main(int argc, char *argv[])
 	QCoreApplication::setApplicationName("GaussianBeam");
 	QCoreApplication::setApplicationVersion("0.5");
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
 	QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF8"));
+#endif
 
 	QString locale = QLocale::system().name();
 	// Load translations for the qt library

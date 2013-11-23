@@ -99,6 +99,7 @@ public:
 	void setHorizontalRange(double horizontalRange);
 	QPointF origin() const { return m_origin; }
 	void setOrigin(QPointF origin);
+	void zoom(double factor);
 	void showProperties(bool show = true);
 	bool propertiesVisible() const;
 	OpticsViewProperties* propertiesWidget() { return m_opticsViewProperties; }
