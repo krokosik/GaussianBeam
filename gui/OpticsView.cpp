@@ -149,6 +149,10 @@ void OpticsScene::setOpticsHeight(double opticsHeight)
 	foreach (QGraphicsView* view, views())
 		dynamic_cast<OpticsView*>(view)->propertiesWidget()->setOpticsHeight(m_opticsHeight);
 
+	foreach (QGraphicsItem* item, items())
+		if (OpticsItem* opticsItem = dynamic_cast<OpticsItem*>(item))
+			opticsItem->updateNameLabel();
+
 	if (m_scenesLocked && m_otherScene)
 		m_otherScene->setOpticsHeight(m_opticsHeight);
 }
@@ -192,6 +196,7 @@ void OpticsScene::onOpticsBenchDataChanged(int startOptics, int endOptics)
 				Utils::Point coord = axis->absoluteCoordinates(opticsItem->optics()->position());
 				opticsItem->setRotation(-(axis->angle() + opticsItem->optics()->angle())*180./M_PI);
 				opticsItem->setPos(coord.x(), -coord.y());
+				opticsItem->updateNameLabel();
 				opticsItem->setUpdate(true);
 			}
 		}
@@ -539,6 +544,8 @@ OpticsItem::OpticsItem(const Optics* optics, OpticsBench* bench)
 	else
 		setZValue(-1);
 
+	m_label = new QGraphicsSimpleTextItem(this);
+
 	m_update = true;
 }
 
@@ -585,7 +592,23 @@ QVariant OpticsItem::itemChange(GraphicsItemChange change, const QVariant& value
 	}
 
 	return QGraphicsItem::itemChange(change, value);
- }
+}
+
+void OpticsItem::updateNameLabel()
+{
+	if (m_optics->type() == CreateBeamType)
+	{
+		m_label->setText("");
+		return;
+	}
+
+	QRectF rect = boundingRect();
+	double pointSize = m_label->font().pointSizeF();
+	double scale = rect.height()*0.1/pointSize;
+	m_label->setText(QString::fromUtf8(m_optics->name().c_str()));
+	m_label->setPos(-0.5*m_label->boundingRect().width()*scale, -rect.height()*0.7);
+	m_label->setScale(scale);
+}
 
 void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
@@ -676,17 +699,6 @@ void OpticsItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option
 		painter->setBrush(QBrush(color));
 		painter->drawRect(rect);
 	}
-/*
-	if (m_optics->type() != CreateBeamType)
-	{
-		painter->setPen(textPen);
-		QString text = QString::fromUtf8(m_optics->name().c_str());
-		QRectF textRect(0., 0., 0., 0.);
-		textRect.moveCenter(rect.center() - QPointF(0., rect.height()*0.7));
-		textRect = painter->boundingRect(textRect, Qt::AlignCenter, text);
-		painter->drawText(textRect, Qt::AlignCenter, text);
-	}
-*/
 }
 
 /////////////////////////////////////////////////

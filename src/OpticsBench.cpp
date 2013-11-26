@@ -410,9 +410,15 @@ void OpticsBench::addOptics(OpticsType opticsType, int index)
 	if (opticsType == LensType)
 		optics = new Lens(0.1, 0.0, name);
 	else if (opticsType == FlatMirrorType)
+	{
 		optics = new FlatMirror(0.0, name);
+		optics->setAngle(M_PI);
+	}
 	else if (opticsType == CurvedMirrorType)
+	{
 		optics = new CurvedMirror(0.05, 0.0, name);
+		optics->setAngle(M_PI);
+	}
 	else if (opticsType == FlatInterfaceType)
 		optics = new FlatInterface(1.5, 0.0, name);
 	else if (opticsType == CurvedInterfaceType)
@@ -447,10 +453,33 @@ void OpticsBench::removeOptics(int index, int count)
 int OpticsBench::setOpticsPosition(int index, double position)
 {
 	Optics* movedOptics = m_optics[index];
+
+	// Check that the optics does not exit the optical bench
+	/// @todo : this function for now only works for a 1D bench
+	if ((position < m_boundary.x1()) || (position > m_boundary.x2()))
+		return index;
+
+	// Check that the optics does not overlap with another optics
+	double start1 = position;
+	double stop1  = position + movedOptics->width();
+	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
+		if ((*it) != movedOptics)
+		{
+			double start2 = (*it)->position();
+			double stop2  = (*it)->endPosition();
+			if (((start2 >= start1) && (start2 <= stop1)) ||
+				((stop2  >= start1) && (stop2  <= stop1)) ||
+				((start1 >= start2) && (start1 <= stop2)) ||
+				((stop1  >= start2) && (stop1  <= stop2)))
+				return index;
+		}
+
+	// Move the optics
 	m_optics[index]->setPosition(position, true);
 	sort(m_optics.begin() + 1, m_optics.end(), less<Optics*>());
 	computeBeams();
 
+	// Return the new index of the optics
 	for (vector<Optics*>::iterator it = m_optics.begin(); it != m_optics.end(); it++)
 		if ((*it) == movedOptics)
 			return it - m_optics.begin();

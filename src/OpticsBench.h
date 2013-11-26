@@ -161,7 +161,10 @@ public:
 	* Set the optics at @p index to position @p position. Takes care of locks,
 	* exclusion areas, and optics ordering.
 	* @return the new index of the optics
-	* @todo remove this function
+	* @todo remove this function (not sur this is possible : the setPosition has to check that
+	* - the optics does not overlap another one
+	* - after moving, no optics exits the optical bench
+	* - and that the optics respects exlusion areas
 	*/
 	int setOpticsPosition(int index, double position);
 	/// set the name of optics at @p index to @p name
@@ -171,7 +174,7 @@ public:
 	* Retrieve a non constant pointer to the optics @p index for property change.
 	* When finished, call opticsPropertyChanged() to propagate your changes
 	* If opticsBench proposes a direct function for changing a property
-	* (position, name, lockTo), rather use these functions.
+	* (for now, only setOpticsPosition), rather use these functions.
 	*/
 	Optics* opticsForPropertyChange(int index) { return m_optics[index]; }
 	/// Call this function after changing the properties of an optics returned by opticsForPropertyChange( @p index )

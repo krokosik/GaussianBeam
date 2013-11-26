@@ -24,13 +24,13 @@ WISHLIST:
 	more intrication between opticsbench bounds and view bounds
 	Scripting
 	Unittest
-	Restore names above optics
 	explore the q/n = (Aq/n + B)/(Cq/n + D) expression
 
 BUGS:
+	When adding an optics, the validity of the positioning (optics ovelap, opticsbench boundaries, exlcusion areas is not checked)
+	When moving an optics to an invalid area, the optics does not stick to the closest possible point to the invalid area
 	Save properties for H and V views
 	Even when the table value did not changed, modified is triggered
-	Problem in redraw when deleting an optics with non zero width
 	Update all data when chaging the delegate
 	Save all views information (save beam scale, optics height and lock view)
 	Different graphism for H/V lenses -> for instance more alpha ?
@@ -38,6 +38,7 @@ BUGS:
 	Changing the waist in an intermediate beam might scramble the optics ordering with angle (e.g. linear cavity)
 	Lock to create beam does not work : changing the position of createBeam should change the waist position i.e. the beam stored in create beam should be relative to the create beam position
 	On the same account, the sensitivity does not work for createBeam
+	After implementing the signal mechanism for optics, check that the signals are reset after cloning, so that clones don't emit messages
 	Grammar : change optics properties order (common first, specific after)
 	Grammar : Change orientation data type
 	Grammar : add orientation attribute to genericABCD
@@ -46,10 +47,8 @@ MINOR BUGS
 	Flip mirrors when loading and old files
 
 FUTURE RELEASE BUG
-	Don't allow for optics to exit the optical bench
 	Problem with n > 1 and target beam
 	Really find local optimum, not 100% local optimum
-	After implementing the signal mechanism for optics, check that the signals are reset after cloning, so that clones don't emit messages
 
 CONSTANT VIGILENCE:
 	Change all parameters when changing the wavelength

@@ -148,11 +148,13 @@ public:
 	const Optics* optics() const { return m_optics; }
 	void setOptics(const Optics* optics) { m_optics = optics; }
 	void prepareHeightChange() { prepareGeometryChange(); }
+	void updateNameLabel();
 
 private:
 	const Optics* m_optics;
 	bool m_update;
 	OpticsBench* m_bench;
+	QGraphicsSimpleTextItem* m_label;
 };
 
 class BeamItem : public QGraphicsItem

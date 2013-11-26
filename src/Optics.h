@@ -95,6 +95,7 @@ public:
 	/// @return the position of the left boundary of the optics
 	double position() const { return m_position; }
 	/// Set the left position of the optics to @p position. If @p respectLocks is true, respect absolute and relative locks
+	/// @note when relevant, rather use the OpticsBench::setOpticsPosition function.
 	void setPosition(double position, bool respectLocks);
 	/// @return the right position of the optics
 	double endPosition() const { return position() + width(); }

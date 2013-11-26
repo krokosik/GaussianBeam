@@ -115,7 +115,6 @@ namespace Utils
 		double m_x1, m_y1, m_x2, m_y2;
 	};
 
-
 	/// Signal
 	template<class Param>
 	class Signal
