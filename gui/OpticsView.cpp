@@ -238,8 +238,8 @@ void OpticsScene::onOpticsBenchOpticsAdded(int index)
 
 	const Beam* beam = m_bench->beam(index);
 	BeamItem* beamItem = new BeamItem(beam,                                                           // Added beam
-	                                  (index > 0) ? m_bench->beam(index-1) : 0,                       // Previous beam
-	                                  (index < m_bench->nOptics() - 1) ? m_bench->beam(index+1) : 0); // Next beam
+									  (index > 0) ? m_bench->beam(index-1) : 0,                       // Previous beam
+									  (index < m_bench->nOptics() - 1) ? m_bench->beam(index+1) : 0); // Next beam
 	m_beamItems.insert(index, beamItem);
 	if (index > 0)
 		m_beamItems[index-1]->setNextBeam(beam);
@@ -421,8 +421,15 @@ void OpticsView::setHorizontalRange(double horizontalRange)
 
 void OpticsView::zoom(double factor)
 {
-	setOrigin(origin() + QPointF(0.5*(1. - factor)*horizontalRange(), 0.));
+	zoom(origin().x() + 0.5*horizontalRange(), factor);
+}
+
+void OpticsView::zoom(double center, double factor)
+{
+	setOrigin(factor*origin() + QPointF((1. - factor)*center, 0.));
 	setHorizontalRange(factor*horizontalRange());
+//	setOrigin(origin() + QPointF(0.5*(1. - factor)*horizontalRange(), 0.));
+//	setHorizontalRange(factor*horizontalRange());
 }
 
 void OpticsView::showFullBench()
@@ -759,9 +766,9 @@ void BeamItem::updateTransform()
 	const double minStart = qMin(m_startLowerCache, m_startUpperCache);
 	const double maxStop  = qMax(m_stopLowerCache, m_stopUpperCache);
 	const double maxLowerRadius = qMax(m_beam->radius(m_startLowerCache, m_orientationCache),
-	                                   m_beam->radius(m_stopLowerCache,  m_orientationCache));
+									   m_beam->radius(m_stopLowerCache,  m_orientationCache));
 	const double maxUpperRadius = qMax(m_beam->radius(m_startUpperCache, m_orientationCache),
-	                                   m_beam->radius(m_stopUpperCache,  m_orientationCache));
+									   m_beam->radius(m_stopUpperCache,  m_orientationCache));
 	m_boundingRectCache = QRectF(QPointF(minStart, -maxUpperRadius), QPointF(maxStop, maxLowerRadius));
 
 	// Position the beam
@@ -837,7 +844,7 @@ void BeamItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, 
 /*
 	qDebug() << "paint" << horizontalScale << verticalScale;
 	qDebug() << 1./sqrt(sqr(painter->worldTransform().m11()) + sqr(painter->worldTransform().m12())) <<
-	            1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21()));
+				1./sqrt(sqr(painter->worldTransform().m22()) + sqr(painter->worldTransform().m21()));
 */
 	const double waist = m_beam->waist(m_orientationCache);
 	const double waistPosition = m_beam->waistPosition(m_orientationCache);

@@ -99,6 +99,9 @@ public:
 	void setHorizontalRange(double horizontalRange);
 	QPointF origin() const { return m_origin; }
 	void setOrigin(QPointF origin);
+	/// Zoom the view by @p factor, leaving @p center invariant. @todo: implement a 2D version of this function
+	void zoom(double center, double factor);
+	/// Zoom the view by @p factor, leaving the center of the view invariant
 	void zoom(double factor);
 	void showProperties(bool show = true);
 	bool propertiesVisible() const;

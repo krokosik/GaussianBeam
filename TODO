@@ -35,7 +35,6 @@ BUGS:
 	Save all views information (save beam scale, optics height and lock view)
 	Different graphism for H/V lenses -> for instance more alpha ?
 	Disappearing beam in test.xml
-	Changing the waist in an intermediate beam might scramble the optics ordering with angle (e.g. linear cavity)
 	Lock to create beam does not work : changing the position of createBeam should change the waist position i.e. the beam stored in create beam should be relative to the create beam position
 	On the same account, the sensitivity does not work for createBeam
 	After implementing the signal mechanism for optics, check that the signals are reset after cloning, so that clones don't emit messages
@@ -44,11 +43,12 @@ BUGS:
 	Grammar : add orientation attribute to genericABCD
 
 MINOR BUGS
-	Flip mirrors when loading and old files
+	Check that curved mirrors are flipped when loading and old files
 
 FUTURE RELEASE BUG
 	Problem with n > 1 and target beam
 	Really find local optimum, not 100% local optimum
+	Changing the waist in an intermediate beam might scramble the optics ordering with angle (e.g. linear cavity)
 
 CONSTANT VIGILENCE:
 	Change all parameters when changing the wavelength

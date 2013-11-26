@@ -62,6 +62,24 @@
 </createBeam>
 </xsl:template>
 
+<!-- flatMirror -->
+
+<xsl:template match="gaussianBeam[@version = '1.1']/bench/opticsList/flatMirror">
+<flatMirror>
+	<xsl:apply-templates select="@id|position|name|absoluteLock|relativeLockParent"/>
+	<angle>3.141592653</angle>
+</flatMirror>
+</xsl:template>
+
+<!-- curvedMirror -->
+
+<xsl:template match="gaussianBeam[@version = '1.1']/bench/opticsList/curvedMirror">
+<curvedMirror>
+	<xsl:apply-templates select="@id|position|curvatureRadius|name|absoluteLock|relativeLockParent"/>
+	<angle>3.141592653</angle>
+</curvedMirror>
+</xsl:template>
+
 <!-- verticalRange TODO -->
 <xsl:template match="gaussianBeam[@version = '1.1']/view/verticalRange">
 </xsl:template>

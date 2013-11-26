@@ -31,15 +31,15 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page_Bench">
         <property name="geometry">
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>207</width>
-          <height>182</height>
+          <width>254</width>
+          <height>479</height>
          </rect>
         </property>
         <attribute name="label">
@@ -102,22 +102,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="groupBox_2">
-           <property name="title">
-            <string>Cavity</string>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout">
-            <item>
-             <widget class="QLabel" name="cavityLabel">
-              <property name="text">
-               <string>Unstable</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
-         <item>
           <spacer>
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -137,8 +121,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>254</width>
-          <height>479</height>
+          <width>228</width>
+          <height>360</height>
          </rect>
         </property>
         <attribute name="label">
@@ -338,8 +322,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>239</width>
-          <height>510</height>
+          <width>237</width>
+          <height>511</height>
          </rect>
         </property>
         <attribute name="label">
