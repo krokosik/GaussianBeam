@@ -5,8 +5,6 @@
 # Uncomment to build the unit tests
 # CONFIG += unittest
 
-include(po/po.pri)
-
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TEMPLATE = app
