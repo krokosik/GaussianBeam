@@ -36,7 +36,7 @@ jobs:
           version:      ${{ env.QT_VERSION }}
           arch:         win64_mingw81
           dir:          ${{ runner.temp }}
-          modules:      qtxmlpatterns
+          archives:     x86_64 qtxmlpatterns qtbase
           setup-python: false
           cache:        true
 
@@ -64,7 +64,7 @@ jobs:
               qmake -r ${{ env.SOURCE_DIR }}\GaussianBeam.pro
               ${{ runner.temp }}\jom\jom -j2
               cd release
-              windeployqt  GaussianBeam.exe --pdb --release --compiler-runtime --no-translations
+              windeployqt  GaussianBeam.exe --pdb --release --compiler-runtime --no-translations --no-network --no-opengl
               
       - name: Zip build
         working-directory: ${{ runner.temp }}
