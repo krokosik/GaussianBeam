@@ -25,6 +25,7 @@
 #include <QMainWindow>
 #include <QXmlStreamWriter>
 #include <QDomElement>
+#include <QtWidgets>
 
 class OpticsView;
 class OpticsScene;

@@ -143,7 +143,7 @@ void GraduatedRuller::paintEvent(QPaintEvent* event)
 
 void GraduatedRuller::wheelEvent(QWheelEvent* event)
 {
-	const int numDegrees = event->delta()/8;
+    const int numDegrees = event->angleDelta().y() / 8;
 	const double numSteps = double(numDegrees)/15.;
 
 	if (m_orientation == Qt::Horizontal)

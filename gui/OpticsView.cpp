@@ -367,7 +367,7 @@ void OpticsView::adjustRange()
 	// Transform the view so that it displays the view rect
 	fitInView(sceneRect());
 	// Change the vertical scale to have an orthonormal representation
-	double vScale = matrix().m11()/matrix().m22();
+    double vScale = transform().m11()/transform().m22();
 	scale(1., vScale);
 
 	emit(rangeChanged());

@@ -104,13 +104,13 @@ QVariant GaussianBeamModel::data(const QModelIndex& index, int role) const
 		{
 			return QString("n2/n1 = ") + QString::number(dynamic_cast<const FlatInterface*>(optics)->indexRatio());
 		}
-		else if (optics->type() == CurvedInterfaceType)
-		{
-			const CurvedInterface* interface = dynamic_cast<const CurvedInterface*>(optics);
-			return QString("n2/n1 = ") + QString::number(interface->indexRatio()) +
-			       QString("\nR = ") + QString::number(interface->surfaceRadius()*Unit(UnitCurvature).divider())
-			                       + Unit(UnitCurvature).string();
-		}
+        else if (optics->type() == CurvedInterfaceType)
+        {
+            const CurvedInterface* curved_interface = dynamic_cast<const CurvedInterface*>(optics);
+            return QString("n2/n1 = ") + QString::number(curved_interface->indexRatio()) +
+                   QString("\nR = ") + QString::number(curved_interface->surfaceRadius()*Unit(UnitCurvature).divider())
+                                   + Unit(UnitCurvature).string();
+        }
 		else if (optics->type() == DielectricSlabType)
 		{
 			const DielectricSlab* slab = dynamic_cast<const DielectricSlab*>(optics);
