@@ -83,8 +83,8 @@ GaussianBeamWindow::GaussianBeamWindow(const QString& fileName)
 	m_wavelengthSpinBox = new QDoubleSpinBox(wavelengthWidget);
 	m_wavelengthSpinBox->setDecimals(0);
 	m_wavelengthSpinBox->setSuffix(" nm");
-	m_wavelengthSpinBox->setRange(1., 999999.);
-	m_wavelengthSpinBox->setValue(532.);
+    m_wavelengthSpinBox->setRange(1., 99999999.);
+    m_wavelengthSpinBox->setValue(532.);
 	m_wavelengthSpinBox->setSingleStep(10.);
 	wavelengthLayout->addWidget(m_wavelengthSpinBox);
 	wavelengthLayout->addWidget(wavelengthLabel);
