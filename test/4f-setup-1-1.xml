@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gaussianBeam>
+<gaussianBeam version="1.1">
+    <bench id="0">
+        <wavelength>4.8e-07</wavelength>
+        <leftBoundary>-0.1</leftBoundary>
+        <rightBoundary>0.7</rightBoundary>
+        <targetBeam id="0">
+            <position>0.6</position>
+            <waist>0.00015</waist>
+            <positionTolerance>0.1</positionTolerance>
+            <waistTolerance>0.05</waistTolerance>
+            <minOverlap>0.98</minOverlap>
+            <overlapCriterion>0</overlapCriterion>
+        </targetBeam>
+        <beamFit id="0">
+            <name>Fit0</name>
+            <dataType>1</dataType>
+            <color>0</color>
+            <data id="0">
+                <position>0</position>
+                <value>0</value>
+            </data>
+            <data id="1">
+                <position>0</position>
+                <value>0</value>
+            </data>
+            <data id="2">
+                <position>0</position>
+                <value>0</value>
+            </data>
+        </beamFit>
+        <opticsList>
+            <inputBeam id="2">
+                <waist>0.00018</waist>
+                <index>1</index>
+                <M2>1</M2>
+                <position>0</position>
+                <name>w0</name>
+                <absoluteLock>1</absoluteLock>
+            </inputBeam>
+            <lens id="3">
+                <focal>0.1</focal>
+                <position>0.1</position>
+                <name>L1</name>
+                <absoluteLock>0</absoluteLock>
+            </lens>
+            <lens id="4">
+                <focal>0.1</focal>
+                <position>0.3</position>
+                <name>L2</name>
+                <absoluteLock>0</absoluteLock>
+            </lens>
+        </opticsList>
+    </bench>
+    <view id="0" bench="0">
+        <horizontalRange>0.6</horizontalRange>
+        <verticalRange>0.002</verticalRange>
+        <origin>-0.0998172</origin>
+        <showTargetBeam id="0">0</showTargetBeam>
+    </view>
+</gaussianBeam>

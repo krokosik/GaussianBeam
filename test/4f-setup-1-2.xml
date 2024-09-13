@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gaussianBeam>
+<gaussianBeam version="1.2">
+    <bench id="0">
+        <wavelength>4.8e-07</wavelength>
+        <leftBoundary>-0.1</leftBoundary>
+        <rightBoundary>0.7</rightBoundary>
+        <targetBeam id="0">
+            <waist orientation="spherical">0.00015</waist>
+            <waistPosition orientation="spherical">0.6</waistPosition>
+            <wavelength>4.8e-07</wavelength>
+            <index>1</index>
+            <M2>1</M2>
+            <targetOverlap>0.98</targetOverlap>
+            <targetOrientation>0</targetOrientation>
+        </targetBeam>
+        <beamFit id="0">
+            <name>Fit0</name>
+            <dataType>1</dataType>
+            <color>0</color>
+            <orientation>spherical</orientation>
+            <data id="0">
+                <position>0</position>
+                <value orientation="spherical">0</value>
+            </data>
+            <data id="1">
+                <position>0</position>
+                <value orientation="spherical">0</value>
+            </data>
+            <data id="2">
+                <position>0</position>
+                <value orientation="spherical">0</value>
+            </data>
+        </beamFit>
+        <opticsList>
+            <createBeam id="0">
+                <position>0</position>
+                <angle>0</angle>
+                <orientation>spherical</orientation>
+                <name>w0</name>
+                <absoluteLock>1</absoluteLock>
+                <beam>
+                    <waist orientation="spherical">0.00018</waist>
+                    <waistPosition orientation="spherical">0</waistPosition>
+                    <wavelength>4.8e-07</wavelength>
+                    <index>1</index>
+                    <M2>1</M2>
+                </beam>
+            </createBeam>
+            <lens id="1">
+                <position>0.1</position>
+                <angle>0</angle>
+                <orientation>spherical</orientation>
+                <name>L1</name>
+                <absoluteLock>0</absoluteLock>
+                <focal>0.1</focal>
+            </lens>
+            <lens id="2">
+                <position>0.3</position>
+                <angle>0</angle>
+                <orientation>spherical</orientation>
+                <name>L2</name>
+                <absoluteLock>0</absoluteLock>
+                <focal>0.1</focal>
+            </lens>
+        </opticsList>
+    </bench>
+    <view id="0" bench="0">
+        <horizontalRange>0.6</horizontalRange>
+        <origin>-0.0998172</origin>
+        <showTargetBeam id="0">0</showTargetBeam>
+    </view>
+</gaussianBeam>
