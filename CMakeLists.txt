@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.17)
 project(GaussianBeam VERSION 0.5.0)
 
 # Load CMake modules
@@ -34,12 +34,24 @@ if(APPLE)
 endif()
 
 # Compiler options
-# set(CMAKE_CXX_STANDARD 11)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11 CACHE STRING "The C++ standard to use")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
+
+
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}") # CMake 3.9+
+endif() 
+
+find_program(CLANG_TIDY_PROGRAM clang-tidy)
+if(CLANG_TIDY_PROGRAM)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_PROGRAM};-fix")
+endif()
+
+set(CMAKE_LINK_WHAT_YOU_USE TRUE)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
     set(CMAKE_CXX_FLAGS "-pedantic -Wall -Wno-long-long -Wno-unused-local-typedefs -g")
