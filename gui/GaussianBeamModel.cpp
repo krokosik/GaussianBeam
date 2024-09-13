@@ -24,7 +24,6 @@
 #include "gui/Unit.h"
 #include "gui/Names.h"
 
-#include <QtGui>
 #include <QDebug>
 #include <QTextStream>
 
