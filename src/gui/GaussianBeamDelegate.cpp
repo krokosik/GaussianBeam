@@ -18,8 +18,8 @@
 
 #include "GaussianBeamDelegate.h"
 #include "GaussianBeamModel.h"
-#include "gui/Unit.h"
-#include "gui/Names.h"
+#include "Unit.h"
+#include "Names.h"
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 	#include <QtWidgets>

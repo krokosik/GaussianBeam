@@ -21,8 +21,8 @@
 #include "Utils.h"
 #include "GaussianBeamModel.h"
 #include "OpticsWidgets.h"
-#include "gui/Unit.h"
-#include "gui/Names.h"
+#include "Unit.h"
+#include "Names.h"
 
 #include <QDebug>
 #include <QTextStream>

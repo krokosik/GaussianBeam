@@ -18,8 +18,8 @@
 
 #include "GaussianBeamWindow.h"
 #include "OpticsView.h"
-#include "gui/Unit.h"
-#include "gui/Names.h"
+#include "Unit.h"
+#include "Names.h"
 #include "GaussianFit.h"
 
 #include <QDebug>

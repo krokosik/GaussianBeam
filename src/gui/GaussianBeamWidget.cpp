@@ -22,7 +22,7 @@
 
 #include "GaussianBeamWidget.h"
 #include "GaussianBeamWindow.h"
-#include "gui/Unit.h"
+#include "Unit.h"
 
 #include <QApplication>
 #include <QPushButton>

@@ -19,7 +19,7 @@
 #include "OpticsView.h"
 #include "OpticsWidgets.h"
 #include "GaussianBeamModel.h"
-#include "gui/Unit.h"
+#include "Unit.h"
 #include "GaussianBeam.h"
 #include "Utils.h"
 #include "OpticsBench.h"

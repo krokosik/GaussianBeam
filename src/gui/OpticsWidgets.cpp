@@ -16,10 +16,10 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "gui/Names.h"
+#include "Names.h"
 #include "OpticsWidgets.h"
 #include "OpticsView.h"
-#include "gui/Unit.h"
+#include "Unit.h"
 
 #include <QWheelEvent>
 #include <QListWidget>

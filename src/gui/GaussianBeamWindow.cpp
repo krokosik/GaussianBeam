@@ -22,7 +22,7 @@
 #include "GaussianBeamDelegate.h"
 #include "OpticsView.h"
 #include "OpticsWidgets.h"
-#include "gui/Unit.h"
+#include "Unit.h"
 
 #include <QtCore>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)

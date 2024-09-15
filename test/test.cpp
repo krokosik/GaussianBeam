@@ -1,4 +1,4 @@
-#include "gui/GaussianBeamWindow.h"
+#include "GaussianBeamWindow.h"
 
 #include <QtTest/QtTest>
 

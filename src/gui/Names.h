@@ -21,7 +21,7 @@
 
 #include <GaussianBeam.h>
 #include <Optics.h>
-#include <gui/Unit.h>
+#include <Unit.h>
 
 #include <QString>
 #include <QMap>
