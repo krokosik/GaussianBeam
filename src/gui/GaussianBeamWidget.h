@@ -19,8 +19,8 @@
 #ifndef GAUSSIANBEAMWIDGET_H
 #define GAUSSIANBEAMWIDGET_H
 
-#include "src/Optics.h"
-#include "src/OpticsBench.h"
+#include "logic/Optics.h"
+#include "logic/OpticsBench.h"
 #include "ui_GaussianBeamWidget.h"
 
 #include <QWidget>

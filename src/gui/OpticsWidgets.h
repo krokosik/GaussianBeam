@@ -19,7 +19,7 @@
 #ifndef OPTICSWIDGETS_H
 #define OPTICSWIDGETS_H
 
-#include "src/GaussianBeam.h"
+#include "logic/GaussianBeam.h"
 #include "ui_OpticsViewProperties.h"
 
 #include <QScrollBar>

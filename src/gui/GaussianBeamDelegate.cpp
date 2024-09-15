@@ -16,8 +16,8 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "gui/GaussianBeamDelegate.h"
-#include "gui/GaussianBeamModel.h"
+#include "GaussianBeamDelegate.h"
+#include "GaussianBeamModel.h"
 #include "gui/Unit.h"
 #include "gui/Names.h"
 

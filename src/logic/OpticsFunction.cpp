@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "OpticsFunction.h"
-#include "OpticsBench.h"
-#include "Optics.h"
+#include "logic/OpticsFunction.h"
+#include "logic/OpticsBench.h"
+#include "logic/Optics.h"
 
 #include <vector>
 #include <algorithm>

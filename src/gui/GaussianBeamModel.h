@@ -19,8 +19,8 @@
 #ifndef GAUSSIANBEAMMODEL_H
 #define GAUSSIANBEAMMODEL_H
 
-#include "src/Optics.h"
-#include "src/OpticsBench.h"
+#include "logic/Optics.h"
+#include "logic/OpticsBench.h"
 
 #include <QAbstractTableModel>
 #include <QList>

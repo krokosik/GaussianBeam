@@ -16,7 +16,7 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "Utils.h"
+#include "logic/Utils.h"
 
 #include <cmath>
 

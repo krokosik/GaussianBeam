@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
-#include "lmmin.h"
+#include "logic/lmmin.h"
 
 
 /*****************************************************************************/

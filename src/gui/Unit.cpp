@@ -16,7 +16,7 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "Unit.h"
+#include "gui/Unit.h"
 
 #include <cmath>
 

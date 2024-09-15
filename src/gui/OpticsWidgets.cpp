@@ -17,8 +17,8 @@
 */
 
 #include "gui/Names.h"
-#include "gui/OpticsWidgets.h"
-#include "gui/OpticsView.h"
+#include "OpticsWidgets.h"
+#include "OpticsView.h"
 #include "gui/Unit.h"
 
 #include <QWheelEvent>

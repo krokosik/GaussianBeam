@@ -10,6 +10,11 @@ function(EMBED_ICON SRCS)
     endif()
 endfunction()
 
+if(APPLE)
+    set(CMAKE_OSX_ARCHITECTURES x86_64)   # Build for x64 architecture
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 10.4)   # Minimum version required
+endif()
+
 set(CPACK_GENERATOR DEB RPM TGZ)
 set(CPACK_PACKAGE_VERSION_MAJOR 0)
 set(CPACK_PACKAGE_VERSION_MINOR 5)

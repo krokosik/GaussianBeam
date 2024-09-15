@@ -16,14 +16,14 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "gui/OpticsView.h"
-#include "gui/OpticsWidgets.h"
-#include "gui/GaussianBeamModel.h"
+#include "OpticsView.h"
+#include "OpticsWidgets.h"
+#include "GaussianBeamModel.h"
 #include "gui/Unit.h"
-#include "src/GaussianBeam.h"
-#include "src/Utils.h"
-#include "src/OpticsBench.h"
-#include "src/GaussianFit.h"
+#include "logic/GaussianBeam.h"
+#include "logic/Utils.h"
+#include "logic/OpticsBench.h"
+#include "logic/GaussianFit.h"
 
 #include <QtGui>
 #include <QtDebug>

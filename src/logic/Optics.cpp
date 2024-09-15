@@ -16,8 +16,8 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "Optics.h"
-#include "Utils.h"
+#include "logic/Optics.h"
+#include "logic/Utils.h"
 
 #include <iostream>
 #include <typeinfo>

@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "gui/GaussianBeamWidget.h"
-#include "gui/GaussianBeamWindow.h"
 #include "gui/Names.h"
+#include "GaussianBeamWidget.h"
+#include "GaussianBeamWindow.h"
 
 #include <QApplication>
 #include <QTextCodec>
