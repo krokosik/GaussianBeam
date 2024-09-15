@@ -1,7 +1,7 @@
-file(GLOB HEADER_LIST CONFIGURE DEPENDS "${GaussianBeam_SOURCE_DIR}/include/logic/*.h")
+file(GLOB HEADER_LIST CONFIGURE DEPENDS "${GaussianBeam_SOURCE_DIR}/include/*.h")
 
 add_library(
-    logic
+    lib
     GaussianBeam.cpp
     Optics.cpp
     OpticsBench.cpp
@@ -15,10 +15,10 @@ add_library(
     ${HEADER_LIST}
 )
 
-target_include_directories(logic PUBLIC ../../include)
+target_include_directories(lib PUBLIC ${GaussianBeam_SOURCE_DIR}/include)
 
 source_group(
-    TREE "${PROJECT_SOURCE_DIR}/include/logic"
+    TREE "${PROJECT_SOURCE_DIR}/include"
     PREFIX "Header Files"
     FILES ${HEADER_LIST}
 )

@@ -16,8 +16,8 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "logic/GaussianBeam.h"
-#include "logic/Utils.h"
+#include "GaussianBeam.h"
+#include "Utils.h"
 
 #include <iostream>
 #include <algorithm>

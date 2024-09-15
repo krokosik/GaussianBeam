@@ -16,10 +16,10 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "logic/OpticsBench.h"
-#include "logic/GaussianFit.h"
-#include "logic/OpticsFunction.h"
-#include "logic/Utils.h"
+#include "OpticsBench.h"
+#include "GaussianFit.h"
+#include "OpticsFunction.h"
+#include "Utils.h"
 
 #include <iostream>
 #include <iomanip>

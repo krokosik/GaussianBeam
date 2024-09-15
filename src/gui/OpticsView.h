@@ -19,9 +19,9 @@
 #ifndef OPTICSVIEW_H
 #define OPTICSVIEW_H
 
-#include "logic/GaussianBeam.h"
-#include "logic/Optics.h"
-#include "logic/OpticsBench.h"
+#include "GaussianBeam.h"
+#include "Optics.h"
+#include "OpticsBench.h"
 
 #include <QPoint>
 #include <QPainterPath>

@@ -1,7 +1,8 @@
-file(GLOB HEADER_LIST CONFIGURE DEPENDS "${GaussianBeam_SOURCE_DIR}/include/gui/*.h")
+set(HEADER_LIST GaussianBeamPlot.h Names.h Unit.h)
 
-add_library(
-    gui
+add_executable(
+    gaussianbeam
+    main.cpp
     GaussianBeamWidget.cpp
     OpticsView.cpp
     OpticsWidgets.cpp
@@ -24,13 +25,13 @@ add_library(
     ${HEADER_LIST}
 )
 
-target_include_directories(gui PUBLIC ../../include)
+target_include_directories(gaussianbeam PUBLIC ${GaussianBeam_SOURCE_DIR}/include)
 
-target_link_libraries(gui PRIVATE logic)
-target_link_libraries(gui PUBLIC Qt5::Widgets Qt5::Gui Qt5::Xml Qt5::XmlPatterns LibXml2::LibXml2 LibXslt::LibXslt)
+target_link_libraries(gaussianbeam PRIVATE lib)
+target_link_libraries(gaussianbeam PUBLIC Qt5::Widgets Qt5::Gui Qt5::Xml Qt5::XmlPatterns LibXml2::LibXml2 LibXslt::LibXslt)
 
 source_group(
-    TREE "${PROJECT_SOURCE_DIR}/include/gui"
+    TREE "${PROJECT_SOURCE_DIR}/src/gui"
     PREFIX "Header Files"
     FILES ${HEADER_LIST}
 )

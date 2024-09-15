@@ -19,8 +19,8 @@
 #ifndef NAMES_H
 #define NAMES_H
 
-#include <logic/GaussianBeam.h>
-#include <logic/Optics.h>
+#include <GaussianBeam.h>
+#include <Optics.h>
 #include <gui/Unit.h>
 
 #include <QString>

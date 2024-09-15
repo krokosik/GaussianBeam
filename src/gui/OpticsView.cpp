@@ -20,10 +20,10 @@
 #include "OpticsWidgets.h"
 #include "GaussianBeamModel.h"
 #include "gui/Unit.h"
-#include "logic/GaussianBeam.h"
-#include "logic/Utils.h"
-#include "logic/OpticsBench.h"
-#include "logic/GaussianFit.h"
+#include "GaussianBeam.h"
+#include "Utils.h"
+#include "OpticsBench.h"
+#include "GaussianFit.h"
 
 #include <QtGui>
 #include <QtDebug>

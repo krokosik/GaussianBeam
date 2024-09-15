@@ -19,7 +19,7 @@
 #ifndef GAUSSIANBEAMWINDOWS_H
 #define GAUSSIANBEAMWINDOW_H
 
-#include "logic/OpticsBench.h"
+#include "OpticsBench.h"
 #include "ui_GaussianBeamWindow.h"
 
 #include <QMainWindow>

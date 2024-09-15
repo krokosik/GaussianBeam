@@ -16,8 +16,8 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "logic/Cavity.h"
-#include "logic/OpticsBench.h"
+#include "Cavity.h"
+#include "OpticsBench.h"
 
 #include <iostream>
 #include <algorithm>

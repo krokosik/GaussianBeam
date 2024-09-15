@@ -20,7 +20,7 @@
 #include "OpticsView.h"
 #include "gui/Unit.h"
 #include "gui/Names.h"
-#include "logic/GaussianFit.h"
+#include "GaussianFit.h"
 
 #include <QDebug>
 #include <QFile>

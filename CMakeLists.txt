@@ -8,9 +8,8 @@ include(Package)
 
 embed_icon(gaussianbeam_SRCS)
 
-add_subdirectory(src/logic)
+add_subdirectory(src/lib)
 add_subdirectory(src/gui)
-add_subdirectory(apps)
 
 enable_ipo_for_target(gaussianbeam)
 

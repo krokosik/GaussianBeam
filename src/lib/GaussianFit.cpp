@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "logic/GaussianFit.h"
-#include "logic/Statistics.h"
-#include "logic/lmmin.h"
+#include "GaussianFit.h"
+#include "Statistics.h"
+#include "lmmin.h"
 
 #include <iostream>
 #include <cmath>

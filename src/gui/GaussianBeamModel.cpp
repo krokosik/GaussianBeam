@@ -16,9 +16,9 @@
    Boston, MA 02110-1301, USA.
 */
 
-#include "logic/OpticsBench.h"
-#include "logic/GaussianBeam.h"
-#include "logic/Utils.h"
+#include "OpticsBench.h"
+#include "GaussianBeam.h"
+#include "Utils.h"
 #include "GaussianBeamModel.h"
 #include "OpticsWidgets.h"
 #include "gui/Unit.h"
