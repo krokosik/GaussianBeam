@@ -16,7 +16,7 @@
    Boston, MA 02110-1301, USA.
 */
 
-#ifndef GAUSSIANBEAMWINDOWS_H
+#ifndef GAUSSIANBEAMWINDOW_H
 #define GAUSSIANBEAMWINDOW_H
 
 #include "OpticsBench.h"

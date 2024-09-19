@@ -218,7 +218,6 @@ void GaussianBeamWindow::parseTargetBeam(const QDomElement& element)
 	m_bench->setTargetBeam(targetBeam);
 }
 
-#include <iostream>
 using namespace std;
 
 void GaussianBeamWindow::parseBeam(const QDomElement& element, Beam& beam)

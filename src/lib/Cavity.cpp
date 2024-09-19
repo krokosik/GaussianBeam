@@ -17,7 +17,6 @@
 */
 
 #include "Cavity.h"
-#include "OpticsBench.h"
 
 #include <iostream>
 #include <algorithm>
@@ -72,10 +71,10 @@ void Cavity::computeMatrix() const
 		cerr << " Cavity ABCD added optics = " << m_matrix << endl;
 	}
 	// Free space that closes the cavity
-	if (lastIt != m_opticsList.end())
+	if (lastIt != m_opticsList.end()) {
 		m_matrix *= FreeSpace(m_closingFreeSpace, (*lastIt)->endPosition());
 		cerr << " Cavity ABCD added last free space = " << m_matrix << endl;
-
+	}
 	m_dirty = false;
 }
 

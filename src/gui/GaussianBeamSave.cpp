@@ -18,7 +18,6 @@
 
 #include "GaussianBeamWindow.h"
 #include "OpticsView.h"
-#include "Unit.h"
 #include "Names.h"
 #include "GaussianFit.h"
 
