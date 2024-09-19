@@ -1,4 +1,4 @@
-set(HEADER_LIST GaussianBeamPlot.h Names.h Unit.h)
+set(HEADER_LIST Names.h Unit.h)
 
 add_executable(
     gaussianbeam
@@ -28,7 +28,7 @@ add_executable(
 target_include_directories(gaussianbeam PUBLIC ${GaussianBeam_SOURCE_DIR}/include)
 
 target_link_libraries(gaussianbeam PRIVATE lib)
-target_link_libraries(gaussianbeam PUBLIC Qt5::Widgets Qt5::Gui Qt5::Xml)
+target_link_libraries(gaussianbeam PUBLIC Qt6::Widgets Qt6::Xml)
 
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/src/gui"

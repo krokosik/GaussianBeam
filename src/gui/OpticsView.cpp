@@ -19,17 +19,16 @@
 #include "OpticsView.h"
 #include "OpticsWidgets.h"
 #include "GaussianBeamModel.h"
-#include "Unit.h"
 #include "GaussianBeam.h"
 #include "Utils.h"
 #include "OpticsBench.h"
 #include "GaussianFit.h"
 
-#include <QtGui>
 #include <QtDebug>
 #include <QtGlobal>
 
 #include <cmath>
+#include <qevent.h>
 
 QColor wavelengthColor(double wavelength)
 {

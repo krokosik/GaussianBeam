@@ -1,5 +1,5 @@
-set(QT_MIN_VERSION "5.15.0")
-find_package(Qt5 COMPONENTS Widgets Gui Xml REQUIRED)
+set(QT_MIN_VERSION "6.7.0")
+find_package(Qt6 REQUIRED COMPONENTS Widgets Xml)
 
 include(FetchContent)
 
