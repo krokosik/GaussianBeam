@@ -15,13 +15,15 @@
    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.
 */
+#define _USE_MATH_DEFINES
+#include <cmath>
 
 #include "GaussianBeam.h"
 #include "Utils.h"
 
 #include <iostream>
 #include <algorithm>
-#include <cmath>
+
 
 using namespace std;
 using namespace Utils;

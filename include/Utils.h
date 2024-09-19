@@ -19,10 +19,12 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "Delegate.h"
 #include <vector>
 #include <set>
-#include <cmath>
 
 inline double sqr(double x)
 {
