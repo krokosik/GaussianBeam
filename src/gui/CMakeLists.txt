@@ -28,7 +28,7 @@ add_executable(
 target_include_directories(gaussianbeam PUBLIC ${GaussianBeam_SOURCE_DIR}/include)
 
 target_link_libraries(gaussianbeam PRIVATE lib)
-target_link_libraries(gaussianbeam PUBLIC Qt5::Widgets Qt5::Gui Qt5::Xml Qt5::XmlPatterns LibXml2::LibXml2 LibXslt::LibXslt)
+target_link_libraries(gaussianbeam PUBLIC Qt5::Widgets Qt5::Gui Qt5::Xml)
 
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/src/gui"

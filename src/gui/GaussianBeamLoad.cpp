@@ -18,7 +18,7 @@
 
 #include "GaussianBeamWindow.h"
 #include "OpticsView.h"
-#include "Unit.h"
+#include "IO.h"
 #include "Names.h"
 #include "GaussianFit.h"
 
@@ -28,7 +28,6 @@
 #include <QMessageBox>
 #include <QStandardItemModel>
 #include <QtXml/QDomDocument>
-#include <QtXmlPatterns/QXmlQuery>
 
 /**************************************************************
 Change log for GaussianBeam files. All this changes are coded in XSL-T documents
@@ -85,29 +84,6 @@ GaussianBeam 0.5 (1.2)
 
 ***************************************************************/
 
-void GaussianBeamWindow::convertFormat(QByteArray* data, const QString& xsltPath) const
-{
-	QXmlQuery query(QXmlQuery::XSLT20);
-	QByteArray convertedData;
-	QBuffer inputBuffer(data);
-	QBuffer outputBuffer(&convertedData);
-
-	inputBuffer.open(QIODevice::ReadOnly);
-	outputBuffer.open(QIODevice::WriteOnly);
-	// Set the data to convert
-	query.setFocus(&inputBuffer);
-	// Set the xslt style-sheet
-	QFile xslt(xsltPath);
-	xslt.open(QFile::ReadOnly);
-	query.setQuery(&xslt);
-	xslt.close();
-	// Convert
-	query.evaluateTo(&outputBuffer);
-	outputBuffer.close();
-	inputBuffer.close();
-	*data = convertedData;
-}
-
 bool GaussianBeamWindow::parseFile(const QString& fileName)
 {
 	// Load data
@@ -120,9 +96,21 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	QByteArray data = file.readAll();
 	file.close();
 
-	// Convert old file versions
-	convertFormat(&data, ":/xslt/1_0_to_1_1.xsl");
-	convertFormat(&data, ":/xslt/1_1_to_1_2.xsl");
+	string xsltFiles[] = {":/xslt/1_0_to_1_1.xsl", ":/xslt/1_1_to_1_2.xsl"};
+
+	for (auto xsltFile : xsltFiles)
+	{
+		QFile xsltFile10(xsltFile.c_str());
+		xsltFile10.open(QFile::ReadOnly);
+		QByteArray xsltFile10Data = xsltFile10.readAll();
+		xsltFile10.close();
+
+		// Convert old file versions
+		string rawData = string(data.data());
+		convertFormat(rawData, string(xsltFile10Data.data()));
+
+		data = QByteArray(rawData.c_str(), rawData.size());
+	}
 
 	// Parse XML file
 	QString errorStr;

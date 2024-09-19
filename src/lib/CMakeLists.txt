@@ -11,11 +11,14 @@ add_library(
     OpticsFunction.cpp
     Cavity.cpp
     Utils.cpp
+    IO.cpp
     lmmin.c
     ${HEADER_LIST}
 )
 
 target_include_directories(lib PUBLIC ${GaussianBeam_SOURCE_DIR}/include)
+
+target_link_libraries(lib PRIVATE LibXml2::LibXml2 LibXslt::LibXslt)
 
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/include"
