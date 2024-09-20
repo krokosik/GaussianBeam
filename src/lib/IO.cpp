@@ -1,5 +1,4 @@
 #include "IO.h"
-#include <iostream>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxslt/transform.h>
@@ -24,16 +23,12 @@ private:
 };
 
 void convertFormat(string &data, string const xsl_path) {
-  cout << "convertFormat" << endl;
-
   // Load the XML from the input data
   xmlDocPtr inputDoc = xmlParseMemory(data.c_str(), data.size());
   if (inputDoc == nullptr) {
     // Handle XML parsing error
     return;
   }
-
-  cout << "xml doc loaded" << endl;
 
   xmlDocPtr xsltDoc = xmlParseMemory(xsl_path.c_str(), xsl_path.size());
   if (xsltDoc == nullptr) {
@@ -42,8 +37,6 @@ void convertFormat(string &data, string const xsl_path) {
     return;
   }
 
-  cout << "xslt doc loaded" << endl;
-
   xsltStylesheetPtr xslt = xsltParseStylesheetDoc(xsltDoc);
   if (xslt == nullptr) {
     // Handle XSLT parsing error
@@ -51,8 +44,6 @@ void convertFormat(string &data, string const xsl_path) {
     xmlFreeDoc(xsltDoc);
     return;
   }
-
-  cout << "xslt parsed" << endl;
 
   // Apply the XSLT transformation
   xmlDocPtr resultDoc = xsltApplyStylesheet(xslt, inputDoc, nullptr);
