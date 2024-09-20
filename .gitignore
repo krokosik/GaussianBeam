@@ -2,6 +2,3 @@ build/
 *.user
 .vscode/
 .cache/
-5.15.2/
-aqtinstall.log
-Tools/
