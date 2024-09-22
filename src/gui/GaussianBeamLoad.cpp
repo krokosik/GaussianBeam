@@ -96,7 +96,7 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 	QByteArray data = file.readAll();
 	file.close();
 
-	string xsltFiles[] = {":/xslt/1_0_to_1_1.xsl", ":/xslt/1_1_to_1_2.xsl"};
+	std::string xsltFiles[] = {":/xslt/1_0_to_1_1.xsl", ":/xslt/1_1_to_1_2.xsl"};
 
 	for (auto xsltFile : xsltFiles)
 	{
@@ -106,8 +106,8 @@ bool GaussianBeamWindow::parseFile(const QString& fileName)
 		xsltFile10.close();
 
 		// Convert old file versions
-		string rawData = string(data.data());
-		convertFormat(rawData, string(xsltFile10Data.data()));
+		std::string rawData = std::string(data.data());
+		convertFormat(rawData, std::string(xsltFile10Data.data()));
 
 		data = QByteArray(rawData.c_str(), rawData.size());
 	}

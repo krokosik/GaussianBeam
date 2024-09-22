@@ -1,11 +1,11 @@
 #include "IO.h"
+
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <libxslt/transform.h>
 #include <libxslt/xslt.h>
 #include <libxslt/xsltInternals.h>
 #include <libxslt/xsltutils.h>
-#include <string>
 
 class xmlchar_helper
 {
@@ -22,7 +22,7 @@ private:
     xmlChar *ptr_;
 };
 
-void convertFormat(string &data, string const xsl_path) {
+void convertFormat(std::string &data, std::string const xsl_path) {
   // Load the XML from the input data
   xmlDocPtr inputDoc = xmlParseMemory(data.c_str(), data.size());
   if (inputDoc == nullptr) {

@@ -3,8 +3,6 @@
 
 #include <string>
 
-using namespace std;
-
-void convertFormat(string &data, string const xslt);
+void convertFormat(std::string &data, std::string const xslt);
 
 #endif
