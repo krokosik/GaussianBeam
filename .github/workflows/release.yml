@@ -37,7 +37,7 @@ jobs:
 
       - name: Build
         working-directory: ${{ runner.temp }}\build
-        run:  |
+        run:  >
               cmake
               -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${{ runner.temp }}\${{ env.QT_VERSION}}\msvc2019_64\lib\cmake\Qt6\qt.toolchain.cmake 
               -S ${{ env.SOURCE_DIR }}
