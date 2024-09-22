@@ -6,13 +6,9 @@ on:
       - v*
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: cmd
-
 env:
   SOURCE_DIR:   ${{ github.workspace }}
-  QT_VERSION:   5.15.2
+  QT_VERSION:   6.7.2
   ARTIFACT:     GaussianBeam.zip
 
 jobs:
@@ -22,49 +18,27 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - name: Get all tags for correct version determination
-        working-directory:  ${{ github.workspace }}
-        run: |
-          git fetch --all --tags -f
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v3
         with:
-          version:      ${{ env.QT_VERSION }}
-          arch:         win64_mingw81
-          dir:          ${{ runner.temp }}
-          archives:     x86_64 qtxmlpatterns qtbase
+          aqtversion: '==3.1.*'
+          version: ${{ env.QT_VERSION }}
+          host: windows
+          target: desktop
+          arch: win64_msvc2019_64
+          archives: qtbase
           setup-python: false
-          cache:        true
-
-      - name: Download JOM
-        uses: suisei-cn/actions-download-file@v1
-        with:
-          url:    http://download.qt.io/official_releases/jom/jom.zip
-          target: ${{ runner.temp }}\
-
-      - name: Unzip JOM
-        working-directory: ${{ runner.temp }}
-        run: 7z x jom.zip -ojom
-              
-      - name: Create build directory
-        run:  mkdir ${{ runner.temp }}\build
-
-      - name: Set up MinGW
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: x64
+          cache: true
+          dir: ${{ runner.temp }}
 
       - name: Build
         working-directory: ${{ runner.temp }}\build
         run:  |
-              qmake -r ${{ env.SOURCE_DIR }}\GaussianBeam.pro
-              ${{ runner.temp }}\jom\jom -j2
-              cd release
-              windeployqt  GaussianBeam.exe --pdb --release --compiler-runtime --no-translations --no-network --no-opengl
+              cmake 
+              -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${{ runner.temp }}\${{ env.QT_VERSION}}\msvc2019_64\lib\cmake\Qt6\qt.toolchain.cmake 
+              -SC:${{ env.SOURCE_DIR }} 
+              -G "Ninja Multi-Config"
               
       - name: Zip build
         working-directory: ${{ runner.temp }}
