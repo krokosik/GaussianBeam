@@ -40,8 +40,8 @@ jobs:
         run:  |
               cmake
               -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${{ runner.temp }}\${{ env.QT_VERSION}}\msvc2019_64\lib\cmake\Qt6\qt.toolchain.cmake 
-              -SC:${{ env.SOURCE_DIR }}
-              -BC:${{ runner.temp }}\build
+              -S ${{ env.SOURCE_DIR }}
+              -B ${{ runner.temp }}\build
               -G "Ninja Multi-Config"
               
       - name: Zip build
