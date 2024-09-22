@@ -13,7 +13,10 @@ env:
 
 jobs:
   build:
-    runs-on:  windows-2019
+    strategy:
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout repo
@@ -24,33 +27,41 @@ jobs:
         with:
           aqtversion: '==3.1.*'
           version: ${{ env.QT_VERSION }}
-          host: windows
+          host: ${{ matrix.os == 'ubuntu-latest' && 'linux' || 'windows' }}
           target: desktop
-          arch: win64_msvc2019_64
+          arch: ${{ matrix.os == 'ubuntu-latest' && 'linux_gcc_64' || 'win64_msvc2019_64' }}
           archives: qtbase
           setup-python: false
           cache: true
           dir: ${{ runner.temp }}
 
-      - name: Create build directory
-        run: mkdir ${{ runner.temp }}\build
+      - name: Install Ninja (Linux)
+        run: sudo apt-get install ninja-build
+        if: matrix.os == 'ubuntu-latest'
 
+      - name: Install Ninja (windows)
+        run: choco install ninja
+        if: matrix.os == 'windows-latest'
+
+      - name: Install Ninja (macOS)
+        run: brew install ninja
+        if: matrix.os == 'macos-latest'
+
+      - uses: ilammy/msvc-dev-cmd@v1
       - name: Build
-        working-directory: ${{ runner.temp }}\build
         run:  >
               cmake
-              -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${{ runner.temp }}\${{ env.QT_VERSION}}\msvc2019_64\lib\cmake\Qt6\qt.toolchain.cmake 
-              -S ${{ env.SOURCE_DIR }}
-              -B ${{ runner.temp }}\build
+              -S .
+              -B build
               -G "Ninja Multi-Config"
+              && cmake --build build --config Release
               
       - name: Zip build
-        working-directory: ${{ runner.temp }}
         run:  |
-              7z a ${{ env.ARTIFACT }} ${{ runner.temp }}\build\* -r
+              7z a ${{ env.ARTIFACT }} ./build/* -r
               
       - name: (10) Save build artifact
         uses: actions/upload-artifact@master
         with:
           name: ${{ env.ARTIFACT }}
-          path: ${{ runner.temp }}\${{ env.ARTIFACT }}
+          path: ./${{ env.ARTIFACT }}
