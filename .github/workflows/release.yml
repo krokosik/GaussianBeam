@@ -32,12 +32,16 @@ jobs:
           cache: true
           dir: ${{ runner.temp }}
 
+      - name: Create build directory
+        run: mkdir ${{ runner.temp }}\build
+
       - name: Build
         working-directory: ${{ runner.temp }}\build
         run:  |
-              cmake 
+              cmake
               -DCMAKE_TOOLCHAIN_FILE:FILEPATH=${{ runner.temp }}\${{ env.QT_VERSION}}\msvc2019_64\lib\cmake\Qt6\qt.toolchain.cmake 
-              -SC:${{ env.SOURCE_DIR }} 
+              -SC:${{ env.SOURCE_DIR }}
+              -BC:${{ runner.temp }}\build
               -G "Ninja Multi-Config"
               
       - name: Zip build
