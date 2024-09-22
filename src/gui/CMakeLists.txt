@@ -40,7 +40,8 @@ if(WIN32)
         --no-network
         --no-svg
         --no-opengl-sw
-        --no-system-dxc-compiler 
+        --no-system-dxc-compiler
+        --skip-plugin-types imageformats,iconengines
     )
 endif()
 

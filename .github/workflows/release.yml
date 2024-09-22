@@ -30,7 +30,7 @@ jobs:
           host: ${{ matrix.os == 'ubuntu-latest' && 'linux' || 'windows' }}
           target: desktop
           arch: ${{ matrix.os == 'ubuntu-latest' && 'linux_gcc_64' || 'win64_msvc2019_64' }}
-          archives: qtbase
+          archives: qtbase qtsvg
           setup-python: false
           cache: true
           dir: ${{ runner.temp }}
