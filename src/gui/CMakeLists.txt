@@ -29,6 +29,18 @@ target_include_directories(gaussianbeam PUBLIC ${GaussianBeam_SOURCE_DIR}/includ
 
 target_link_libraries(gaussianbeam PRIVATE lib)
 target_link_libraries(gaussianbeam PUBLIC Qt6::Widgets Qt6::Xml)
+add_custom_command(TARGET gaussianbeam POST_BUILD
+    COMMAND ${WINDEPLOYQT_EXECUTABLE} $<TARGET_FILE:gaussianbeam> 
+    --no-translations 
+    --no-system-d3d-compiler 
+    --compiler-runtime 
+    --widgets
+    --xml
+    --no-network
+    --no-svg
+    --no-opengl-sw
+    --no-system-dxc-compiler 
+)
 
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/src/gui"

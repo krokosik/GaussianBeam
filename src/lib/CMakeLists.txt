@@ -2,6 +2,7 @@ file(GLOB HEADER_LIST CONFIGURE DEPENDS "${GaussianBeam_SOURCE_DIR}/include/*.h"
 
 add_library(
     lib
+    STATIC
     GaussianBeam.cpp
     Optics.cpp
     OpticsBench.cpp
