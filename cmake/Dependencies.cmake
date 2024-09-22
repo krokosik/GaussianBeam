@@ -2,17 +2,19 @@ set(QT_MIN_VERSION "6.7.0")
 find_package(Qt6 REQUIRED COMPONENTS Widgets Xml)
 qt_standard_project_setup()
 
-find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS
-    "${Qt6_DIR}/../../../bin"       # Adjust based on your Qt installation layout
-    "${Qt6_DIR}/bin"
-    ENV QT_BIN_DIR                  # Environment variable (optional)
-    NO_DEFAULT_PATH                 # Ignore default search paths
-)
+if(WIN32)
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS
+        "${Qt6_DIR}/../../../bin"       # Adjust based on your Qt installation layout
+        "${Qt6_DIR}/bin"
+        ENV QT_BIN_DIR                  # Environment variable (optional)
+        NO_DEFAULT_PATH                 # Ignore default search paths
+    )
 
-if(NOT WINDEPLOYQT_EXECUTABLE)
-    message(FATAL_ERROR "windeployqt not found!")
-else()
-    message(STATUS "Found windeployqt at: ${WINDEPLOYQT_EXECUTABLE}")
+    if(NOT WINDEPLOYQT_EXECUTABLE)
+        message(FATAL_ERROR "windeployqt not found!")
+    else()
+        message(STATUS "Found windeployqt at: ${WINDEPLOYQT_EXECUTABLE}")
+    endif()
 endif()
 
 include(FetchContent)
